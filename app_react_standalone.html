@@ -769,8 +769,39 @@
         showToast(`Venta #${orderId} revertida (+${ord.qty} unidades al stock)`);
       };
 
+      const refreshSalesHistory = () => {
+        try {
+          const s = localStorage.getItem('BOBINAS_EXPRESS_SALES_V4');
+          if (s) {
+            const parsed = JSON.parse(s);
+            if (Array.isArray(parsed)) {
+              setSalesHistory(parsed);
+              showToast(`✓ Registro de ventas actualizado (${parsed.length} órdenes)`);
+              return;
+            }
+          }
+        } catch(e) {}
+        showToast(`✓ Registro de ventas al día (${salesHistory.length} órdenes)`);
+      };
+
+      const importSalesBatch = (newRecords, replaceAll = false) => {
+        setSalesHistory(prev => {
+          let next;
+          if (replaceAll) {
+            next = newRecords;
+          } else {
+            const existingIds = new Set(prev.map(s => String(s.orderId)));
+            const nonDups = newRecords.filter(s => !existingIds.has(String(s.orderId)));
+            next = [...nonDups, ...prev];
+          }
+          try { localStorage.setItem('BOBINAS_EXPRESS_SALES_V4', JSON.stringify(next)); } catch(e) {}
+          return next;
+        });
+        showToast(`✓ ${newRecords.length} ventas importadas y conectadas con el catálogo`);
+      };
+
       return (
-        <InventoryContext.Provider value={{ coils, dbEngine, changeDbEngine, dbCredentials, updateDbCredentials, apiConnectionStatus, testApiConnection, syncWithApi, upsertCoil, deleteCoil, clearInventory, restoreSeedData, bulkImport, salesHistory, ownerSettings, updateOwnerSettings, processSaleTransaction, revertSale, pendingOwnerAlert, dismissOwnerAlert: () => setPendingOwnerAlert(null) }}>
+        <InventoryContext.Provider value={{ coils, dbEngine, changeDbEngine, dbCredentials, updateDbCredentials, apiConnectionStatus, testApiConnection, syncWithApi, upsertCoil, deleteCoil, clearInventory, restoreSeedData, bulkImport, salesHistory, refreshSalesHistory, importSalesBatch, ownerSettings, updateOwnerSettings, processSaleTransaction, revertSale, pendingOwnerAlert, dismissOwnerAlert: () => setPendingOwnerAlert(null) }}>
           {children}
         </InventoryContext.Provider>
       );
@@ -1406,21 +1437,137 @@
         </div>
       );
     }
-      );
-    }
 
     function SalesView({ onOpenManualSale }) {
-      const { salesHistory, revertSale } = useInventory();
+      const { salesHistory, revertSale, coils, processSaleTransaction, refreshSalesHistory, importSalesBatch } = useInventory();
+      const [salesModalOpen, setSalesModalOpen] = useState(false);
+      const [isRefreshing, setIsRefreshing] = useState(false);
+      const [modalTab, setModalTab] = useState('export'); // 'export' | 'import'
+      const [csvInput, setCsvInput] = useState('');
+      const [replaceAll, setReplaceAll] = useState(false);
+
+      const handleQuickSimulation = () => {
+        const available = coils.filter(b => b.stock > 0);
+        const pick = available[0] || coils[0];
+        if (!pick) return;
+        processSaleTransaction({
+          coilId: pick.id,
+          qty: 1,
+          customerName: 'Cliente Rápido Simulador',
+          customerPhone: '0412-5558900',
+          paymentRef: `Pago Móvil Ref #${Math.floor(100000 + Math.random() * 900000)}`,
+          userId: 'CLI-SIMULATED'
+        });
+      };
+
+      const handleRefresh = () => {
+        setIsRefreshing(true);
+        refreshSalesHistory();
+        setTimeout(() => setIsRefreshing(false), 500);
+      };
+
+      const exportCSV = () => {
+        const headers = ['order_id','fecha_hora','cliente_nombre','cliente_telefono','producto_id','producto_nombre','codigo_oem','marca_producto','modelo_vehiculo','cantidad','precio_unitario_usd','total_usd','stock_actual_catalogo','referencia_pago','estado_orden'];
+        const rows = salesHistory.map(s => {
+          const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
+          return [
+            s.orderId || '',
+            s.timestamp || '',
+            s.customerName || 'Cliente General',
+            s.customerPhone || '',
+            coil ? coil.id : (s.coilId || ''),
+            coil ? coil.name : (s.coilName || ''),
+            coil ? coil.oem : (s.oem || ''),
+            coil ? coil.brand : '',
+            coil ? coil.carModel : '',
+            s.qty || 1,
+            Number(s.unitPrice || 0).toFixed(2),
+            Number(s.totalPrice || 0).toFixed(2),
+            coil ? coil.stock : (s.stockAfter ?? ''),
+            s.paymentRef || '',
+            s.status || 'CONFIRMED'
+          ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+        });
+        const content = [headers.join(','), ...rows].join('\n');
+        downloadFile(content, `jf_autoparts_ventas_supabase_${Date.now()}.csv`, 'text/csv;charset=utf-8;');
+      };
+
+      const exportSQL = () => {
+        const safe = str => String(str ?? '').replace(/'/g, "''");
+        const inserts = salesHistory.map(s => {
+          const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
+          return `INSERT INTO public.ventas (order_id, fecha, cliente_nombre, producto_id, producto_nombre, codigo_oem, cantidad, precio_unitario, total_usd, stock_actual_catalogo, referencia_pago, estado) VALUES ('${safe(s.orderId)}', '${safe(s.timestamp)}', '${safe(s.customerName)}', '${safe(coil ? coil.id : s.coilId)}', '${safe(coil ? coil.name : s.coilName)}', '${safe(coil ? coil.oem : s.oem)}', ${Number(s.qty || 1)}, ${Number(s.unitPrice || 0).toFixed(2)}, ${Number(s.totalPrice || 0).toFixed(2)}, ${Number(coil ? coil.stock : 0)}, '${safe(s.paymentRef)}', '${safe(s.status || 'CONFIRMED')}');`;
+        }).join('\n');
+        const sql = `-- DDL TABLA VENTAS SUPABASE\nCREATE TABLE IF NOT EXISTS public.ventas (\n  id BIGSERIAL PRIMARY KEY,\n  order_id TEXT NOT NULL UNIQUE,\n  fecha TEXT,\n  cliente_nombre TEXT,\n  producto_id TEXT,\n  producto_nombre TEXT,\n  codigo_oem TEXT,\n  cantidad INTEGER DEFAULT 1,\n  precio_unitario NUMERIC(10,2),\n  total_usd NUMERIC(10,2),\n  stock_actual_catalogo INTEGER,\n  referencia_pago TEXT,\n  estado TEXT DEFAULT 'CONFIRMED'\n);\nALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;\n\n${inserts}`;
+        downloadFile(sql, `jf_autoparts_ventas_supabase_${Date.now()}.sql`, 'application/sql;charset=utf-8;');
+      };
+
+      const handleImportCSV = () => {
+        if (!csvInput.trim()) return;
+        const lines = csvInput.trim().split(/\r?\n/);
+        if (lines.length < 2) return;
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+        const imported = lines.slice(1).map((line, idx) => {
+          const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+          const row = {};
+          headers.forEach((h, i) => { row[h] = cols[i] || ''; });
+          const rawId = row.producto_id || row.coilid || row.id || '';
+          const rawOem = row.codigo_oem || row.oem || '';
+          const rawName = row.producto_nombre || row.coilname || row.nombre || '';
+          const coil = coils.find(c => (rawId && c.id.toLowerCase() === rawId.toLowerCase()) || (rawOem && c.oem.includes(rawOem)) || (rawName && c.name.toLowerCase().includes(rawName.toLowerCase())));
+          const qty = parseInt(row.cantidad || row.qty || 1, 10);
+          const price = parseFloat(row.precio_unitario || row.unitprice || (coil ? coil.price : 30));
+          return {
+            orderId: String(row.order_id || row.orderid || `ORD-${Date.now().toString().slice(-4)}${idx}`).replace(/^#/, ''),
+            timestamp: row.fecha_hora || row.fecha || 'Hoy',
+            customerName: row.cliente_nombre || row.cliente || 'Cliente Importado',
+            customerPhone: row.cliente_telefono || '',
+            coilId: coil ? coil.id : (rawId || 'BOB-GEN'),
+            coilName: coil ? coil.name : (rawName || 'Bobina'),
+            oem: coil ? coil.oem : rawOem,
+            qty,
+            unitPrice: price,
+            totalPrice: parseFloat(row.total_usd || row.totalprice || (price * qty)),
+            stockBefore: coil ? coil.stock + qty : 10,
+            stockAfter: coil ? coil.stock : 10,
+            paymentRef: row.referencia_pago || 'Pago Registrado',
+            status: 'CONFIRMED'
+          };
+        });
+        importSalesBatch(imported, replaceAll);
+        setSalesModalOpen(false);
+        setCsvInput('');
+      };
+
       return (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-white">Auditoría de Ventas en Vivo</h2>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white">Auditoría de Ventas & Despachos</h2>
               <p className="text-xs text-slate-400">Descuento automático de stock con alertas al WhatsApp del dueño (0412-6497478).</p>
             </div>
-            <button onClick={onOpenManualSale} className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow">
-              <i className="fa-solid fa-plus"></i> Registrar Venta Manual
-            </button>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={onOpenManualSale} className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow">
+                <i className="fa-solid fa-plus"></i> Registrar Venta Manual
+              </button>
+
+              <button onClick={handleQuickSimulation} className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i className="fa-solid fa-bolt text-amber-400"></i> Simular Venta Rápida WA
+              </button>
+
+              {/* Botón: Actualizar registro de ventas */}
+              <button onClick={handleRefresh} disabled={isRefreshing} className="px-3 py-2 bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Actualizar registro de ventas realizadas">
+                <i className={`fa-solid fa-arrows-rotate ${isRefreshing ? 'fa-spin' : ''} text-sky-400`}></i>
+                <span>Actualizar Registro</span>
+              </button>
+
+              {/* Botón: Base de Datos CSV & Supabase */}
+              <button onClick={() => setSalesModalOpen(true)} className="px-3 py-2 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg active:scale-95" title="Importar y Exportar CSV conectado al catálogo para Supabase">
+                <i className="fa-solid fa-file-csv text-emerald-200"></i>
+                <span>Base de Datos CSV (Supabase)</span>
+              </button>
+            </div>
           </div>
 
           <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl">
@@ -1463,6 +1610,43 @@
               </tbody>
             </table>
           </div>
+
+          {/* Modal Base de Datos CSV & Supabase */}
+          {salesModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative space-y-4">
+                <button onClick={() => setSalesModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer"><i className="fa-solid fa-xmark"></i></button>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shadow-lg"><i className="fa-solid fa-database"></i></div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Base de Datos de Ventas (CSV & Supabase)</h3>
+                    <p className="text-[11px] text-slate-400">Exporta e importa ventas vinculadas a los productos del catálogo</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                  <button onClick={() => setModalTab('export')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${modalTab === 'export' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Exportar para Supabase</button>
+                  <button onClick={() => setModalTab('import')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${modalTab === 'import' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Importar CSV de Ventas</button>
+                </div>
+
+                {modalTab === 'export' ? (
+                  <div className="space-y-3">
+                    <p className="text-xs text-slate-300 leading-relaxed">Descarga el registro de ventas estructurado con los campos de productos (ID, OEM, nombre, marca, modelo y stock actual del catálogo) compatible con tablas SQL de Supabase.</p>
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button onClick={exportCSV} className="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow"><i className="fa-solid fa-file-csv"></i> Descargar CSV Supabase</button>
+                      <button onClick={exportSQL} className="py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs border border-slate-700 flex items-center justify-center gap-2 cursor-pointer"><i className="fa-solid fa-code text-sky-400"></i> Descargar Script SQL</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <textarea rows={6} value={csvInput} onChange={e => setCsvInput(e.target.value)} placeholder="Pega aquí tu CSV de ventas (order_id,fecha_hora,cliente_nombre,producto_id,codigo_oem,cantidad,precio_unitario...)" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer"><input type="checkbox" checked={replaceAll} onChange={e => setReplaceAll(e.target.checked)} /> Reemplazar todo el registro actual</label>
+                    <button onClick={handleImportCSV} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs cursor-pointer shadow">Procesar e Importar al Registro</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       );
     }

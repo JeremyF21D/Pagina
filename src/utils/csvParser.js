@@ -109,3 +109,210 @@ export function downloadFile(content, fileName, mimeType = 'text/plain;charset=u
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+const escapeCSVField = val => {
+  const str = String(val ?? '');
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
+
+/**
+ * Exports sales history to CSV format optimized for Supabase / SQL database import,
+ * deeply linked to available catalog products.
+ */
+export function exportSalesToCSV(salesList, catalogCoils = []) {
+  const headers = [
+    'order_id',
+    'fecha_hora',
+    'cliente_nombre',
+    'cliente_telefono',
+    'producto_id',
+    'producto_nombre',
+    'codigo_oem',
+    'marca_producto',
+    'modelo_vehiculo',
+    'motor_vehiculo',
+    'tipo_bobina',
+    'cantidad',
+    'precio_unitario_usd',
+    'total_usd',
+    'stock_antes_venta',
+    'stock_despues_venta',
+    'stock_actual_catalogo',
+    'referencia_pago',
+    'estado_orden',
+    'usuario_id'
+  ];
+
+  const rows = salesList.map(s => {
+    // Cross-link with catalog product
+    const coil = catalogCoils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
+    const prodId = coil ? coil.id : (s.coilId || '');
+    const prodName = coil ? coil.name : (s.coilName || '');
+    const oem = coil ? coil.oem : (s.oem || '');
+    const brand = coil ? (coil.brand || '') : '';
+    const carModel = coil ? (coil.carModel || '') : '';
+    const engine = coil ? (coil.engine || '') : '';
+    const type = coil ? (coil.type || '') : '';
+    const currentStock = coil ? coil.stock : (s.stockAfter ?? '');
+
+    const record = [
+      s.orderId || '',
+      s.timestamp || '',
+      s.customerName || 'Cliente General',
+      s.customerPhone || '',
+      prodId,
+      prodName,
+      oem,
+      brand,
+      carModel,
+      engine,
+      type,
+      s.qty || 1,
+      Number(s.unitPrice || (s.totalPrice / (s.qty || 1)) || 0).toFixed(2),
+      Number(s.totalPrice || 0).toFixed(2),
+      s.stockBefore ?? '',
+      s.stockAfter ?? '',
+      currentStock,
+      s.paymentRef || '',
+      s.status || 'CONFIRMED',
+      s.userId || 'CLI-WA'
+    ];
+
+    return record.map(escapeCSVField).join(',');
+  });
+
+  return [headers.join(','), ...rows].join('\n');
+}
+
+/**
+ * Generates SQL DDL + INSERT statements for the 'ventas' table in Supabase
+ */
+export function exportSalesToSQL(salesList, catalogCoils = []) {
+  const safe = str => String(str ?? '').replace(/'/g, "''");
+  const inserts = salesList.map(s => {
+    const coil = catalogCoils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
+    const prodId = coil ? coil.id : (s.coilId || '');
+    const prodName = coil ? coil.name : (s.coilName || '');
+    const oem = coil ? coil.oem : (s.oem || '');
+    const brand = coil ? (coil.brand || '') : '';
+    const carModel = coil ? (coil.carModel || '') : '';
+    const engine = coil ? (coil.engine || '') : '';
+    const type = coil ? (coil.type || '') : '';
+    const currentStock = coil ? coil.stock : (s.stockAfter ?? 0);
+
+    return `INSERT INTO public.ventas (order_id, fecha, cliente_nombre, cliente_telefono, producto_id, producto_nombre, codigo_oem, marca_producto, modelo_vehiculo, motor_vehiculo, tipo_bobina, cantidad, precio_unitario, total_usd, stock_anterior, stock_posterior, stock_actual_catalogo, referencia_pago, estado, usuario_id) VALUES ('${safe(s.orderId)}', '${safe(s.timestamp)}', '${safe(s.customerName)}', '${safe(s.customerPhone)}', '${safe(prodId)}', '${safe(prodName)}', '${safe(oem)}', '${safe(brand)}', '${safe(carModel)}', '${safe(engine)}', '${safe(type)}', ${Number(s.qty || 1)}, ${Number(s.unitPrice || 0).toFixed(2)}, ${Number(s.totalPrice || 0).toFixed(2)}, ${Number(s.stockBefore || 0)}, ${Number(s.stockAfter || 0)}, ${Number(currentStock || 0)}, '${safe(s.paymentRef)}', '${safe(s.status || 'CONFIRMED')}', '${safe(s.userId || 'CLI-WA')}');`;
+  }).join('\n');
+
+  return `-- ========================================================
+-- DUMP SQL TABLA VENTAS & AUDITORÍA PARA SUPABASE
+-- Plataforma Oficial: JF AUTO PARTS
+-- Fecha: ${new Date().toISOString()}
+-- Total registros de venta: ${salesList.length}
+-- ========================================================
+
+-- 1. Crear tabla de ventas compatible con PostgreSQL / Supabase
+CREATE TABLE IF NOT EXISTS public.ventas (
+  id BIGSERIAL PRIMARY KEY,
+  order_id TEXT NOT NULL UNIQUE,
+  fecha TEXT,
+  cliente_nombre TEXT,
+  cliente_telefono TEXT,
+  producto_id TEXT,
+  producto_nombre TEXT,
+  codigo_oem TEXT,
+  marca_producto TEXT,
+  modelo_vehiculo TEXT,
+  motor_vehiculo TEXT,
+  tipo_bobina TEXT,
+  cantidad INTEGER DEFAULT 1,
+  precio_unitario NUMERIC(10,2),
+  total_usd NUMERIC(10,2),
+  stock_anterior INTEGER,
+  stock_posterior INTEGER,
+  stock_actual_catalogo INTEGER,
+  referencia_pago TEXT,
+  estado TEXT DEFAULT 'CONFIRMED',
+  usuario_id TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. Desactivar RLS temporalmente para permitir lecturas y escrituras desde la web
+ALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;
+
+-- 3. Habilitar inserciones públicas si se desea mantener RLS
+-- CREATE POLICY "Permitir lectura publica ventas" ON public.ventas FOR SELECT USING (true);
+-- CREATE POLICY "Permitir insercion publica ventas" ON public.ventas FOR INSERT WITH CHECK (true);
+
+-- 4. Registros de ventas exportados:
+${inserts}`;
+}
+
+/**
+ * Parses sales CSV and auto-connects each record with available products in the catalog
+ */
+export function parseSalesCSV(csvText, catalogCoils = []) {
+  const rawRows = parseCSV(csvText);
+  let matchedCount = 0;
+
+  const sales = rawRows.map((r, idx) => {
+    // Read raw fields flexibly (supports both Spanish snake_case and camelCase)
+    const rawOrderId = r.order_id || r.orderId || r.orden || r.id || `ORD-${Date.now().toString().slice(-4)}${idx}`;
+    const rawProdId = r.producto_id || r.coilId || r.coil_id || r.id_producto || '';
+    const rawOem = r.codigo_oem || r.oem || r.cod_oem || '';
+    const rawProdName = r.producto_nombre || r.coilName || r.coil_name || r.nombre || r.producto || '';
+    const rawCustomer = r.cliente_nombre || r.cliente || r.customerName || r.customer_name || 'Cliente Mostrador';
+    const rawPhone = r.cliente_telefono || r.telefono || r.customerPhone || r.customer_phone || '';
+    const rawQty = Math.max(1, parseInt(r.cantidad || r.qty || r.unidades || 1, 10));
+    const rawPrice = parseFloat(r.precio_unitario || r.precio_unitario_usd || r.unitPrice || r.unit_price || r.precio || 0);
+    const rawTotal = parseFloat(r.total_usd || r.totalPrice || r.total || 0);
+    const rawPayRef = r.referencia_pago || r.paymentRef || r.pago || r.referencia || 'Transferencia / Pago Móvil';
+    const rawStatus = (r.estado_orden || r.estado || r.status || 'CONFIRMED').toUpperCase();
+    const rawDate = r.fecha_hora || r.fecha || r.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // CONNECT WITH CATALOG PRODUCT:
+    // 1. By ID
+    let matchedCoil = catalogCoils.find(c => c.id && rawProdId && c.id.toLowerCase() === rawProdId.toLowerCase());
+    // 2. By OEM
+    if (!matchedCoil && rawOem) {
+      matchedCoil = catalogCoils.find(c => c.oem && c.oem.toLowerCase().includes(rawOem.toLowerCase()));
+    }
+    // 3. By Name
+    if (!matchedCoil && rawProdName) {
+      matchedCoil = catalogCoils.find(c => c.name && c.name.toLowerCase().includes(rawProdName.toLowerCase()));
+    }
+
+    if (matchedCoil) matchedCount++;
+
+    const finalProdId = matchedCoil ? matchedCoil.id : (rawProdId || 'BOB-GENERICA');
+    const finalProdName = matchedCoil ? matchedCoil.name : (rawProdName || 'Bobina de Encendido Estándar');
+    const finalOem = matchedCoil ? matchedCoil.oem : (rawOem || 'N/A');
+    const finalUnitPrice = rawPrice > 0 ? rawPrice : (matchedCoil ? matchedCoil.price : 25.00);
+    const finalTotalPrice = rawTotal > 0 ? rawTotal : (finalUnitPrice * rawQty);
+    const stockAfter = matchedCoil ? matchedCoil.stock : parseInt(r.stock_despues_venta || r.stockAfter || 10, 10);
+    const stockBefore = parseInt(r.stock_antes_venta || r.stockBefore || (stockAfter + rawQty), 10);
+
+    return {
+      orderId: String(rawOrderId).replace(/^#/, ''),
+      timestamp: rawDate,
+      userId: r.usuario_id || r.userId || 'CLI-IMPORT',
+      customerName: rawCustomer,
+      customerPhone: rawPhone,
+      coilId: finalProdId,
+      coilName: finalProdName,
+      oem: finalOem,
+      qty: rawQty,
+      unitPrice: finalUnitPrice,
+      totalPrice: finalTotalPrice,
+      stockBefore,
+      stockAfter,
+      paymentRef: rawPayRef,
+      status: ['CONFIRMED', 'REVERTED', 'PENDING_APPROVAL'].includes(rawStatus) ? rawStatus : 'CONFIRMED',
+      isMatched: Boolean(matchedCoil)
+    };
+  });
+
+  return { sales, matchedCount, totalCount: sales.length };
+}

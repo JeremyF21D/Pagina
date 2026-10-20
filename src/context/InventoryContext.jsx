@@ -672,6 +672,146 @@ Directrices de conversación:
     showToast(`Venta #${orderId} revertida (+${ord.qty} unidades al stock)`);
   }, [salesHistory, showToast]);
 
+  const refreshSalesHistory = useCallback(async () => {
+    // 1. If active engine is supabase, attempt fetch from Supabase table 'ventas'
+    if (dbEngine === 'supabase') {
+      const creds = dbCredentials.supabase;
+      if (creds && creds.url && creds.anonKey) {
+        try {
+          let cleanUrl = String(creds.url || '').trim();
+          if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
+          const table = creds.salesTable || 'ventas';
+          const endpoint = `${cleanUrl}/rest/v1/${table}?select=*&order=created_at.desc`;
+          const resp = await fetch(endpoint, {
+            headers: {
+              'apikey': creds.anonKey,
+              'Authorization': `Bearer ${creds.anonKey}`
+            }
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data) && data.length > 0) {
+              const mapped = data.map(item => ({
+                orderId: item.order_id || item.id,
+                timestamp: item.fecha || item.created_at || 'Hoy',
+                customerName: item.cliente_nombre || 'Cliente',
+                customerPhone: item.cliente_telefono || '',
+                coilId: item.producto_id || '',
+                coilName: item.producto_nombre || '',
+                oem: item.codigo_oem || '',
+                qty: item.cantidad || 1,
+                unitPrice: Number(item.precio_unitario || 0),
+                totalPrice: Number(item.total_usd || 0),
+                stockBefore: item.stock_anterior || 0,
+                stockAfter: item.stock_posterior || 0,
+                paymentRef: item.referencia_pago || '',
+                status: item.estado || 'CONFIRMED',
+                userId: item.usuario_id || 'CLI-SUPABASE'
+              }));
+              setSalesHistory(mapped);
+              try { localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(mapped)); } catch(e){}
+              showToast(`✓ Registro de ventas actualizado desde Supabase (${mapped.length} órdenes)`);
+              return mapped;
+            }
+          }
+        } catch (e) {
+          console.warn('Error al consultar ventas en Supabase:', e);
+        }
+      }
+    }
+
+    // 2. Read from LocalStorage & broadcast
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_SALES_LOG);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setSalesHistory(parsed);
+          showToast(`✓ Registro de ventas sincronizado (${parsed.length} órdenes activas)`);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    showToast(`✓ Registro de ventas al día (${salesHistory.length} órdenes)`);
+    return salesHistory;
+  }, [dbCredentials, dbEngine, salesHistory, showToast]);
+
+  const importSalesBatch = useCallback((newRecords, replaceAll = false) => {
+    setSalesHistory(prev => {
+      let next;
+      if (replaceAll) {
+        next = newRecords;
+      } else {
+        const existingIds = new Set(prev.map(s => String(s.orderId)));
+        const nonDups = newRecords.filter(s => !existingIds.has(String(s.orderId)));
+        next = [...nonDups, ...prev];
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+    showToast(`✓ ${newRecords.length} ventas importadas y conectadas con el catálogo`);
+  }, [showToast]);
+
+  const pushSalesToSupabase = useCallback(async () => {
+    const creds = dbCredentials.supabase;
+    if (!creds || !creds.url || !creds.anonKey) {
+      throw new Error('Configura primero la URL y Anon Key de Supabase en la pestaña "Base de Datos" o "Config IA".');
+    }
+    let cleanUrl = String(creds.url || '').trim();
+    if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
+    const table = creds.salesTable || 'ventas';
+    const endpoint = `${cleanUrl}/rest/v1/${table}`;
+
+    // Payload mapped for Supabase
+    const payload = salesHistory.map(s => {
+      const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
+      return {
+        order_id: s.orderId,
+        fecha: s.timestamp,
+        cliente_nombre: s.customerName,
+        cliente_telefono: s.customerPhone || '',
+        producto_id: coil ? coil.id : (s.coilId || ''),
+        producto_nombre: coil ? coil.name : (s.coilName || ''),
+        codigo_oem: coil ? coil.oem : (s.oem || ''),
+        marca_producto: coil ? coil.brand : '',
+        modelo_vehiculo: coil ? coil.carModel : '',
+        motor_vehiculo: coil ? coil.engine : '',
+        tipo_bobina: coil ? coil.type : '',
+        cantidad: s.qty || 1,
+        precio_unitario: Number(s.unitPrice || 0),
+        total_usd: Number(s.totalPrice || 0),
+        stock_anterior: s.stockBefore || 0,
+        stock_posterior: s.stockAfter || 0,
+        stock_actual_catalogo: coil ? coil.stock : (s.stockAfter || 0),
+        referencia_pago: s.paymentRef || '',
+        estado: s.status || 'CONFIRMED',
+        usuario_id: s.userId || 'CLI-WA'
+      };
+    });
+
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'apikey': creds.anonKey,
+        'Authorization': `Bearer ${creds.anonKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Error en Supabase (${resp.status}): ${errText}`);
+    }
+
+    showToast(`✓ ${salesHistory.length} ventas sincronizadas exitosamente en Supabase (tabla '${table}')`);
+    return true;
+  }, [coils, dbCredentials.supabase, salesHistory, showToast]);
+
   const dismissOwnerAlert = useCallback(() => {
     setPendingOwnerAlert(null);
   }, []);
@@ -766,6 +906,9 @@ Directrices de conversación:
       restoreSeedData,
       bulkImport,
       salesHistory,
+      refreshSalesHistory,
+      importSalesBatch,
+      pushSalesToSupabase,
       ownerSettings,
       updateOwnerSettings,
       processSaleTransaction,
