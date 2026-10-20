@@ -673,15 +673,21 @@ Directrices de conversación:
   }, [salesHistory, showToast]);
 
   const refreshSalesHistory = useCallback(async () => {
-    // 1. If active engine is supabase, attempt fetch from Supabase table 'ventas'
+    // 1. If active engine is supabase, attempt fetch from Supabase table 'ventas' (or 'ventas_ordenes')
     if (dbEngine === 'supabase') {
       const creds = dbCredentials.supabase;
       if (creds && creds.url && creds.anonKey) {
         try {
           let cleanUrl = String(creds.url || '').trim();
           if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
+          let baseUrl = cleanUrl;
+          try {
+            baseUrl = new URL(cleanUrl).origin;
+          } catch (e) {
+            baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
+          }
           const table = creds.salesTable || 'ventas';
-          const endpoint = `${cleanUrl}/rest/v1/${table}?select=*&order=created_at.desc`;
+          const endpoint = `${baseUrl}/rest/v1/${table}?select=*`;
           const resp = await fetch(endpoint, {
             headers: {
               'apikey': creds.anonKey,
@@ -691,23 +697,29 @@ Directrices de conversación:
           if (resp.ok) {
             const data = await resp.json();
             if (Array.isArray(data) && data.length > 0) {
-              const mapped = data.map(item => ({
-                orderId: item.order_id || item.id,
-                timestamp: item.fecha || item.created_at || 'Hoy',
-                customerName: item.cliente_nombre || 'Cliente',
-                customerPhone: item.cliente_telefono || '',
-                coilId: item.producto_id || '',
-                coilName: item.producto_nombre || '',
-                oem: item.codigo_oem || '',
-                qty: item.cantidad || 1,
-                unitPrice: Number(item.precio_unitario || 0),
-                totalPrice: Number(item.total_usd || 0),
-                stockBefore: item.stock_anterior || 0,
-                stockAfter: item.stock_posterior || 0,
-                paymentRef: item.referencia_pago || '',
-                status: item.estado || 'CONFIRMED',
-                userId: item.usuario_id || 'CLI-SUPABASE'
-              }));
+              const mapped = data.map(item => {
+                const rawProdId = item.producto_id || item.coil_id || '';
+                const rawOem = item.codigo_oem || item.oem || '';
+                const matchedCoil = coils.find(c => (rawProdId && c.id.toLowerCase() === rawProdId.toLowerCase()) || (rawOem && c.oem && c.oem.includes(rawOem)));
+
+                return {
+                  orderId: String(item.order_id || item.id).replace(/^#/, ''),
+                  timestamp: item.fecha || item.fecha_hora || item.created_at || 'Hoy',
+                  customerName: item.cliente_nombre || item.customer_name || 'Cliente',
+                  customerPhone: item.cliente_telefono || item.customer_phone || '',
+                  coilId: matchedCoil ? matchedCoil.id : (rawProdId || 'BOB-GEN'),
+                  coilName: matchedCoil ? matchedCoil.name : (item.producto_nombre || item.coil_name || 'Bobina de Encendido'),
+                  oem: matchedCoil ? matchedCoil.oem : rawOem,
+                  qty: parseInt(item.cantidad || item.qty || 1, 10),
+                  unitPrice: Number(item.precio_unitario || item.unit_price || (matchedCoil ? matchedCoil.price : 0)),
+                  totalPrice: Number(item.total_usd || item.total_price || 0),
+                  stockBefore: Number(item.stock_anterior || item.stock_before || 0),
+                  stockAfter: Number(item.stock_posterior || item.stock_after || 0),
+                  paymentRef: item.referencia_pago || item.payment_ref || '',
+                  status: (item.estado || item.status || 'CONFIRMED').toUpperCase(),
+                  userId: item.usuario_id || item.user_id || 'CLI-SUPABASE'
+                };
+              });
               setSalesHistory(mapped);
               try { localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(mapped)); } catch(e){}
               showToast(`✓ Registro de ventas actualizado desde Supabase (${mapped.length} órdenes)`);
@@ -760,56 +772,167 @@ Directrices de conversación:
     if (!creds || !creds.url || !creds.anonKey) {
       throw new Error('Configura primero la URL y Anon Key de Supabase en la pestaña "Base de Datos" o "Config IA".');
     }
+
     let cleanUrl = String(creds.url || '').trim();
     if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
-    const table = creds.salesTable || 'ventas';
-    const endpoint = `${cleanUrl}/rest/v1/${table}`;
-
-    // Payload mapped for Supabase
-    const payload = salesHistory.map(s => {
-      const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
-      return {
-        order_id: s.orderId,
-        fecha: s.timestamp,
-        cliente_nombre: s.customerName,
-        cliente_telefono: s.customerPhone || '',
-        producto_id: coil ? coil.id : (s.coilId || ''),
-        producto_nombre: coil ? coil.name : (s.coilName || ''),
-        codigo_oem: coil ? coil.oem : (s.oem || ''),
-        marca_producto: coil ? coil.brand : '',
-        modelo_vehiculo: coil ? coil.carModel : '',
-        motor_vehiculo: coil ? coil.engine : '',
-        tipo_bobina: coil ? coil.type : '',
-        cantidad: s.qty || 1,
-        precio_unitario: Number(s.unitPrice || 0),
-        total_usd: Number(s.totalPrice || 0),
-        stock_anterior: s.stockBefore || 0,
-        stock_posterior: s.stockAfter || 0,
-        stock_actual_catalogo: coil ? coil.stock : (s.stockAfter || 0),
-        referencia_pago: s.paymentRef || '',
-        estado: s.status || 'CONFIRMED',
-        usuario_id: s.userId || 'CLI-WA'
-      };
-    });
-
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'apikey': creds.anonKey,
-        'Authorization': `Bearer ${creds.anonKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(`Error en Supabase (${resp.status}): ${errText}`);
+    let baseUrl = cleanUrl;
+    try {
+      baseUrl = new URL(cleanUrl).origin;
+    } catch (e) {
+      baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
     }
 
-    showToast(`✓ ${salesHistory.length} ventas sincronizadas exitosamente en Supabase (tabla '${table}')`);
-    return true;
+    const table = String(creds.salesTable || 'ventas').trim();
+    const endpoint = `${baseUrl}/rest/v1/${table}`;
+
+    // 1. Intentar descubrir las columnas que realmente existen en la tabla de Supabase
+    let knownColumns = null;
+    try {
+      const specResp = await fetch(`${baseUrl}/rest/v1/`, {
+        headers: { 'apikey': creds.anonKey }
+      });
+      if (specResp.ok) {
+        const spec = await specResp.json();
+        const tableDef = spec?.definitions?.[table] || spec?.definitions?.['ventas'] || spec?.definitions?.['ventas_ordenes'];
+        if (tableDef?.properties) {
+          knownColumns = new Set(Object.keys(tableDef.properties));
+        }
+      }
+    } catch (e) {}
+
+    // Si OpenAPI no devolvió columnas, consultar 1 fila de muestra
+    if (!knownColumns) {
+      try {
+        const sampleResp = await fetch(`${endpoint}?select=*&limit=1`, {
+          headers: { 
+            'apikey': creds.anonKey, 
+            'Authorization': `Bearer ${creds.anonKey}` 
+          }
+        });
+        if (sampleResp.ok) {
+          const sampleRows = await sampleResp.json();
+          if (Array.isArray(sampleRows) && sampleRows.length > 0) {
+            knownColumns = new Set(Object.keys(sampleRows[0]));
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. Construir fila adaptativa enlazada con los productos del catálogo
+    const buildRow = (s) => {
+      const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
+      const row = {};
+
+      const setField = (spanishKey, englishKey, val) => {
+        if (knownColumns) {
+          if (knownColumns.has(spanishKey)) {
+            row[spanishKey] = val;
+          } else if (knownColumns.has(englishKey)) {
+            row[englishKey] = val;
+          }
+        } else {
+          // Si no conocemos aún las columnas, priorizamos la clave estándar
+          row[spanishKey] = val;
+        }
+      };
+
+      row.order_id = s.orderId;
+      setField('fecha', 'timestamp', s.timestamp || 'Hoy');
+      setField('cliente_nombre', 'customer_name', s.customerName || 'Cliente');
+      setField('cliente_telefono', 'customer_phone', s.customerPhone || '');
+      setField('producto_id', 'coil_id', coil ? coil.id : (s.coilId || ''));
+      setField('producto_nombre', 'coil_name', coil ? coil.name : (s.coilName || ''));
+      setField('codigo_oem', 'oem', coil ? coil.oem : (s.oem || ''));
+      setField('marca_producto', 'brand', coil ? coil.brand : '');
+      setField('modelo_vehiculo', 'car_model', coil ? coil.carModel : '');
+      setField('motor_vehiculo', 'engine', coil ? coil.engine : '');
+      setField('tipo_bobina', 'type', coil ? coil.type : '');
+      setField('cantidad', 'qty', s.qty || 1);
+      setField('precio_unitario', 'unit_price', Number(s.unitPrice || 0));
+      setField('total_usd', 'total_price', Number(s.totalPrice || 0));
+      setField('stock_anterior', 'stock_before', s.stockBefore || 0);
+      setField('stock_posterior', 'stock_after', s.stockAfter || 0);
+      setField('stock_actual_catalogo', 'catalog_stock', coil ? coil.stock : (s.stockAfter || 0));
+      setField('referencia_pago', 'payment_ref', s.paymentRef || '');
+      setField('estado', 'status', s.status || 'CONFIRMED');
+      setField('usuario_id', 'user_id', s.userId || 'CLI-WA');
+
+      return row;
+    };
+
+    let payload = salesHistory.map(buildRow);
+
+    // 3. Bucle de reintento inteligente: si Supabase arroja PGRST204 para alguna columna,
+    // se remapea automáticamente (por ej. 'estado' -> 'status') o se excluye esa columna.
+    let attempts = 0;
+    while (attempts < 8) {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'apikey': creds.anonKey,
+          'Authorization': `Bearer ${creds.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (resp.ok) {
+        showToast(`✓ ${salesHistory.length} ventas sincronizadas exitosamente en Supabase (tabla '${table}')`);
+        return true;
+      }
+
+      const errText = await resp.text();
+      let errJson = null;
+      try { errJson = JSON.parse(errText); } catch (e) {}
+
+      // Detectar error PGRST204 de columna inexistente
+      const missingMatch = (errJson?.message || errText).match(/Could not find the '([^']+)' column/i);
+      if (missingMatch && missingMatch[1]) {
+        const missingCol = missingMatch[1];
+        payload = payload.map(row => {
+          const updated = { ...row };
+          // Mapeo de respaldo inteligente
+          if (missingCol === 'estado') {
+            updated.status = updated.estado || 'CONFIRMED';
+          } else if (missingCol === 'status') {
+            updated.estado = updated.status || 'CONFIRMED';
+          } else if (missingCol === 'cliente_nombre') {
+            updated.customer_name = updated.cliente_nombre;
+          } else if (missingCol === 'producto_id') {
+            updated.coil_id = updated.producto_id;
+          } else if (missingCol === 'producto_nombre') {
+            updated.coil_name = updated.producto_nombre;
+          } else if (missingCol === 'total_usd') {
+            updated.total_price = updated.total_usd;
+          } else if (missingCol === 'precio_unitario') {
+            updated.unit_price = updated.precio_unitario;
+          } else if (missingCol === 'cantidad') {
+            updated.qty = updated.cantidad;
+          } else if (missingCol === 'referencia_pago') {
+            updated.payment_ref = updated.referencia_pago;
+          }
+          delete updated[missingCol];
+          return updated;
+        });
+
+        attempts++;
+        continue; // Reintentar con el payload adaptado
+      }
+
+      // Si es un error de tabla inexistente (PGRST200) o permiso RLS (42501)
+      if (errJson?.code === 'PGRST200' || errText.includes('Could not find the table')) {
+        throw new Error(`La tabla '${table}' no existe en Supabase. Ve a la pestaña "Sincronizar Supabase" y ejecuta el Script SQL de creación.`);
+      }
+
+      if (resp.status === 401 || resp.status === 403) {
+        throw new Error(`Permiso denegado en Supabase (RLS activado). Ejecuta en el SQL Editor: ALTER TABLE public.${table} DISABLE ROW LEVEL SECURITY;`);
+      }
+
+      throw new Error(`Error en Supabase (${resp.status}): ${errJson?.message || errText}`);
+    }
+
+    throw new Error('No se pudo completar la sincronización tras adaptar las columnas.');
   }, [coils, dbCredentials.supabase, salesHistory, showToast]);
 
   const dismissOwnerAlert = useCallback(() => {

@@ -207,13 +207,32 @@ export function exportSalesToSQL(salesList, catalogCoils = []) {
   }).join('\n');
 
   return `-- ========================================================
--- DUMP SQL TABLA VENTAS & AUDITORÍA PARA SUPABASE
--- Plataforma Oficial: JF AUTO PARTS
+-- SCRIPT SQL INTEGRAL SUPABASE | JF AUTO PARTS
+-- Crea y actualiza las tablas del Catálogo y Auditoría de Ventas
 -- Fecha: ${new Date().toISOString()}
 -- Total registros de venta: ${salesList.length}
 -- ========================================================
 
--- 1. Crear tabla de ventas compatible con PostgreSQL / Supabase
+-- 1. TABLA CATÁLOGO DE BOBINAS / REPUESTOS
+CREATE TABLE IF NOT EXISTS public.bobinas_inventario (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  brand TEXT,
+  car_model TEXT,
+  engine TEXT,
+  oem TEXT,
+  type TEXT DEFAULT 'Tipo Lápiz Individual',
+  connector TEXT DEFAULT '4 Pines',
+  price NUMERIC(10,2) NOT NULL DEFAULT 25.00,
+  old_price NUMERIC(10,2) DEFAULT 32.00,
+  stock INTEGER NOT NULL DEFAULT 0,
+  warranty TEXT DEFAULT '12 meses',
+  badge TEXT DEFAULT 'OEM Spec',
+  image TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. TABLA AUDITORÍA DE VENTAS Y DESPACHOS
 CREATE TABLE IF NOT EXISTS public.ventas (
   id BIGSERIAL PRIMARY KEY,
   order_id TEXT NOT NULL UNIQUE,
@@ -235,18 +254,55 @@ CREATE TABLE IF NOT EXISTS public.ventas (
   stock_actual_catalogo INTEGER,
   referencia_pago TEXT,
   estado TEXT DEFAULT 'CONFIRMED',
-  usuario_id TEXT,
+  status TEXT DEFAULT 'CONFIRMED',
+  usuario_id TEXT DEFAULT 'CLI-WA',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Desactivar RLS temporalmente para permitir lecturas y escrituras desde la web
+-- 3. MIGRACIÓN AUTOMÁTICA: Asegura que todas las columnas existan si la tabla ya fue creada previamente
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'CONFIRMED';
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'CONFIRMED';
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_id TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_nombre TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS codigo_oem TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS marca_producto TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS modelo_vehiculo TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS motor_vehiculo TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS tipo_bobina TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS cantidad INTEGER DEFAULT 1;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS precio_unitario NUMERIC(10,2);
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS total_usd NUMERIC(10,2);
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS stock_anterior INTEGER;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS stock_posterior INTEGER;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS stock_actual_catalogo INTEGER;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS cliente_nombre TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS cliente_telefono TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS referencia_pago TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS fecha TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS usuario_id TEXT;
+ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS order_id TEXT;
+
+-- 4. RELACIONAR CLAVE FORÁNEA CON EL CATÁLOGO (Integridad Referencial)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_ventas_producto_catalogo') THEN
+    ALTER TABLE public.ventas 
+      ADD CONSTRAINT fk_ventas_producto_catalogo 
+      FOREIGN KEY (producto_id) 
+      REFERENCES public.bobinas_inventario(id) 
+      ON DELETE SET NULL 
+      ON UPDATE CASCADE;
+  END IF;
+END $$;
+
+-- 5. DESACTIVAR RLS PARA PERMITIR OPERACIONES DE LECTURA/ESCRITURA DIRECTAS
+ALTER TABLE public.bobinas_inventario DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;
 
--- 3. Habilitar inserciones públicas si se desea mantener RLS
--- CREATE POLICY "Permitir lectura publica ventas" ON public.ventas FOR SELECT USING (true);
--- CREATE POLICY "Permitir insercion publica ventas" ON public.ventas FOR INSERT WITH CHECK (true);
+-- 6. RECARGAR LA CACHÉ DE POSTGREST (Corrige de inmediato el error PGRST204)
+NOTIFY pgrst, 'reload schema';
 
--- 4. Registros de ventas exportados:
+-- 7. REGISTROS DE VENTAS INSERTABLES:
 ${inserts}`;
 }
 

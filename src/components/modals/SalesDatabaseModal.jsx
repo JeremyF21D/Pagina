@@ -434,38 +434,70 @@ ALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;`}
                 </div>
               </div>
 
+              {/* Solución de Esquema y Error PGRST204 */}
+              <div className="p-3.5 bg-gradient-to-r from-slate-950 to-amber-950/30 border border-amber-500/40 rounded-xl space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs">
+                      <i className="fa-solid fa-wrench"></i>
+                    </span>
+                    <h4 className="font-bold text-white text-xs">
+                      Solución de Esquema & Vinculación con Catálogo (Error PGRST204)
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopySQL}
+                    className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <i className={`fa-solid ${copiedSql ? 'fa-check text-emerald-400' : 'fa-copy'}`}></i>
+                    <span>{copiedSql ? '¡Copiado!' : 'Copiar Script de Reparación'}</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Si Supabase arrojó <em>"Could not find the 'estado' column of 'ventas' in the schema cache"</em>, se debe a que la tabla fue creada sin esa columna o PostgREST no ha recargado su caché. El sistema ahora <strong>adapta automáticamente las columnas</strong> al subir, y con el script SQL de abajo aseguras todas las columnas y la <strong>clave foránea al catálogo</strong> con 1 clic en el SQL Editor de Supabase:
+                </p>
+                <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-[10px] font-mono text-emerald-300 space-y-1">
+                  <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'CONFIRMED';</div>
+                  <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'CONFIRMED';</div>
+                  <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_id TEXT REFERENCES public.bobinas_inventario(id);</div>
+                  <div className="text-amber-400">NOTIFY pgrst, 'reload schema'; -- Recarga la caché de Supabase</div>
+                </div>
+              </div>
+
+              {/* Botón de subida */}
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h4 className="font-bold text-white text-xs">Subida en Lote a Supabase</h4>
+                    <h4 className="font-bold text-white text-xs">Subida Inteligente en Lote a Supabase</h4>
                     <p className="text-[11px] text-slate-400">
-                      Envía los {salesHistory.length} registros de ventas con sus campos enlazados al catálogo directamente a Supabase.
+                      Envía los {salesHistory.length} registros con resolución de duplicados y detección automática de columnas.
                     </p>
                   </div>
                   <button
                     type="button"
                     disabled={!isSupabaseConfigured || isPushing || salesHistory.length === 0}
                     onClick={handlePushToSupabase}
-                    className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition cursor-pointer ${
+                    className={`px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition cursor-pointer shrink-0 ${
                       isSupabaseConfigured && salesHistory.length > 0 && !isPushing
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 active:scale-95'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-700/30 active:scale-95'
                         : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                     }`}
                   >
                     <i className={`fa-solid ${isPushing ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`}></i>
-                    <span>{isPushing ? 'Subiendo...' : 'Subir Ventas a Supabase'}</span>
+                    <span>{isPushing ? 'Subiendo y Adaptando...' : 'Subir Ventas a Supabase'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Step by step guide */}
+              {/* Guía paso a paso */}
               <div className="space-y-2 p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400">
-                <strong className="text-white block font-semibold">¿Cómo configurar la tabla en Supabase?</strong>
+                <strong className="text-white block font-semibold">Pasos recomendados para máxima sincronización:</strong>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Inicia sesión en tu proyecto de <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-emerald-400 underline">Supabase Dashboard</a>.</li>
-                  <li>Ve a <strong>SQL Editor</strong> en la barra lateral izquierda.</li>
-                  <li>Pega el código SQL que puedes copiar en la pestaña <em>"Exportar CSV (Supabase)"</em> y presiona <strong>Run</strong>.</li>
-                  <li>Listo. Podrás subir y consultar ventas en tiempo real sin restricciones de RLS.</li>
+                  <li>Inicia sesión en tu <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="text-emerald-400 underline">Dashboard de Supabase</a> y abre <strong>SQL Editor</strong>.</li>
+                  <li>Pulsa el botón de arriba <strong>"Copiar Script de Reparación"</strong>, pégalo en Supabase y pulsa <strong>Run</strong>.</li>
+                  <li>Al ejecutarse, creará la relación automática entre <code>ventas.producto_id</code> y <code>bobinas_inventario.id</code>.</li>
+                  <li>Vuelve aquí y pulsa <strong>"Subir Ventas a Supabase"</strong>. ¡Se sincronizará en verde sin errores!</li>
                 </ol>
               </div>
             </div>
