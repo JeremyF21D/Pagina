@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bobinas Express | React Standalone Preview</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
+              400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+              800: '#991b1b', 900: '#7f1d1d', 950: '#450a0a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons 6.4.0 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- React 18 & Babel Standalone (Para ejecutar directamente con doble clic) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+    ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 4px; }
+    .chat-bubble-tail-in::before { content: ""; position: absolute; top: 0; left: -8px; width: 0; height: 0; border: 8px solid transparent; border-top-color: #ffffff; border-right: 0; }
+    .dark .chat-bubble-tail-in::before { border-top-color: #202c33; }
+    .chat-bubble-tail-out::after { content: ""; position: absolute; top: 0; right: -8px; width: 0; height: 0; border: 8px solid transparent; border-top-color: #d9fdd3; border-left: 0; }
+    .dark .chat-bubble-tail-out::after { border-top-color: #005c4b; }
+    @keyframes pulse-dot { 0%, 80%, 100% { transform: scale(0); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+    .pulsing-dot { animation: pulse-dot 1.4s infinite ease-in-out; }
+    .pulsing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .pulsing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+  <div id="root">
+    <div style="padding: 40px; text-align: center; color: #94a3b8; font-family: sans-serif;">
+      <i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-brand-500"></i>
+      <p>Cargando aplicación React de Bobinas Express...</p>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useContext, createContext, useMemo, useCallback, useRef } = React;
+
+    // --- SEED DATA ---
+    const DEFAULT_BOBINAS_SEED = [
+      { id: 'BOB-CAP32', name: 'Bobina de Encendido Chevrolet Captiva 3.2 V6 Alloytec', brand: 'Chevrolet', carModel: 'Captiva Sport 3.2L V6 (2008 - 2015)', engine: '3.2L V6 24V High Feature', oem: '12618542 / 12590990 / UF569', type: 'Tipo Lápiz Individual (COP)', connector: 'Conector 4 Pines', price: 32.00, oldPrice: 39.50, stock: 18, inStock: true, warranty: '12 meses', badge: 'Más Vendida', image: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-CORSA1416', name: 'Bobina de Encendido Chevrolet Corsa 1.4 / 1.6 / Chevy', brand: 'Chevrolet', carModel: 'Corsa, Chevy C2, Montana, Meriva (1998 - 2012)', engine: '1.4L / 1.6L 8V MPFI', oem: '10450424 / 93230798', type: 'Paquete Múltiple 4 Torres', connector: 'Conector 4 Pines Plano', price: 34.00, oldPrice: 42.00, stock: 22, inStock: true, warranty: '12 meses', badge: 'Original Delphi Spec', image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-AVEO16', name: 'Bobina de Encendido Chevrolet Aveo 1.6 16V / Optra Design', brand: 'Chevrolet', carModel: 'Aveo, Kalos, Spark GT, Optra Design (2005 - 2016)', engine: '1.6L 16V E-TEC II', oem: '96253555 / 96566258', type: 'Módulo 4 Salidas', connector: 'Conector 3 Pines Ovalado', price: 29.50, oldPrice: 36.00, stock: 25, inStock: true, warranty: '12 meses', badge: 'Oferta', image: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-VITARA20', name: 'Bobina Suzuki Grand Vitara 2.0L J20A / XL7 2.7 V6', brand: 'Suzuki', carModel: 'Grand Vitara, Aerio, Tracker, XL7 (1999 - 2009)', engine: '2.0L J20A 4 Cil / 2.7L H27A V6', oem: '33410-77E20 / 33400-65G00', type: 'Tipo Lápiz Individual Denso Spec', connector: 'Conector 3 Pines', price: 28.00, oldPrice: 34.00, stock: 14, inStock: true, warranty: '12 meses', badge: 'Japonesa OEM', image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-COROLLA18', name: 'Bobina Toyota Corolla 1.8 VVT-i (2003 - 2014)', brand: 'Toyota', carModel: 'Corolla New Sensation, Matrix, Yaris, Celica', engine: '1.8L 1ZZ-FE / 2ZR-FE VVT-i', oem: '90919-02239 / 90919-02258', type: 'Tipo Lápiz Individual Denso', connector: 'Conector 4 Pines', price: 27.50, oldPrice: 33.00, stock: 30, inStock: true, warranty: '18 meses', badge: 'Alta Durabilidad', image: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-FIESTA16', name: 'Bobina Ford Fiesta Power / Max / Move / EcoSport 1.6', brand: 'Ford', carModel: 'Fiesta, Ka, EcoSport, Focus (2001 - 2013)', engine: '1.6L Zetec Rocam 8V', oem: '988F-12029-AC / XS6F-12029-AA', type: 'Paquete Cuadrado 4 Torres', connector: 'Conector 3 Pines Motorcraft Spec', price: 31.00, oldPrice: 38.00, stock: 16, inStock: true, warranty: '12 meses', badge: 'Heavy Duty', image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-CLIO16V', name: 'Bobina Tipo Lápiz Renault Clio / Mégane / Logan / Kangoo 16V', brand: 'Renault', carModel: 'Clio II, Symbol, Logan, Sandero, Duster, Mégane II', engine: '1.4L K4J / 1.6L K4M / 2.0L F4R 16V', oem: '7700875000 / 8200154186A', type: 'Tipo Lápiz Individual Beru Spec', connector: 'Conector 2 Pines', price: 18.50, oldPrice: 23.00, stock: 40, inStock: true, warranty: '12 meses', badge: 'Oferta', image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-ELANTRA', name: 'Bobina Hyundai Tucson / Elantra / Kia Sportage 2.0', brand: 'Hyundai', carModel: 'Tucson, Elantra, Sportage, Cerato (2005 - 2012)', engine: '2.0L Beta II / 1.8L', oem: '27301-23700 / 27301-23900', type: 'Bobina Pack Doble con Soporte', connector: 'Conector 3 Pines', price: 31.00, oldPrice: 38.00, stock: 8, inStock: true, warranty: '12 meses', badge: 'Pocas Unidades', image: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-CRUZE18', name: 'Riel de Bobinas Chevrolet Cruze 1.8 / Sonic 1.6 Ecotec', brand: 'Chevrolet', carModel: 'Cruze, Sonic, Tracker, Orlando (2010 - 2018)', engine: '1.6L / 1.8L Ecotec 16V', oem: '55570160 / 25195107 / 96476983', type: 'Riel Completo 4 Cilindros', connector: 'Conector 7 Pines Lateral', price: 58.00, oldPrice: 75.00, stock: 6, inStock: true, warranty: '12 meses', badge: 'Premium', image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-SENTRA', name: 'Bobina Nissan Tiida / Sentra B16 / Versa 1.8 MR18DE', brand: 'Nissan', carModel: 'Tiida, Sentra 2.0 B16, Versa, Cube (2007 - 2016)', engine: '1.8L MR18DE / 2.0L MR20DE', oem: '22448-ED000 / AIC-2408G / 22448-JA00C', type: 'Tipo Lápiz Hanshin Spec', connector: 'Conector 3 Pines', price: 25.00, oldPrice: 32.00, stock: 15, inStock: true, warranty: '12 meses', badge: 'Calidad OEM', image: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=500&auto=format&fit=crop&q=80' },
+      { id: 'BOB-DFSK16', name: 'Bobina de Encendido Dong Feng / DFSK 1.6', brand: 'DFSK', carModel: 'CS35, CS55, Alsvin, Glory 560', engine: '1.6L Bluetec / DOHC', oem: '444-2112 / DF-16029', type: 'Tipo Lápiz Individual', connector: 'Conector 3 Pines', price: 30.00, oldPrice: 38.00, stock: 2, inStock: true, warranty: '2 meses', badge: 'OEM DFSK', image: 'https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?w=500&auto=format&fit=crop&q=80' }
+    ];
+
+    const INITIAL_SALES_SEED = [
+      { orderId: 'ORD-8901', timestamp: 'Hoy, 09:15 AM', userId: 'CLI-INITIAL', customerName: 'Taller Electromecánica Zulia', customerPhone: '0414-6112233', coilId: 'BOB-CORSA1416', coilName: 'Bobina de Encendido Chevrolet Corsa 1.4 / 1.6 / Chevy', oem: '10450424', qty: 1, unitPrice: 34.00, totalPrice: 34.00, stockBefore: 23, stockAfter: 22, paymentRef: 'Pago Móvil Ref #550129', status: 'CONFIRMED' }
+    ];
+
+    const OFFICIAL_WA_RAW = '04126497478';
+    const SYNC_CHANNEL_NAME = 'bobinas_express_sync_v4';
+
+    const broadcastSync = (items) => {
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          const channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+          channel.postMessage({ type: 'SYNC_INVENTORY', coils: items });
+          channel.close();
+        } catch (e) {}
+      }
+    };
+
+    const pushToApi = (items, currentEngine = null, currentCreds = null) => {
+      try {
+        const payload = { coils: Array.isArray(items) ? items : [] };
+        if (currentEngine) payload.dbEngine = currentEngine;
+        if (currentCreds) payload.dbCredentials = currentCreds;
+
+        fetch('/api/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch (e) {}
+    };
+
+    // --- UTILITIES ---
+    function formatUSD(amt) { return `$${Number(amt || 0).toFixed(2)}`; }
+
+    function generateAutoCoilId(existingCoils = [], brand = '') {
+      const brandPrefix = brand ? String(brand).replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() : '';
+      const prefix = brandPrefix ? `BOB-${brandPrefix}` : 'BOB';
+      let maxNum = 0;
+      if (Array.isArray(existingCoils)) {
+        existingCoils.forEach(item => {
+          if (!item || !item.id) return;
+          const match = String(item.id).match(/(\d+)$/);
+          if (match) {
+            const n = parseInt(match[1], 10);
+            if (!isNaN(n) && n > maxNum && n < 100000) maxNum = n;
+          }
+        });
+      }
+      const nextNum = maxNum > 0 ? maxNum + 1 : (existingCoils.length ? existingCoils.length + 1 : 1);
+      const padded = String(nextNum).padStart(3, '0');
+      const candidateId = `${prefix}-${padded}`;
+      const exists = Array.isArray(existingCoils) && existingCoils.some(c => String(c.id).toLowerCase() === candidateId.toLowerCase());
+      if (exists) {
+        const randomSuffix = Math.floor(100 + Math.random() * 900);
+        return `${prefix}-${randomSuffix}`;
+      }
+      return candidateId;
+    }
+
+    function normalizeCoilRecord(raw, existingCoils = []) {
+      if (!raw || typeof raw !== 'object') return null;
+      if (raw.error || raw.message) return null;
+
+      // Price / Precio
+      const rawPrice = raw.price ?? raw.precio ?? raw.costo ?? raw.valor ?? raw.precio_usd ?? 25;
+      const priceVal = parseFloat(rawPrice);
+      const safePrice = !isNaN(priceVal) && priceVal >= 0 ? priceVal : 25.00;
+
+      // Old Price / Precio Anterior
+      const rawOldPrice = raw.oldPrice ?? raw.old_price ?? raw.precio_anterior ?? raw.precio_lista ?? raw.precio_viejo;
+      const oldPriceVal = parseFloat(rawOldPrice);
+      const safeOldPrice = !isNaN(oldPriceVal) && oldPriceVal > 0 ? oldPriceVal : Number((safePrice * 1.2).toFixed(2));
+
+      // Stock / Cantidad
+      const rawStock = raw.stock ?? raw.cantidad ?? raw.existencia ?? raw.inventario ?? raw.unidades ?? raw.qty ?? 0;
+      const stockVal = parseInt(rawStock, 10);
+      const safeStock = !isNaN(stockVal) && stockVal >= 0 ? stockVal : 0;
+
+      // Brand / Marca
+      const brandVal = String(raw.brand ?? raw.marca ?? raw.fabricante ?? 'Chevrolet').trim();
+
+      // ID / Código
+      const idVal = String(raw.id ?? raw.ID ?? raw.codigo ?? raw.code ?? raw.id_bobina ?? raw.cod ?? raw._id ?? '').trim();
+      const safeId = idVal || generateAutoCoilId(existingCoils, brandVal);
+
+      // Name / Nombre
+      const nameVal = String(raw.name ?? raw.nombre ?? raw.title ?? raw.titulo ?? raw.repuesto ?? raw.producto ?? raw.descripcion ?? '').trim();
+
+      // Model / Modelo
+      const modelVal = String(raw.carModel ?? raw.car_model ?? raw.modelo ?? raw.aplicacion ?? raw.vehiculo ?? raw.auto ?? 'Multimodelo').trim();
+
+      // Engine / Motor
+      const engineVal = String(raw.engine ?? raw.motor ?? raw.cilindrada ?? '1.6L / 2.0L').trim();
+
+      // OEM / Parte
+      const oemVal = String(raw.oem ?? raw.codigo_oem ?? raw.oem_code ?? raw.part_number ?? raw.numero_parte ?? 'OEM-STD').trim();
+
+      // Type / Tipo
+      const typeVal = String(raw.type ?? raw.tipo ?? 'Tipo Lápiz Individual').trim();
+
+      // Connector / Pines
+      const connectorVal = String(raw.connector ?? raw.conector ?? raw.pines ?? 'Conector 4 Pines').trim();
+
+      // Warranty / Garantía
+      const warrantyVal = String(raw.warranty ?? raw.garantia ?? '12 meses').trim();
+
+      // Badge / Etiqueta
+      const badgeVal = String(raw.badge ?? raw.etiqueta ?? raw.tag ?? 'OEM Spec').trim();
+
+      // Image / Foto
+      const rawImage = String(raw.image ?? raw.imageUrl ?? raw.image_url ?? raw.img ?? raw.foto ?? raw.imagen ?? raw.url_imagen ?? '').trim();
+
+      return {
+        id: safeId,
+        name: nameVal || 'Bobina de Encendido Automotriz',
+        brand: brandVal,
+        carModel: modelVal,
+        engine: engineVal,
+        oem: oemVal,
+        type: typeVal,
+        connector: connectorVal,
+        price: safePrice,
+        oldPrice: safeOldPrice,
+        stock: safeStock,
+        inStock: safeStock > 0,
+        warranty: warrantyVal,
+        badge: badgeVal,
+        image: rawImage
+      };
+    }
+
+    function getEngineLabel(engine) {
+      const map = { supabase: 'Supabase (PostgreSQL)', mongodb: 'MongoDB Atlas', mysql: 'MySQL / MariaDB', local: 'LocalStorage DB' };
+      return map[engine] || 'Supabase (PostgreSQL)';
+    }
+
+    function normalizeWaPhone(rawPhone) {
+      let digits = String(rawPhone || OFFICIAL_WA_RAW).replace(/[^0-9]/g, '');
+      if (!digits) digits = '584126497478';
+      if (digits.startsWith('0') && digits.length === 11) digits = '58' + digits.substring(1);
+      else if (digits.length === 10 && (digits.startsWith('412') || digits.startsWith('414') || digits.startsWith('424') || digits.startsWith('416') || digits.startsWith('426'))) digits = '58' + digits;
+      return digits;
+    }
+
+    function parseCSV(csvText) {
+      const rows = [];
+      let currentRow = [];
+      let currentField = '';
+      let insideQuotes = false;
+      for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+        if (char === '"') {
+          if (insideQuotes && nextChar === '"') { currentField += '"'; i++; }
+          else insideQuotes = !insideQuotes;
+        } else if (char === ',' && !insideQuotes) {
+          currentRow.push(currentField.trim());
+          currentField = '';
+        } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+          if (char === '\r' && nextChar === '\n') i++;
+          currentRow.push(currentField.trim());
+          currentField = '';
+          if (currentRow.some(col => col.length > 0)) rows.push(currentRow);
+          currentRow = [];
+        } else {
+          currentField += char;
+        }
+      }
+      if (currentField.length > 0 || currentRow.length > 0) {
+        currentRow.push(currentField.trim());
+        if (currentRow.some(col => col.length > 0)) rows.push(currentRow);
+      }
+      if (rows.length < 2) throw new Error('El archivo CSV debe contener al menos cabecera y 1 fila de datos.');
+      const headers = rows[0].map(h => h.trim().replace(/^"|"$/g, ''));
+      const records = [];
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r];
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = row[idx] !== undefined ? row[idx] : ''; });
+        records.push(obj);
+      }
+      return records;
+    }
+
+    function exportToCSV(items) {
+      const headers = ['id', 'name', 'brand', 'carModel', 'engine', 'oem', 'type', 'connector', 'price', 'oldPrice', 'stock', 'warranty', 'badge'];
+      const escapeField = val => {
+        const str = String(val ?? '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`;
+        return str;
+      };
+      const headerRow = headers.join(',');
+      const dataRows = items.map(item => headers.map(h => escapeField(item[h])).join(','));
+      return [headerRow, ...dataRows].join('\n');
+    }
+
+    function exportToSQL(items) {
+      const safe = str => String(str ?? '').replace(/'/g, "''");
+      const inserts = items.map(b => 
+        `INSERT INTO bobinas_inventario (id, name, brand, car_model, engine, oem, type, connector, price, old_price, stock, warranty, badge) VALUES ('${safe(b.id)}', '${safe(b.name)}', '${safe(b.brand)}', '${safe(b.carModel)}', '${safe(b.engine)}', '${safe(b.oem)}', '${safe(b.type)}', '${safe(b.connector)}', ${Number(b.price).toFixed(2)}, ${Number(b.oldPrice || b.price * 1.2).toFixed(2)}, ${b.stock}, '${safe(b.warranty)}', '${safe(b.badge)}');`
+      ).join('\n');
+      return `-- DUMP SQL BOBINAS EXPRESS\n${inserts}`;
+    }
+
+    function downloadFile(content, fileName, mimeType = 'text/plain;charset=utf-8;') {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- CONTEXTS ---
+    const ToastContext = createContext(null);
+    function ToastProvider({ children }) {
+      const [toast, setToast] = useState({ message: '', visible: false });
+      const showToast = useCallback((message) => {
+        setToast({ message, visible: true });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3200);
+      }, []);
+      return (
+        <ToastContext.Provider value={{ showToast }}>
+          {children}
+          <div className={`fixed bottom-6 right-6 z-50 transform transition-all duration-300 pointer-events-none ${toast.visible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <div className="bg-slate-900 border border-brand-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md max-w-md">
+              <div className="h-8 w-8 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
+                <i className="fa-solid fa-bell text-sm"></i>
+              </div>
+              <span className="text-xs font-semibold">{toast.message}</span>
+            </div>
+          </div>
+        </ToastContext.Provider>
+      );
+    }
+    const useToast = () => useContext(ToastContext);
+
+    const AuthContext = createContext(null);
+    function AuthProvider({ children }) {
+      const { showToast } = useToast();
+      const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('AUTOIGNITION_ADMIN_SESSION_V2') === 'true');
+      const [deviceId] = useState(() => {
+        let s = localStorage.getItem('AUTOIGNITION_PRIVATE_CLIENT_ID_V2');
+        if (!s) { s = 'CLI-' + Math.random().toString(36).substring(2, 8).toUpperCase(); localStorage.setItem('AUTOIGNITION_PRIVATE_CLIENT_ID_V2', s); }
+        return s;
+      });
+      const [authModalOpen, setAuthModalOpen] = useState(false);
+      const [authLockReason, setAuthLockReason] = useState('');
+      const [pendingAction, setPendingAction] = useState(null);
+
+      const login = (user, pass) => {
+        const u = String(user || '').trim().toLowerCase();
+        const p = String(pass || '').trim();
+        if ((u === 'admin' || u === 'dueno') && (p === '123456' || p === 'admin123')) {
+          setIsAdmin(true);
+          localStorage.setItem('AUTOIGNITION_ADMIN_SESSION_V2', 'true');
+          showToast('🔓 Sesión de Administrador iniciada: Módulos críticos desbloqueados');
+          setAuthModalOpen(false);
+          if (typeof pendingAction === 'function') { const act = pendingAction; setPendingAction(null); act(); }
+          return true;
+        } else {
+          showToast('❌ Contraseña incorrecta');
+          return false;
+        }
+      };
+
+      const logout = () => {
+        setIsAdmin(false);
+        localStorage.removeItem('AUTOIGNITION_ADMIN_SESSION_V2');
+        showToast('🔒 Sesión de Administrador cerrada');
+      };
+
+      const requireAdminAuth = (callback, reason = 'Acción requiere sesión de Administrador.') => {
+        if (isAdmin) { callback(); return true; }
+        setPendingAction(() => callback);
+        setAuthLockReason(reason);
+        setAuthModalOpen(true);
+        return false;
+      };
+
+      return (
+        <AuthContext.Provider value={{ isAdmin, deviceId, login, logout, requireAdminAuth, authModalOpen, authLockReason, openAuthModal: (r) => { setAuthLockReason(r || ''); setAuthModalOpen(true); }, closeAuthModal: () => setAuthModalOpen(false) }}>
+          {children}
+        </AuthContext.Provider>
+      );
+    }
+    const useAuth = () => useContext(AuthContext);
+
+    const InventoryContext = createContext(null);
+    function InventoryProvider({ children }) {
+      const { showToast } = useToast();
+      const [coils, setCoils] = useState(() => {
+        try {
+          const s = localStorage.getItem('BOBINAS_EXPRESS_STORE_V4');
+          if (s !== null) { const p = JSON.parse(s); if (Array.isArray(p)) return p.map(normalizeCoilRecord); }
+        } catch (e) {}
+        return [];
+      });
+      const [isDbLoading, setIsDbLoading] = useState(true);
+      const [dbEngine, setDbEngine] = useState(() => localStorage.getItem('BOBINAS_EXPRESS_ENGINE_V4') || 'local');
+      const [salesHistory, setSalesHistory] = useState(() => {
+        try { const s = localStorage.getItem('BOBINAS_EXPRESS_SALES_V4'); if (s) return JSON.parse(s); } catch (e) {}
+        return INITIAL_SALES_SEED;
+      });
+      const [ownerSettings, setOwnerSettings] = useState(() => {
+        try { const s = localStorage.getItem('BOBINAS_EXPRESS_PREFS_V4'); if (s) return JSON.parse(s); } catch (e) {}
+        return {
+          ownerPhone: OFFICIAL_WA_RAW,
+          ownerName: 'Administrador Principal',
+          autoDeductStock: true,
+          soundAlert: true,
+          requireApproval: false,
+          systemPrompt: `Eres el Asesor Oficial de "Bobinas Express" para WhatsApp (0412-6497478). Consulta la base de datos en tiempo real, verifica el stock y cierra ventas.`
+        };
+      });
+      const [pendingOwnerAlert, setPendingOwnerAlert] = useState(null);
+
+      const [dbCredentials, setDbCredentials] = useState(() => {
+        try {
+          const s = localStorage.getItem('BOBINAS_EXPRESS_CREDS_V4');
+          if (s) return JSON.parse(s);
+        } catch (e) {}
+        return {
+          supabase: { url: 'https://vznqrxvblgghjswdmsaa.supabase.co/rest/v1', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', table: 'bobinas_inventario' },
+          mongodb: { uri: 'https://data.mongodb-api.com/app/data-express/endpoint/data/v1', apiKey: 'mongo_sec_token_88921...', database: 'bobinas_express_db', collection: 'bobinas' },
+          mysql: { apiUrl: 'https://api.bobinasexpress.com/v1/inventory', bearerToken: 'bearer_token_sql_live_4492', table: 'bobinas' },
+          local: { storageKey: 'BOBINAS_EXPRESS_STORE_V4' }
+        };
+      });
+
+      const [apiConnectionStatus, setApiConnectionStatus] = useState({
+        status: 'idle',
+        latency: null,
+        lastChecked: null,
+        message: '',
+        itemCount: 0
+      });
+
+      useEffect(() => {
+        try { localStorage.setItem('BOBINAS_EXPRESS_CREDS_V4', JSON.stringify(dbCredentials)); } catch (e) {}
+      }, [dbCredentials]);
+
+      const updateDbCredentials = (engine, newFields) => {
+        const nextCreds = { ...dbCredentials, [engine]: { ...dbCredentials[engine], ...newFields } };
+        setDbCredentials(nextCreds);
+        pushToApi(coils, dbEngine, nextCreds);
+        showToast(`Credenciales para ${engine.toUpperCase()} guardadas`);
+      };
+
+      const checkAndSyncDatabase = async (engine = dbEngine, customCreds = null, showNotification = false) => {
+        setIsDbLoading(true);
+        setApiConnectionStatus({ status: 'checking', latency: null, lastChecked: new Date(), message: `Sincronizando inventario con la base de datos...`, itemCount: 0 });
+        const start = performance.now();
+        let targetEngine = engine;
+        let creds = customCreds || dbCredentials[engine] || {};
+
+        try {
+          let rawElements = [];
+          let tableCreated = false;
+
+          // 0. Sincronizar estado global desde el servidor
+          try {
+            const serverCheck = await fetch('/api/inventory', { cache: 'no-store' });
+            if (serverCheck.ok) {
+              const contentType = serverCheck.headers.get('content-type') || '';
+              if (contentType.includes('application/json')) {
+                const serverData = await serverCheck.json();
+                if (serverData) {
+                  if (serverData.dbEngine && !customCreds) {
+                    targetEngine = serverData.dbEngine;
+                    if (targetEngine !== dbEngine) setDbEngine(targetEngine);
+                  }
+                  if (serverData.dbCredentials && !customCreds) {
+                    creds = serverData.dbCredentials[targetEngine] || creds;
+                    setDbCredentials(prev => ({ ...prev, ...serverData.dbCredentials }));
+                  }
+                  if (targetEngine === 'local' && Array.isArray(serverData.coils)) {
+                    rawElements = serverData.coils;
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+
+          if (targetEngine === 'supabase') {
+            const rawUrl = String(creds.url || '').trim();
+            const anonKey = String(creds.anonKey || '').trim();
+            const table = String(creds.table || 'bobinas_inventario').trim();
+            if (rawUrl && anonKey) {
+              try {
+                let cleanUrl = rawUrl;
+                if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
+                let baseUrl = cleanUrl;
+                try {
+                  baseUrl = new URL(cleanUrl).origin;
+                } catch (e) {
+                  baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
+                }
+                const res = await fetch(`${baseUrl}/rest/v1/${table}?select=*`, {
+                  headers: { 
+                    'apikey': anonKey, 
+                    'Authorization': `Bearer ${anonKey}`, 
+                    'Content-Type': 'application/json',
+                    'Prefer': 'count=exact'
+                  }
+                });
+                if (res.ok) {
+                  rawElements = await res.json();
+                } else if (res.status === 404 || res.status === 400) { 
+                  tableCreated = true; 
+                  rawElements = []; 
+                }
+              } catch (e) { 
+                rawElements = []; 
+              }
+            }
+          } else if (targetEngine === 'mongodb') {
+            const uri = String(creds.uri || '').replace(/\/+$/, '');
+            if (uri && creds.apiKey) {
+              try {
+                const res = await fetch(`${uri}/action/find`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'api-key': creds.apiKey },
+                  body: JSON.stringify({ dataSource: 'Cluster0', database: creds.database || 'bobinas_express_db', collection: creds.collection || 'bobinas', filter: {} })
+                });
+                if (res.ok) { const d = await res.json(); rawElements = d.documents || []; }
+              } catch (e) { rawElements = []; }
+            }
+          } else if (targetEngine === 'mysql') {
+            const apiUrl = String(creds.apiUrl || '').replace(/\/+$/, '');
+            if (apiUrl) {
+              try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (creds.bearerToken) headers['Authorization'] = `Bearer ${creds.bearerToken}`;
+                const res = await fetch(apiUrl, { headers });
+                if (res.ok) { const d = await res.json(); rawElements = Array.isArray(d) ? d : (d.items || []); }
+              } catch (e) { rawElements = []; }
+            }
+          }
+
+          const verified = (Array.isArray(rawElements) ? rawElements : [])
+            .map(normalizeCoilRecord)
+            .filter(i => Boolean(i && (i.id || i.name)));
+          const elapsed = Math.round(performance.now() - start);
+
+          setCoils(verified);
+          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify(verified)); } catch (e) {}
+          broadcastSync(verified);
+
+          const msg = tableCreated 
+            ? `Base de datos ${targetEngine.toUpperCase()} lista (0 artículos)` 
+            : `Conectado a ${targetEngine.toUpperCase()}: ${verified.length} bobinas verificadas (${Math.max(14, elapsed)}ms)`;
+
+          setApiConnectionStatus({ status: 'connected', latency: Math.max(14, elapsed), lastChecked: new Date(), message: msg, itemCount: verified.length });
+          if (showNotification) showToast(`🟢 ${msg}`);
+          return { success: true, count: verified.length, elements: verified };
+        } catch (err) {
+          setCoils([]);
+          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify([])); } catch (e) {}
+          setApiConnectionStatus({ status: 'error', latency: 0, lastChecked: new Date(), message: err.message, itemCount: 0 });
+          return { success: false, error: err.message };
+        } finally {
+          setIsDbLoading(false);
+        }
+      };
+
+      const testApiConnection = async (engine = dbEngine, customCreds = null) => {
+        return await checkAndSyncDatabase(engine, customCreds, true);
+      };
+
+      const syncWithApi = async (dir = 'pull', customCreds = null) => {
+        const targetCreds = customCreds || dbCredentials[dbEngine] || {};
+        if (dir === 'pull') {
+          return await checkAndSyncDatabase(dbEngine, targetCreds, true);
+        } else {
+          showToast(`Guardando ${coils.length} bobinas en ${dbEngine.toUpperCase()}...`);
+          if (dbEngine === 'supabase') {
+            const creds = targetCreds;
+            if (creds && creds.url && creds.anonKey) {
+              try {
+                let cleanUrl = String(creds.url || '').trim();
+                if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
+                let baseUrl = cleanUrl;
+                try { baseUrl = new URL(cleanUrl).origin; } catch (e) { baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, ''); }
+                const table = String(creds.table || 'bobinas_inventario').trim();
+                await fetch(`${baseUrl}/rest/v1/${table}`, {
+                  method: 'POST',
+                  headers: { 'apikey': creds.anonKey, 'Authorization': `Bearer ${creds.anonKey}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                  body: JSON.stringify(coils.map(c => ({
+                    id: c.id, name: c.name, brand: c.brand, car_model: c.carModel, engine: c.engine, oem: c.oem,
+                    type: c.type, connector: c.connector, price: c.price, old_price: c.oldPrice, stock: c.stock,
+                    warranty: c.warranty, badge: c.badge, image: c.image
+                  })))
+                });
+              } catch (e) {}
+            }
+          }
+          pushToApi(coils, dbEngine, targetCreds);
+          showToast(`✅ Sincronizados ${coils.length} productos.`);
+        }
+      };
+
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify(coils)); }, [coils]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_SALES_V4', JSON.stringify(salesHistory)); }, [salesHistory]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_ENGINE_V4', dbEngine); }, [dbEngine]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_PREFS_V4', JSON.stringify(ownerSettings)); }, [ownerSettings]);
+
+      // Chequeo inicial automático
+      useEffect(() => {
+        checkAndSyncDatabase(dbEngine, null, false);
+      }, []);
+
+      // Real-time Multi-Tab Broadcast Sync
+      useEffect(() => {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+          channel.onmessage = (event) => {
+            if (event.data && event.data.type === 'SYNC_INVENTORY' && Array.isArray(event.data.coils)) {
+              setCoils(event.data.coils.map(normalizeCoilRecord));
+            }
+          };
+          return () => channel.close();
+        }
+      }, []);
+
+      // Cross-tab storage fallback
+      useEffect(() => {
+        const handleStorage = (e) => {
+          if (e.key === 'BOBINAS_EXPRESS_STORE_V4' && e.newValue) {
+            try {
+              const parsed = JSON.parse(e.newValue);
+              if (Array.isArray(parsed)) {
+                setCoils(parsed.map(normalizeCoilRecord));
+              }
+            } catch (err) {}
+          }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+      }, []);
+
+      const changeDbEngine = (eng) => {
+        setDbEngine(eng);
+        showToast(`Motor cambiado a: ${eng.toUpperCase()} y sincronizando catálogo...`);
+        pushToApi(coils, eng, dbCredentials);
+        checkAndSyncDatabase(eng, null, true);
+      };
+
+      const updateOwnerSettings = (newSettings) => { setOwnerSettings(prev => ({ ...prev, ...newSettings })); showToast('Configuración guardada'); };
+
+      const upsertCoil = (raw) => {
+        const item = normalizeCoilRecord(raw);
+        setCoils(prev => {
+          const idx = prev.findIndex(b => b.id.toLowerCase() === item.id.toLowerCase());
+          let next;
+          if (idx >= 0) { next = [...prev]; next[idx] = item; }
+          else { next = [item, ...prev]; }
+          broadcastSync(next);
+          pushToApi(next, dbEngine, dbCredentials);
+          return next;
+        });
+        showToast(`Bobina ${item.id} guardada`);
+      };
+
+      const deleteCoil = (id) => {
+        const target = String(id || '').trim().toLowerCase();
+        setCoils(prev => {
+          const next = prev.filter(b => String(b.id || '').trim().toLowerCase() !== target);
+          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify(next)); } catch(e) {}
+          broadcastSync(next);
+          pushToApi(next, dbEngine, dbCredentials);
+          return next;
+        });
+        showToast(`Bobina ${id} eliminada`);
+      };
+
+      const clearInventory = () => {
+        setCoils([]);
+        try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify([])); } catch(e) {}
+        broadcastSync([]);
+        pushToApi([], dbEngine, dbCredentials);
+        fetch('/api/inventory', { method: 'DELETE' }).catch(() => {});
+        showToast('Base de datos vaciada por completo (0 artículos)');
+      };
+
+      const restoreSeedData = () => { 
+        const fresh = DEFAULT_BOBINAS_SEED.map(normalizeCoilRecord); 
+        setCoils(fresh); 
+        broadcastSync(fresh);
+        pushToApi(fresh);
+        showToast('Inventario restaurado'); 
+      };
+
+      const bulkImport = (records, replaceAll) => {
+        const norm = records.map(normalizeCoilRecord);
+        setCoils(prev => {
+          let next;
+          if (replaceAll) {
+            next = norm;
+          } else {
+            const map = new Map();
+            prev.forEach(i => map.set(i.id.toLowerCase(), i));
+            norm.forEach(i => map.set(i.id.toLowerCase(), i));
+            next = Array.from(map.values());
+          }
+          broadcastSync(next);
+          pushToApi(next);
+          return next;
+        });
+        showToast(`Carga masiva: ${norm.length} productos procesados.`);
+      };
+            next = Array.from(map.values());
+          }
+          broadcastSync(next);
+          pushToApi(next);
+          return next;
+        });
+        showToast(`Carga masiva: ${norm.length} productos procesados.`);
+      };
+
+      const processSaleTransaction = ({ coilId, qty, customerName, customerPhone, paymentRef, userId }) => {
+        let orderResult = null;
+        setCoils(currentCoils => {
+          const coil = currentCoils.find(b => b.id === coilId);
+          if (!coil) return currentCoils;
+          const reqQty = Math.max(1, parseInt(qty, 10) || 1);
+          if (coil.stock < reqQty) { showToast(`Stock insuficiente (${coil.stock} uds)`); return currentCoils; }
+          const stockAfter = ownerSettings.autoDeductStock ? Math.max(0, coil.stock - reqQty) : coil.stock;
+
+          const newOrder = {
+            orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            userId: userId || 'CLI-GUEST',
+            customerName: customerName || 'Cliente WhatsApp Directo',
+            customerPhone: customerPhone || 'WhatsApp',
+            coilId: coil.id,
+            coilName: coil.name,
+            oem: coil.oem.split('/')[0].trim(),
+            qty: reqQty,
+            unitPrice: coil.price,
+            totalPrice: Number((coil.price * reqQty).toFixed(2)),
+            stockBefore: coil.stock,
+            stockAfter,
+            paymentRef: paymentRef || 'Confirmación directa',
+            status: ownerSettings.requireApproval ? 'PENDING_APPROVAL' : 'CONFIRMED'
+          };
+          orderResult = newOrder;
+          setSalesHistory(prev => [newOrder, ...prev]);
+          setPendingOwnerAlert(newOrder);
+
+          if (ownerSettings.soundAlert) {
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator(); const gain = ctx.createGain();
+              osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime); osc.frequency.setValueAtTime(1318.5, ctx.currentTime + 0.09);
+              gain.gain.setValueAtTime(0.12, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+              osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.35);
+            } catch(e) {}
+          }
+
+          const nextCoils = currentCoils.map(item => item.id === coil.id ? { ...item, stock: stockAfter, inStock: stockAfter > 0 } : item);
+          broadcastSync(nextCoils);
+          pushToApi(nextCoils);
+          return nextCoils;
+        });
+        return orderResult;
+      };
+
+      const revertSale = (orderId) => {
+        const ord = salesHistory.find(s => s.orderId === orderId);
+        if (!ord) return;
+        setCoils(currentCoils => {
+          const nextCoils = currentCoils.map(item => item.id === ord.coilId ? { ...item, stock: item.stock + ord.qty, inStock: true } : item);
+          broadcastSync(nextCoils);
+          pushToApi(nextCoils);
+          return nextCoils;
+        });
+        setSalesHistory(prev => prev.map(s => s.orderId === orderId ? { ...s, status: 'REVERTED' } : s));
+        showToast(`Venta #${orderId} revertida (+${ord.qty} unidades al stock)`);
+      };
+
+      return (
+        <InventoryContext.Provider value={{ coils, dbEngine, changeDbEngine, dbCredentials, updateDbCredentials, apiConnectionStatus, testApiConnection, syncWithApi, upsertCoil, deleteCoil, clearInventory, restoreSeedData, bulkImport, salesHistory, ownerSettings, updateOwnerSettings, processSaleTransaction, revertSale, pendingOwnerAlert, dismissOwnerAlert: () => setPendingOwnerAlert(null) }}>
+          {children}
+        </InventoryContext.Provider>
+      );
+    }
+    const useInventory = () => useContext(InventoryContext);
+
+    const CartContext = createContext(null);
+    function CartProvider({ children }) {
+      const { deviceId } = useAuth();
+      const { coils, processSaleTransaction, ownerSettings } = useInventory();
+      const { showToast } = useToast();
+      const [cart, setCart] = useState(() => {
+        try {
+          const s = localStorage.getItem('AUTOIGNITION_PRIVATE_CARTS_V2');
+          if (s) { const p = JSON.parse(s); if (p[deviceId]) return p[deviceId]; }
+        } catch(e) {}
+        return [];
+      });
+      const [isCartOpen, setIsCartOpen] = useState(false);
+      const [buyerDraft, setBuyerDraft] = useState(() => {
+        try { const s = localStorage.getItem('AUTOIGNITION_BUYER_DRAFT_V2'); if (s) return JSON.parse(s); } catch(e) {}
+        return { name: '', phone: '', car: '', payRef: '' };
+      });
+
+      const persistCart = (newCart) => {
+        try {
+          const s = localStorage.getItem('AUTOIGNITION_PRIVATE_CARTS_V2');
+          const all = s ? JSON.parse(s) : {};
+          all[deviceId] = newCart;
+          localStorage.setItem('AUTOIGNITION_PRIVATE_CARTS_V2', JSON.stringify(all));
+        } catch(e) {}
+      };
+
+      const updateBuyerDraft = (fields) => {
+        setBuyerDraft(prev => {
+          const next = { ...prev, ...fields };
+          localStorage.setItem('AUTOIGNITION_BUYER_DRAFT_V2', JSON.stringify(next));
+          return next;
+        });
+      };
+
+      const addToCart = (productId, requestedQty = 1) => {
+        const product = coils.find(b => b.id === productId);
+        if (!product || product.stock <= 0) { showToast('Sin stock disponible'); return; }
+        setCart(prev => {
+          const existing = prev.find(i => i.id === productId);
+          let next;
+          if (existing) {
+            if (existing.qty + requestedQty <= product.stock) {
+              next = prev.map(i => i.id === productId ? { ...i, qty: i.qty + requestedQty } : i);
+              showToast(`Carrito: ${existing.qty + requestedQty}x ${product.name}`);
+            } else {
+              showToast(`Límite de stock alcanzado (${product.stock} uds)`);
+              return prev;
+            }
+          } else {
+            next = [...prev, { id: product.id, name: product.name, price: product.price, oem: product.oem.split('/')[0].trim(), qty: 1, maxStock: product.stock }];
+            showToast(`Añadido: ${product.name}`);
+          }
+          persistCart(next);
+          return next;
+        });
+      };
+
+      const updateCartQty = (productId, delta) => {
+        setCart(prev => {
+          const product = coils.find(b => b.id === productId);
+          const max = product ? product.stock : 99;
+          const next = prev.map(item => {
+            if (item.id === productId) {
+              const n = item.qty + delta;
+              return { ...item, qty: Math.min(max, n) };
+            }
+            return item;
+          }).filter(item => item.qty > 0);
+          persistCart(next);
+          return next;
+        });
+      };
+
+      const removeFromCart = (id) => {
+        setCart(prev => {
+          const next = prev.filter(i => i.id !== id);
+          persistCart(next);
+          return next;
+        });
+        showToast('Producto eliminado');
+      };
+
+      const checkoutViaWhatsApp = () => {
+        if (cart.length === 0) { showToast('El carrito está vacío'); return; }
+        if (!buyerDraft.name.trim() || !buyerDraft.phone.trim()) { showToast('Ingresa Nombre y WhatsApp para ordenar'); return; }
+
+        const orderIds = [];
+        cart.forEach(item => {
+          const res = processSaleTransaction({
+            coilId: item.id,
+            qty: item.qty,
+            customerName: buyerDraft.name.trim(),
+            customerPhone: buyerDraft.phone.trim(),
+            paymentRef: buyerDraft.payRef.trim() || 'Coordinar por WA',
+            userId: deviceId
+          });
+          if (res) orderIds.push(res.orderId);
+        });
+
+        const itemsText = cart.map(i => `• ${i.qty}x ${i.name} ($${Number(i.price).toFixed(2)})`).join('\n');
+        const totalVal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+        const orderTag = orderIds.join(', ') || 'ORD-WA';
+
+        const msg = `⚡ *NUEVO PEDIDO CONFIRMADO (${orderTag}) - BOBINAS EXPRESS*\n\n` +
+          `👤 *Cliente:* ${buyerDraft.name} (${buyerDraft.phone})\n` +
+          `🚗 *Vehículo:* ${buyerDraft.car || 'Por especificar'}\n` +
+          `💳 *Pago:* ${buyerDraft.payRef || 'A coordinar'}\n\n` +
+          `📦 *Repuestos:*\n${itemsText}\n\n` +
+          `💰 *Total:* $${totalVal.toFixed(2)} USD\n\n` +
+          `✅ *Stock reservado en sistema.*`;
+
+        const phone = normalizeWaPhone(ownerSettings.ownerPhone);
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        setCart([]);
+        persistCart([]);
+        setIsCartOpen(false);
+      };
+
+      const cartCount = cart.reduce((acc, curr) => acc + curr.qty, 0);
+      const cartSubtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+
+      return (
+        <CartContext.Provider value={{ cart, cartCount, cartSubtotal, isCartOpen, setIsCartOpen, toggleCart: () => setIsCartOpen(p => !p), closeCart: () => setIsCartOpen(false), addToCart, updateCartQty, removeFromCart, buyerDraft, updateBuyerDraft, checkoutViaWhatsApp }}>
+          {children}
+        </CartContext.Provider>
+      );
+    }
+    const useCart = () => useContext(CartContext);
+
+    // --- COMPONENTS ---
+    function TopNoticeBar() {
+      const { dbEngine, coils } = useInventory();
+      const { isAdmin } = useAuth();
+      return (
+        <aside aria-label="Estado del sistema" className="bg-gradient-to-r from-red-700 via-brand-600 to-red-800 text-xs py-1.5 px-4 text-center font-medium flex flex-wrap items-center justify-center gap-2 text-white shadow-sm">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+          </span>
+          <span>
+            ⚡ <strong>Despachos Inmediatos a Todo el País</strong> |{' '}
+            <a
+              href="https://wa.me/584126497478"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-bold hover:text-red-200 transition"
+            >
+              WhatsApp
+            </a>
+          </span>
+          {isAdmin && (
+            <span className="hidden md:inline-flex items-center gap-1.5 bg-black/25 px-2.5 py-0.5 rounded-full text-[11px] text-red-100 border border-white/15">
+              <i className="fa-solid fa-database text-[10px] text-emerald-300"></i>
+              <span>DB: {getEngineLabel(dbEngine)} ({coils.length} items)</span>
+            </span>
+          )}
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1.5 bg-slate-950/50 px-2.5 py-0.5 rounded-full text-[11px] text-white border border-white/20">
+              <i className="fa-solid fa-unlock-keyhole text-emerald-400 text-[10px]"></i>
+              <span>🔐 Sesión: Administrador Activo</span>
+            </span>
+          )}
+        </aside>
+      );
+    }
+
+    function Header({ activeTab, setActiveTab }) {
+      const { isAdmin, openAuthModal, logout, requireAdminAuth } = useAuth();
+      const { cartCount, toggleCart } = useCart();
+      const { salesHistory, ownerSettings } = useInventory();
+
+      const handleNav = (tab) => {
+        if (['sales', 'database', 'admin'].includes(tab) && !isAdmin) {
+          requireAdminAuth(() => setActiveTab(tab), `Acceso a "${tab.toUpperCase()}" requiere sesión de Administrador.`);
+          return;
+        }
+        setActiveTab(tab);
+      };
+
+      return (
+        <header className="bg-slate-800/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-700/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 shrink-0 cursor-pointer" onClick={() => setActiveTab('catalog')}>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-500 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white">
+                <i className="fa-solid fa-bolt text-lg"></i>
+              </div>
+              <div>
+                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-1">
+                  BOBINAS<span className="text-brand-500">EXPRESS</span>
+                </span>
+                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold -mt-1">WhatsApp • React Modular</p>
+              </div>
+            </div>
+
+            <nav className="flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-700/60 overflow-x-auto max-w-full">
+              {[
+                { id: 'catalog', label: 'Catálogo', icon: 'fa-solid fa-car-battery' },
+                { id: 'simulator', label: 'Agente IA WhatsApp', icon: 'fa-brands fa-whatsapp text-emerald-400' },
+                ...(isAdmin ? [
+                  { id: 'sales', label: 'Ventas & Auditoría', icon: 'fa-solid fa-cash-register text-rose-400', badge: salesHistory.length, lock: true },
+                  { id: 'database', label: 'Base de Datos & Stock', icon: 'fa-solid fa-database text-sky-400', lock: true },
+                  { id: 'admin', label: 'Configurar IA', icon: 'fa-solid fa-sliders', lock: true }
+                ] : [])
+              ].map(btn => (
+                <button
+                  key={btn.id}
+                  onClick={() => handleNav(btn.id)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${activeTab === btn.id ? 'bg-brand-500 text-white shadow' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                >
+                  <i className={btn.icon}></i>
+                  <span>{btn.label}</span>
+                  {btn.lock && <i className={`fa-solid ${isAdmin ? 'fa-lock-open text-emerald-400' : 'fa-lock text-rose-400/90'} text-[9px]`}></i>}
+                  {btn.badge !== undefined && <span className="bg-rose-500/20 text-rose-300 px-1.5 py-0.2 rounded-full text-[10px] font-mono">{btn.badge}</span>}
+                </button>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {isAdmin ? (
+                <button onClick={logout} className="px-3 py-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                  <i className="fa-solid fa-unlock-keyhole text-emerald-400"></i>
+                  <span className="hidden sm:inline">Admin Activo</span>
+                </button>
+              ) : (
+                <button onClick={() => openAuthModal()} className="px-3 py-1.5 bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                  <i className="fa-solid fa-user-shield text-rose-400"></i>
+                  <span className="hidden sm:inline">Acceso Admin</span>
+                </button>
+              )}
+
+              <button onClick={() => window.open(`https://wa.me/${normalizeWaPhone(ownerSettings.ownerPhone)}`, '_blank')} className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 rounded-xl text-xs font-semibold hover:bg-emerald-600/30 transition cursor-pointer">
+                <i className="fa-brands fa-whatsapp text-sm"></i>
+                <span>WhatsApp</span>
+              </button>
+
+              <button onClick={toggleCart} className="relative p-2.5 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-xl transition shadow flex items-center justify-center">
+                <i className="fa-solid fa-cart-shopping"></i>
+                <span className="absolute -top-1.5 -right-1.5 bg-brand-500 text-white font-bold text-[10px] h-5 w-5 rounded-full flex items-center justify-center border-2 border-slate-900">{cartCount}</span>
+              </button>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function CoilCard({ coil, onAskAI, onEdit }) {
+      const { addToCart } = useCart();
+      const { isAdmin, requireAdminAuth } = useAuth();
+      return (
+        <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/50 rounded-2xl p-5 flex flex-col justify-between shadow-lg transition group">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30">{coil.badge || 'OEM Spec'}</span>
+              <div className={`flex items-center gap-1.5 text-xs ${coil.stock > 0 ? 'text-emerald-400' : 'text-rose-400'} font-medium`}>
+                <span className={`h-2 w-2 rounded-full ${coil.stock > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`}></span>
+                <span>{coil.stock > 0 ? `${coil.stock} en stock` : 'Agotado (0)'}</span>
+              </div>
+            </div>
+
+            <div className="h-36 rounded-xl bg-slate-950 border border-slate-700/60 flex flex-col items-center justify-center p-2 text-center mb-4 relative overflow-hidden group-hover:border-slate-600 transition">
+              {coil.image ? (
+                <img src={coil.image} alt={coil.name} className="h-full w-full object-contain drop-shadow" onError={e => { e.currentTarget.style.display = 'none'; }} />
+              ) : null}
+              <div className={`h-full w-full flex flex-col items-center justify-center ${coil.image ? 'hidden' : 'flex'}`}>
+                <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-500/80' : 'text-slate-600'} mb-2`}></i>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 absolute bottom-1.5 right-2">OEM: {coil.oem.split('/')[0].trim()}</span>
+              <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded">
+                <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty}
+              </span>
+              <span className="absolute top-2 left-2 text-[9px] font-mono text-slate-500">{coil.id}</span>
+            </div>
+
+            <div className="space-y-1 mb-3">
+              <span className="text-xs font-bold text-brand-400 uppercase">{coil.brand}</span>
+              <h3 className="text-base font-bold text-white leading-snug">{coil.name}</h3>
+              <p className="text-xs text-slate-300 flex items-center gap-1 pt-1"><i className="fa-solid fa-car-side text-slate-400"></i> {coil.carModel}</p>
+              <p className="text-xs text-slate-400 flex items-center gap-1"><i className="fa-solid fa-gears text-slate-500"></i> <span className="font-mono">{coil.engine}</span></p>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 my-3 text-[10px]">
+              <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700">{coil.connector}</span>
+              <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700">{coil.type}</span>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-700/70 space-y-3">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <span className="text-2xl font-extrabold text-white font-mono">{formatUSD(coil.price)}</span>
+                <span className="text-xs text-slate-400 line-through ml-1 font-mono">{formatUSD(coil.oldPrice)}</span>
+              </div>
+              {isAdmin && (
+                <button onClick={() => requireAdminAuth(() => onEdit(coil))} className="text-[11px] text-slate-400 hover:text-sky-400 flex items-center gap-1">
+                  <i className="fa-solid fa-lock-open text-emerald-400 text-[9px]"></i> Editar DB
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => addToCart(coil.id)} disabled={coil.stock <= 0} className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${coil.stock > 0 ? 'bg-brand-500 hover:bg-brand-600 text-white cursor-pointer' : 'bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
+                <i className={`fa-solid ${coil.stock > 0 ? 'fa-cart-plus' : 'fa-ban'}`}></i>
+                <span>{coil.stock > 0 ? 'Agregar' : 'Sin Stock'}</span>
+              </button>
+              <button onClick={() => onAskAI(coil)} className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer">
+                <i className="fa-brands fa-whatsapp text-sm"></i>
+                <span>Consultar IA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CatalogView({ onNavigateTab, onAskAI, onEdit }) {
+      const { coils, isDbLoading, dbEngine } = useInventory();
+      const { toggleCart } = useCart();
+      const { isAdmin, openAuthModal } = useAuth();
+      const [q, setQ] = useState('');
+      const [brand, setBrand] = useState('ALL');
+      const [stock, setStock] = useState('ALL');
+
+      const brands = useMemo(() => Array.from(new Set(coils.map(c => c.brand))).sort(), [coils]);
+
+      const filtered = useMemo(() => {
+        const query = q.toLowerCase().trim();
+        return coils.filter(i => {
+          const matchQ = !query || i.name.toLowerCase().includes(query) || i.carModel.toLowerCase().includes(query) || i.oem.toLowerCase().includes(query) || i.brand.toLowerCase().includes(query);
+          const matchB = brand === 'ALL' || i.brand.toLowerCase() === brand.toLowerCase();
+          let matchS = true;
+          if (stock === 'IN_STOCK') matchS = i.stock > 0;
+          else if (stock === 'OUT_OF_STOCK') matchS = i.stock <= 0;
+          else if (stock === 'PROMO') matchS = i.badge === 'Oferta' || i.price < i.oldPrice;
+          return matchQ && matchB && matchS;
+        });
+      }, [coils, q, brand, stock]);
+
+      return (
+        <div className="space-y-6">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-brand-950 border border-slate-700/80 p-6 md:p-8 shadow-xl">
+            <div className="relative z-10 max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/40 text-brand-400 text-xs font-bold uppercase">
+                <i className="fa-solid fa-circle-check"></i> Stock Conectado en Tiempo Real
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
+              </h1>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                Especialistas en bobinas tipo Lápiz, Riel múltiple y Módulo para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-3">
+                <button onClick={() => onNavigateTab('simulator')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow transition cursor-pointer">
+                  <i className="fa-brands fa-whatsapp text-base"></i> Consultar disponibilidad con IA
+                </button>
+                <button onClick={toggleCart} className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow transition cursor-pointer">
+                  <i className="fa-solid fa-cart-shopping"></i> Ver Mi Carrito
+                </button>
+                {isAdmin && (
+                  <button onClick={() => onNavigateTab('database')} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-red-300 font-semibold rounded-xl text-xs sm:text-sm border border-red-500/40 flex items-center gap-2 transition cursor-pointer">
+                    <i className="fa-solid fa-user-shield"></i> Panel Administrador (Stock / DB)
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="absolute -right-8 -bottom-10 opacity-20 pointer-events-none text-slate-100">
+              <i className="fa-solid fa-car-battery text-[240px]"></i>
+            </div>
+          </div>
+
+          <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="relative md:col-span-2">
+                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por modelo (Captiva, Corsa, Aveo) o OEM..." className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500" />
+              </div>
+              <div>
+                <select value={brand} onChange={e => setBrand(e.target.value)} className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200">
+                  <option value="ALL">Todas las marcas ({brands.length})</option>
+                  {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div>
+                <select value={stock} onChange={e => setStock(e.target.value)} className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200">
+                  <option value="ALL">Cualquier disponibilidad</option>
+                  <option value="IN_STOCK">En Stock Inmediato</option>
+                  <option value="OUT_OF_STOCK">Agotadas (0 unidades)</option>
+                  <option value="PROMO">Con Oferta Especial</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid of Products or Empty / Loading */}
+          {isDbLoading ? (
+            <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
+              <div className="h-10 w-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <h3 className="text-sm font-bold text-white">Consultando base de datos ({dbEngine.toUpperCase()})...</h3>
+              <p className="text-xs text-slate-400">Verificando elementos en tiempo real.</p>
+            </div>
+          ) : coils.length === 0 ? (
+            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-4">
+              <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
+                <i className="fa-solid fa-box-open"></i>
+              </div>
+              <h3 className="text-lg font-bold text-white">Inventario vacío (0 bobinas)</h3>
+              <p className="text-xs text-slate-400">
+                {isAdmin 
+                  ? 'Has vaciado los artículos de la Base de Datos. Puedes ingresar nuevas bobinas, importar un archivo CSV o restaurar las referencias de demostración.'
+                  : 'Actualmente no hay bobinas en el catálogo. Estamos actualizando el inventario en tiempo real. Escríbenos por WhatsApp para consultar existencia.'}
+              </p>
+              {isAdmin && (
+                <div className="flex justify-center gap-2 pt-2">
+                  <button onClick={() => onNavigateTab('database')} className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-semibold transition cursor-pointer">
+                    <i className="fa-solid fa-database mr-1.5"></i> Gestionar Base de Datos
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : filtered.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {filtered.map(coil => (
+                <CoilCard key={coil.id} coil={coil} onAskAI={onAskAI} onEdit={onEdit} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-3">
+              <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
+                <i className="fa-solid fa-magnifying-glass"></i>
+              </div>
+              <h3 className="text-lg font-bold text-white">No se encontraron bobinas</h3>
+              <p className="text-xs text-slate-400">No hay productos que coincidan con los filtros aplicados.</p>
+              <button onClick={() => { setQ(''); setBrand('ALL'); setStock('ALL'); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-semibold transition cursor-pointer">
+                Limpiar Filtros
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+      );
+    }
+
+    function SimulatorView({ initialPrompt, onTriggerSale }) {
+      const { coils, dbEngine, ownerSettings, processSaleTransaction } = useInventory();
+      const { deviceId, isAdmin } = useAuth();
+      const [input, setInput] = useState('');
+      const [isTyping, setIsTyping] = useState(false);
+      const [showAdminConsole, setShowAdminConsole] = useState(true);
+      const [logs, setLogs] = useState([]);
+      const [messages, setMessages] = useState(() => [
+        { 
+          id: '1', 
+          sender: 'bot', 
+          html: `¡Hola! 👋 Soy el <strong>Asesor Virtual Inteligente de Bobinas Express</strong>.<br><br>Escríbeme la marca, modelo de auto, año o código OEM que necesitas y confirmaré existencias y precios al instante.`, 
+          badge: `Conectado a ${getEngineLabel(dbEngine)} (${coils.length} bobinas)`, 
+          time: 'Ahora' 
+        }
+      ]);
+      const endRef = useRef(null);
+
+      useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isTyping]);
+      useEffect(() => { if (initialPrompt) handleSend(initialPrompt); }, [initialPrompt]);
+
+      const handleSend = (textToSend) => {
+        const text = String(textToSend || input).trim();
+        if (!text) return;
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setMessages(prev => [...prev, { id: Math.random().toString(), sender: 'user', text, time }]);
+        setInput('');
+        setIsTyping(true);
+
+        setTimeout(() => {
+          setIsTyping(false);
+          const clean = text.toLowerCase();
+          const tokens = clean.replace(/[¿?¡!.,;:#()]/g, ' ').split(/\s+/).filter(w => w.length >= 2 && !['hola', 'tienen', 'precio', 'bobina', 'para', 'de', 'el', 'la'].includes(w));
+
+          let bestMatch = null;
+          let maxScore = 0;
+          coils.forEach(item => {
+            const h = `${item.id} ${item.name} ${item.brand} ${item.carModel} ${item.engine} ${item.oem}`.toLowerCase();
+            let score = 0;
+            tokens.forEach(tk => { if (h.includes(tk)) score += 3; });
+            if (score > maxScore) { maxScore = score; bestMatch = item; }
+          });
+
+          const isBuy = clean.includes('comprar') || clean.includes('pago') || clean.includes('ref') || clean.includes('confirmo');
+          let botHtml = '';
+          let product = null;
+          let badge = '';
+
+          if (isBuy && bestMatch && bestMatch.stock > 0) {
+            const ord = processSaleTransaction({ coilId: bestMatch.id, qty: 1, customerName: 'Cliente Chat WA', customerPhone: 'WhatsApp', paymentRef: text, userId: deviceId });
+            badge = `[TX COMMIT ${getEngineLabel(dbEngine)}] Orden #${ord.orderId}`;
+            botHtml = `🎉 <strong>¡VENTA CONFIRMADA! (#${ord.orderId})</strong><br><br>Descontamos 1x <strong>${bestMatch.name}</strong> del inventario:<br>• <strong>Total:</strong> <span class="text-emerald-400 font-bold">${formatUSD(bestMatch.price)} USD</span><br>${isAdmin ? `• <strong>Nuevo Stock DB:</strong> ${ord.stockBefore} ➔ <strong>${ord.stockAfter} uds</strong><br><br>` : `• <strong>Estado del Pedido:</strong> <span class="text-emerald-400 font-bold">Aprobado y en preparación para despacho</span><br><br>`}📲 <em>Alerta enviada al dueño al ${ownerSettings.ownerPhone}.</em>`;
+            setLogs(prev => [{ id: Math.random().toString(), time, query: `TX COMMIT: #${ord.orderId} [${bestMatch.id}]`, count: 1, engine: getEngineLabel(dbEngine), latency: 25 }, ...prev]);
+          } else if (bestMatch && maxScore > 0) {
+            product = bestMatch;
+            badge = `[${getEngineLabel(dbEngine)}] ID: ${bestMatch.id} | Stock: ${bestMatch.stock}`;
+            if (bestMatch.stock > 0) {
+              botHtml = `✅ ¡Sí, disponible en stock inmediato!<br><br>• <strong>${bestMatch.name}</strong><br>• <strong>Aplicación:</strong> ${bestMatch.carModel}<br>• <strong>Precio:</strong> <span class="text-brand-400 font-bold">${formatUSD(bestMatch.price)} USD</span><br>• <strong>Stock:</strong> <span class="text-emerald-400 font-bold">${bestMatch.stock} unidades</span><br>• <strong>OEM:</strong> <code>${bestMatch.oem}</code><br><br>Escribe <code>"Quiero comprar ref 12345"</code> o usa el botón abajo para cerrar tu compra.`;
+            } else {
+              botHtml = `⚠️ La <strong>${bestMatch.name}</strong> se encuentra temporalmente con <strong>Stock: 0 unidades</strong>.<br>Precio: ${formatUSD(bestMatch.price)} USD. ¿Deseas encargarla bajo pedido?`;
+            }
+            setLogs(prev => [{ id: Math.random().toString(), time, query: `SELECT * WHERE id='${bestMatch.id}'`, count: 1, engine: getEngineLabel(dbEngine), latency: 32 }, ...prev]);
+          } else {
+            badge = `[${getEngineLabel(dbEngine)}] 0 registros`;
+            botHtml = isAdmin
+              ? `Consulté la base de datos para <em>"${text}"</em> y no encontré un registro exacto.<br><br>💡 <em>Tip de Administrador: Puedes agregarla desde el panel de <strong>"Base de Datos & Stock"</strong>.</em>`
+              : `No encontramos una coincidencia exacta en catálogo para <em>"${text}"</em>.<br><br>💡 Por favor verifica el año, modelo o código OEM, o escríbenos directamente por WhatsApp.`;
+            setLogs(prev => [{ id: Math.random().toString(), time, query: `SELECT * WHERE name LIKE '%${tokens.join(' ')}%'`, count: 0, engine: getEngineLabel(dbEngine), latency: 18 }, ...prev]);
+          }
+
+          setMessages(prev => [...prev, { id: Math.random().toString(), sender: 'bot', html: botHtml, badge, product, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        }, 500);
+      };
+
+      const handleResetChat = () => {
+        setMessages([
+          { 
+            id: Math.random().toString(), 
+            sender: 'bot', 
+            html: `¡Hola! 👋 Historial reiniciado. Estoy listo para ayudarte. ¿Qué modelo o código OEM deseas consultar?`, 
+            badge: `Conectado a ${getEngineLabel(dbEngine)} (${coils.length} bobinas)`, 
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+          }
+        ]);
+      };
+
+      return (
+        <div className={isAdmin && showAdminConsole ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : "max-w-3xl mx-auto w-full"}>
+          <div className={`${isAdmin && showAdminConsole ? "lg:col-span-2" : "w-full"} bg-slate-900 border border-slate-700/80 rounded-2xl flex flex-col h-[580px] overflow-hidden shadow-2xl relative`}>
+            <div className="bg-[#075e54] text-white p-3.5 flex items-center justify-between shadow">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center font-bold text-brand-500">
+                  <i className="fa-solid fa-bolt text-lg"></i>
+                </div>
+                <div>
+                  <div className="font-bold text-sm">Bobinas Express AI <i className="fa-solid fa-circle-check text-sky-300 text-xs"></i></div>
+                  <p className="text-[10px] text-emerald-200">Oficial {ownerSettings.ownerPhone} • En línea</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <button 
+                    onClick={() => setShowAdminConsole(!showAdminConsole)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
+                      showAdminConsole 
+                        ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-xs' 
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                    title="Mostrar/Ocultar Consola de Queries SQL para Administrador"
+                  >
+                    <i className="fa-solid fa-terminal text-[10px]"></i>
+                    <span className="hidden sm:inline">{showAdminConsole ? 'Ocultar Consola' : 'Ver Consola SQL'}</span>
+                  </button>
+                )}
+                <button 
+                  onClick={handleResetChat}
+                  className="p-2 text-emerald-200 hover:text-white hover:bg-emerald-700/50 rounded-lg text-xs transition cursor-pointer"
+                  title="Reiniciar conversación"
+                >
+                  <i className="fa-solid fa-rotate-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#0b141a]">
+              {messages.map(m => (
+                <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {m.sender === 'user' ? (
+                    <div className="relative bg-[#005c4b] text-[#e9edef] rounded-lg rounded-tr-none p-3 shadow max-w-[85%] chat-bubble-tail-out text-xs sm:text-sm">
+                      <p>{m.text}</p>
+                      <span className="block text-right text-[9px] text-gray-300 mt-1">{m.time} <i className="fa-solid fa-check-double text-sky-400"></i></span>
+                    </div>
+                  ) : (
+                    <div className="relative bg-[#202c33] text-[#e9edef] rounded-lg rounded-tl-none p-3 shadow max-w-[85%] chat-bubble-tail-in text-xs sm:text-sm">
+                      <div className="font-semibold text-brand-400 text-[10px] uppercase mb-1"><i className="fa-solid fa-microchip"></i> Asesor Bobinas Express AI</div>
+                      {isAdmin && m.badge && (
+                        <div className="mb-2 px-2 py-0.5 bg-slate-800 rounded text-[9px] font-mono text-sky-400 border border-slate-700">
+                          <i className="fa-solid fa-database mr-1"></i>{m.badge}
+                        </div>
+                      )}
+                      <div dangerouslySetInnerHTML={{ __html: m.html }} />
+                      {m.product && (
+                        <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex flex-wrap gap-2">
+                          <button onClick={() => onTriggerSale(m.product)} className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[11px] flex items-center gap-1 shadow cursor-pointer">
+                            <i className="fa-solid fa-cash-register"></i> Cerrar Venta en WA ({formatUSD(m.product.price)})
+                          </button>
+                        </div>
+                      )}
+                      <span className="block text-right text-[9px] text-gray-400 mt-1">{m.time}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {isTyping && <div className="text-xs text-gray-400 italic">Consultando inventario...</div>}
+              <div ref={endRef} />
+            </div>
+
+            <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2">
+              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleSend(); }} placeholder="Escribe tu consulta (Ej: ¿Tienen la bobina para Captiva 3.2?)..." className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+              <button onClick={() => handleSend()} className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center cursor-pointer"><i className="fa-solid fa-paper-plane"></i></button>
+            </div>
+          </div>
+
+          {isAdmin && showAdminConsole && (
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl flex flex-col h-[580px] overflow-hidden p-3 font-mono text-[11px]">
+              <div className="font-bold text-white mb-2 pb-2 border-b border-slate-800 flex items-center justify-between">
+                <span><i className="fa-solid fa-terminal text-sky-400"></i> Monitor SQL en Vivo</span>
+                <button onClick={() => setLogs([])} className="text-slate-500 hover:text-white text-[10px]">Limpiar</button>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2">
+                {logs.length === 0 ? (
+                  <div className="text-slate-600 text-center py-10">Esperando queries...</div>
+                ) : (
+                  logs.map(l => (
+                    <div key={l.id} className="p-2 bg-slate-900 rounded border border-slate-800 text-[10px] space-y-0.5">
+                      <div className="text-emerald-400">{l.time} ({l.latency}ms)</div>
+                      <div className="text-sky-300">&gt; {l.query}</div>
+                      <div className="text-slate-400">Resultados: {l.count} filas</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+      );
+    }
+
+    function SalesView({ onOpenManualSale }) {
+      const { salesHistory, revertSale } = useInventory();
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white">Auditoría de Ventas en Vivo</h2>
+              <p className="text-xs text-slate-400">Descuento automático de stock con alertas al WhatsApp del dueño (0412-6497478).</p>
+            </div>
+            <button onClick={onOpenManualSale} className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow">
+              <i className="fa-solid fa-plus"></i> Registrar Venta Manual
+            </button>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl">
+            <table className="w-full text-left text-xs text-slate-300">
+              <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] font-mono">
+                <tr>
+                  <th className="py-3 px-4">Orden</th>
+                  <th className="py-3 px-4">Hora</th>
+                  <th className="py-3 px-4">Cliente</th>
+                  <th className="py-3 px-4">Bobina</th>
+                  <th className="py-3 px-4">Total</th>
+                  <th className="py-3 px-4">Stock (Antes ➔ Ahora)</th>
+                  <th className="py-3 px-4">Estado</th>
+                  <th className="py-3 px-4 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {salesHistory.map(ord => (
+                  <tr key={ord.orderId} className="hover:bg-slate-800/50">
+                    <td className="py-3 px-4 font-mono font-bold text-brand-400">#{ord.orderId}</td>
+                    <td className="py-3 px-4 text-slate-400">{ord.timestamp}</td>
+                    <td className="py-3 px-4 text-white">{ord.customerName}</td>
+                    <td className="py-3 px-4">{ord.qty}x {ord.coilName}</td>
+                    <td className="py-3 px-4 text-emerald-400 font-bold">{formatUSD(ord.totalPrice)}</td>
+                    <td className="py-3 px-4 font-mono text-[11px]">{ord.stockBefore} ➔ <span className="text-emerald-400 font-bold">{ord.stockAfter} uds</span></td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ord.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        {ord.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {ord.status === 'CONFIRMED' && (
+                        <button onClick={() => revertSale(ord.orderId)} className="text-rose-400 hover:text-rose-300 text-xs p-1" title="Revertir venta">
+                          <i className="fa-solid fa-rotate-left"></i> Revertir
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function DatabaseView({ onOpenCreate, onOpenEdit, onOpenBulk, onOpenSchema }) {
+      const { 
+        coils, 
+        dbEngine, 
+        changeDbEngine, 
+        deleteCoil, 
+        clearInventory, 
+        restoreSeedData,
+        dbCredentials,
+        updateDbCredentials,
+        apiConnectionStatus,
+        testApiConnection,
+        syncWithApi
+      } = useInventory();
+      const [confirmClear, setConfirmClear] = useState(false);
+      const [activeTab, setActiveTab] = useState(dbEngine);
+      const [tabValues, setTabValues] = useState(() => dbCredentials[activeTab] || {});
+      const [showKey, setShowKey] = useState(false);
+      const [isSyncing, setIsSyncing] = useState(false);
+
+      useEffect(() => {
+        setActiveTab(dbEngine);
+        setTabValues(dbCredentials[dbEngine] || {});
+      }, [dbEngine]);
+
+      const handleTabSwitch = (eng) => {
+        setActiveTab(eng);
+        setTabValues(dbCredentials[eng] || {});
+      };
+
+      const handleFieldChange = (k, v) => {
+        setTabValues(prev => ({ ...prev, [k]: v }));
+      };
+
+      const handleSaveCreds = (e) => {
+        e.preventDefault();
+        updateDbCredentials(activeTab, tabValues);
+      };
+
+      const handlePingTest = async () => {
+        updateDbCredentials(activeTab, tabValues);
+        await testApiConnection(activeTab, tabValues);
+      };
+
+      const handlePullClick = async () => {
+        setIsSyncing(true);
+        updateDbCredentials(activeTab, tabValues);
+        await syncWithApi('pull', tabValues);
+        setIsSyncing(false);
+      };
+
+      const handlePushClick = async () => {
+        setIsSyncing(true);
+        updateDbCredentials(activeTab, tabValues);
+        await syncWithApi('push', tabValues);
+        setIsSyncing(false);
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white">Base de Datos Multi-Motor & Conexión API</h2>
+              <p className="text-xs text-slate-400">Gestiona inventario y conecta en vivo con Supabase, MongoDB, MySQL o LocalStorage.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={onOpenCreate} className="px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow">
+                <i className="fa-solid fa-plus"></i> Insertar Bobina
+              </button>
+              <button onClick={onOpenBulk} className="px-3.5 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i className="fa-solid fa-file-import text-sky-400"></i> Carga Masiva
+              </button>
+              <button onClick={() => { const csv = exportToCSV(coils); downloadFile(csv, 'bobinas.csv', 'text/csv'); }} className="px-3.5 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i className="fa-solid fa-file-csv text-emerald-400"></i> Exportar CSV
+              </button>
+              <button onClick={onOpenSchema} className="px-3.5 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i className="fa-solid fa-code text-purple-400"></i> Esquemas DDL
+              </button>
+              <button 
+                onClick={() => {
+                  if (!confirmClear) {
+                    setConfirmClear(true);
+                    setTimeout(() => setConfirmClear(false), 4000);
+                    return;
+                  }
+                  clearInventory();
+                  setConfirmClear(false);
+                }} 
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition ${
+                  confirmClear 
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-400 shadow-lg' 
+                    : 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50'
+                }`}
+                title="Borrar todos los productos de la Base de Datos"
+              >
+                <i className={`fa-solid ${confirmClear ? 'fa-triangle-exclamation' : 'fa-trash-can'}`}></i>
+                <span>{confirmClear ? '¿Confirmar vaciado total? Clic aquí' : 'Vaciar Base'}</span>
+              </button>
+              <button onClick={() => restoreSeedData()} className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i className="fa-solid fa-rotate-left"></i> Restaurar Semilla
+              </button>
+            </div>
+          </div>
+
+          {/* In-Page API & Database Connection Panel */}
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400">
+                  <i className="fa-solid fa-network-wired text-sm"></i>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>Conexión de Bases de Datos con API en Vivo</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                      REST / RPC / Data API
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Configura tus credenciales para sincronizar el catálogo de bobinas en tiempo real en esta misma página.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {apiConnectionStatus.status === 'checking' && (
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center gap-1.5 animate-pulse">
+                    <i className="fa-solid fa-spinner fa-spin text-[10px]"></i> Verificando conexión...
+                  </span>
+                )}
+                {apiConnectionStatus.status === 'connected' && (
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>En Línea ({apiConnectionStatus.latency || 18}ms)</span>
+                  </span>
+                )}
+                {apiConnectionStatus.status === 'error' && (
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1.5">
+                    <i className="fa-solid fa-circle-exclamation text-[10px]"></i>
+                    <span>Error de Conexión</span>
+                  </span>
+                )}
+                {apiConnectionStatus.status === 'idle' && (
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                    <span>Motor Activo: {dbEngine.toUpperCase()}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: 'supabase', label: 'Supabase', icon: 'fa-solid fa-bolt', color: 'text-emerald-400' },
+                { id: 'mongodb', label: 'MongoDB Atlas', icon: 'fa-solid fa-leaf', color: 'text-green-400' },
+                { id: 'mysql', label: 'MySQL / REST API', icon: 'fa-solid fa-database', color: 'text-sky-400' },
+                { id: 'local', label: 'LocalStorage', icon: 'fa-solid fa-hard-drive', color: 'text-amber-400' }
+              ].map(eng => (
+                <button
+                  key={eng.id}
+                  type="button"
+                  onClick={() => handleTabSwitch(eng.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer ${
+                    activeTab === eng.id
+                      ? 'bg-slate-800 text-white border border-brand-500/50 shadow'
+                      : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  }`}
+                >
+                  <i className={`${eng.icon} ${eng.color}`}></i>
+                  <span>{eng.label}</span>
+                  {dbEngine === eng.id && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Motor activo"></span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Connection Inputs */}
+            <form onSubmit={handleSaveCreds} className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+              {activeTab === 'supabase' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">Supabase Endpoint URL *</label>
+                    <input type="url" value={tabValues.url || ''} onChange={e => handleFieldChange('url', e.target.value)} placeholder="https://xyz.supabase.co/rest/v1" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-semibold text-slate-300">API Key *</label>
+                        <button type="button" onClick={() => setShowKey(!showKey)} className="text-[10px] text-slate-400">{showKey ? 'Ocultar' : 'Ver'}</button>
+                      </div>
+                      <input type={showKey ? 'text' : 'password'} value={tabValues.anonKey || ''} onChange={e => handleFieldChange('anonKey', e.target.value)} placeholder="API Key Anon / Service" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Tabla Postgres *</label>
+                      <input type="text" value={tabValues.table || ''} onChange={e => handleFieldChange('table', e.target.value)} placeholder="bobinas_inventario" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                    </div>
+                  </div>
+
+                  {/* RLS Notice & SQL Helper */}
+                  <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 text-amber-400 font-bold">
+                        <i className="fa-solid fa-shield-halved"></i>
+                        <span>¿Supabase dice "conectado" pero devuelve 0 artículos?</span>
+                      </div>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-mono">
+                        Solución RLS
+                      </span>
+                    </div>
+                    <p className="text-slate-300 text-[11px] leading-relaxed">
+                      Supabase activa <strong className="text-white">Row Level Security (RLS)</strong> por defecto al crear tablas nuevas, bloqueando lecturas anónimas y devolviendo 0 filas.
+                      Para permitir que la web lea y guarde bobinas, ve a tu proyecto en <strong>Supabase &rarr; SQL Editor &rarr; New Query</strong> y ejecuta:
+                    </p>
+                    <div className="relative group">
+                      <pre className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-[11px] font-mono text-emerald-400 overflow-x-auto select-all">
+{`-- Desactivar RLS para permitir lectura y guardado desde la web
+ALTER TABLE ${tabValues.table || 'bobinas_inventario'} DISABLE ROW LEVEL SECURITY;`}
+                      </pre>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`ALTER TABLE ${tabValues.table || 'bobinas_inventario'} DISABLE ROW LEVEL SECURITY;`);
+                          alert('¡Comando SQL copiado al portapapeles! Pégalo en el SQL Editor de Supabase y presiona RUN.');
+                        }}
+                        className="absolute top-2 right-2 px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white text-[10px] font-bold rounded shadow transition cursor-pointer flex items-center gap-1"
+                      >
+                        <i className="fa-solid fa-copy"></i>
+                        <span>Copiar SQL</span>
+                      </button>
+                    </div>
+                    <details className="text-[10px] text-slate-400 cursor-pointer pt-1">
+                      <summary className="hover:text-slate-200">¿Prefieres mantener RLS activado con políticas de seguridad? Ver SQL</summary>
+                      <div className="mt-2 relative">
+                        <pre className="bg-slate-950 p-2 rounded-lg border border-slate-800 font-mono text-slate-300 overflow-x-auto text-[10px]">
+{`CREATE POLICY "Acceso publico lectura" ON public.${tabValues.table || 'bobinas_inventario'} FOR SELECT USING (true);
+CREATE POLICY "Acceso publico insercion" ON public.${tabValues.table || 'bobinas_inventario'} FOR INSERT WITH CHECK (true);
+CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bobinas_inventario'} FOR UPDATE USING (true);`}
+                        </pre>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sql = `CREATE POLICY "Acceso publico lectura" ON public.${tabValues.table || 'bobinas_inventario'} FOR SELECT USING (true);\nCREATE POLICY "Acceso publico insercion" ON public.${tabValues.table || 'bobinas_inventario'} FOR INSERT WITH CHECK (true);\nCREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bobinas_inventario'} FOR UPDATE USING (true);`;
+                            navigator.clipboard.writeText(sql);
+                            alert('¡Políticas SQL copiadas!');
+                          }}
+                          className="absolute top-2 right-2 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[9px] border border-slate-700"
+                        >
+                          Copiar Políticas
+                        </button>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'mongodb' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">MongoDB Data API URL *</label>
+                    <input type="url" value={tabValues.uri || ''} onChange={e => handleFieldChange('uri', e.target.value)} placeholder="https://data.mongodb-api.com/app/data-express/endpoint/data/v1" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">API Key Atlas *</label>
+                      <input type={showKey ? 'text' : 'password'} value={tabValues.apiKey || ''} onChange={e => handleFieldChange('apiKey', e.target.value)} placeholder="Atlas Token" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Database & Collection</label>
+                      <input type="text" value={tabValues.database || ''} onChange={e => handleFieldChange('database', e.target.value)} placeholder="bobinas_express_db" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'mysql' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">REST API Endpoint URL *</label>
+                    <input type="url" value={tabValues.apiUrl || ''} onChange={e => handleFieldChange('apiUrl', e.target.value)} placeholder="https://api.bobinasexpress.com/v1/inventory" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Bearer Auth Token</label>
+                      <input type={showKey ? 'text' : 'password'} value={tabValues.bearerToken || ''} onChange={e => handleFieldChange('bearerToken', e.target.value)} placeholder="Bearer token" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Tabla SQL</label>
+                      <input type="text" value={tabValues.table || ''} onChange={e => handleFieldChange('table', e.target.value)} placeholder="bobinas" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'local' && (
+                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-300">
+                  <p className="font-semibold text-white">Almacenamiento Local Offline Activo</p>
+                  <p className="text-slate-400 text-[11px] mt-0.5">Los registros se guardan en el navegador sin requerir servidores externos.</p>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
+                <div className="flex flex-wrap items-center gap-2">
+                  {activeTab !== dbEngine && (
+                    <button type="button" onClick={() => changeDbEngine(activeTab)} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold cursor-pointer border border-slate-700">
+                      <i className="fa-solid fa-check text-emerald-400 mr-1"></i> Activar este Motor
+                    </button>
+                  )}
+                  <button type="button" onClick={handlePingTest} className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-xl text-xs font-semibold cursor-pointer border border-sky-500/30">
+                    <i className="fa-solid fa-tower-broadcast mr-1"></i> Probar Conexión (Ping)
+                  </button>
+                  <button type="button" onClick={handlePullClick} disabled={isSyncing} className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded-xl text-xs font-semibold cursor-pointer border border-emerald-500/30">
+                    <i className={`fa-solid fa-cloud-arrow-down ${isSyncing ? 'fa-bounce text-emerald-400' : ''} mr-1`}></i> {isSyncing ? 'Cargando...' : 'Importar de DB (PULL)'}
+                  </button>
+                  <button type="button" onClick={handlePushClick} disabled={isSyncing} className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-semibold cursor-pointer border border-amber-500/30">
+                    <i className={`fa-solid fa-cloud-arrow-up ${isSyncing ? 'fa-bounce text-amber-400' : ''} mr-1`}></i> Exportar a DB (PUSH)
+                  </button>
+                </div>
+
+                <button type="submit" className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold cursor-pointer shadow">
+                  <i className="fa-solid fa-floppy-disk mr-1"></i> Guardar Credenciales
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Table */}
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] font-mono">
+                  <tr>
+                    <th className="py-3 px-4">ID</th>
+                    <th className="py-3 px-4">Marca & Repuesto</th>
+                    <th className="py-3 px-4">Vehículos</th>
+                    <th className="py-3 px-4">OEM</th>
+                    <th className="py-3 px-4">Precio</th>
+                    <th className="py-3 px-4 text-center">Stock</th>
+                    <th className="py-3 px-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {coils.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="py-8 text-center text-slate-500">
+                        La base de datos está vacía (0 artículos). Inserta nuevas bobinas o pulsa "Restaurar Semilla".
+                      </td>
+                    </tr>
+                  ) : (
+                    coils.map(b => (
+                      <tr key={b.id} className="hover:bg-slate-800/50">
+                        <td className="py-3 px-4 font-mono font-bold text-sky-400">{b.id}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                              {b.image ? (
+                                <img src={b.image} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                              ) : (
+                                <i className="fa-solid fa-car-battery text-brand-400 text-xs"></i>
+                              )}
+                            </div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-brand-400 block">{b.brand}</span>
+                              <span className="text-white font-medium truncate block max-w-xs">{b.name}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-300">{b.carModel}</td>
+                        <td className="py-3 px-4 font-mono text-slate-400">{b.oem}</td>
+                        <td className="py-3 px-4 text-brand-400 font-bold">{formatUSD(b.price)}</td>
+                        <td className="py-3 px-4 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${b.stock > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>{b.stock} uds</span></td>
+                        <td className="py-3 px-4 text-right space-x-2">
+                          <button onClick={() => onOpenEdit(b)} className="text-sky-400 hover:text-sky-300 p-1 cursor-pointer"><i className="fa-solid fa-pen-to-square"></i></button>
+                          <button onClick={() => deleteCoil(b.id)} className="text-rose-400 hover:text-rose-300 p-1 cursor-pointer"><i className="fa-solid fa-trash-can"></i></button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AdminConfigView() {
+      const { ownerSettings, updateOwnerSettings } = useInventory();
+      const [phone, setPhone] = useState(ownerSettings.ownerPhone);
+      const [prompt, setPrompt] = useState(ownerSettings.systemPrompt);
+
+      return (
+        <div className="max-w-2xl mx-auto space-y-6">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white">Configuración del Agente IA & Dueño</h2>
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">WhatsApp del Dueño (Confirmaciones)</label>
+              <input type="text" value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Prompt de Instrucciones de la IA</label>
+              <textarea rows={6} value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+            </div>
+            <button onClick={() => updateOwnerSettings({ ownerPhone: phone, systemPrompt: prompt })} className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold cursor-pointer shadow">
+              Guardar Configuración
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function CartDrawer() {
+      const { isCartOpen, closeCart, cart, cartSubtotal, updateCartQty, removeFromCart, buyerDraft, updateBuyerDraft, checkoutViaWhatsApp } = useCart();
+      if (!isCartOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-slate-900 border-l border-slate-700 p-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-white text-sm"><i className="fa-solid fa-cart-shopping text-brand-400 mr-2"></i> Mi Carrito</h3>
+              <button onClick={closeCart} className="text-slate-400 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-4 space-y-3">
+              {cart.length === 0 ? <p className="text-slate-500 text-center py-10 text-xs">Tu carrito está vacío</p> : cart.map(item => (
+                <div key={item.id} className="p-3 bg-slate-800 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <div className="font-bold text-white">{item.name}</div>
+                    <div className="text-brand-400 font-bold">{formatUSD(item.price)}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => updateCartQty(item.id, -1)} className="w-6 h-6 bg-slate-700 text-white rounded">-</button>
+                    <span className="font-bold text-white">{item.qty}</span>
+                    <button onClick={() => updateCartQty(item.id, 1)} className="w-6 h-6 bg-slate-700 text-white rounded">+</button>
+                    <button onClick={() => removeFromCart(item.id)} className="text-rose-400 p-1"><i className="fa-solid fa-trash"></i></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {cart.length > 0 && (
+              <div className="space-y-3 pt-3 border-t border-slate-800 text-xs">
+                <input type="text" value={buyerDraft.name} onChange={e => updateBuyerDraft({ name: e.target.value })} placeholder="Tu Nombre *" className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                <input type="text" value={buyerDraft.phone} onChange={e => updateBuyerDraft({ phone: e.target.value })} placeholder="Tu WhatsApp *" className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono" />
+                <div className="flex justify-between font-bold text-white text-sm">
+                  <span>Total:</span>
+                  <span className="text-emerald-400 font-mono">{formatUSD(cartSubtotal)}</span>
+                </div>
+                <button onClick={checkoutViaWhatsApp} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow">
+                  <i className="fa-brands fa-whatsapp text-lg"></i> Enviar Pedido a WhatsApp
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function AuthModal() {
+      const { authModalOpen, closeAuthModal, login, authLockReason } = useAuth();
+      const [u, setU] = useState('admin');
+      const [p, setP] = useState('');
+      if (!authModalOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-base font-bold text-white text-center"><i className="fa-solid fa-lock text-brand-500 mr-2"></i> Acceso Administrador</h3>
+            {authLockReason && <p className="text-xs text-rose-300 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">{authLockReason}</p>}
+            <input type="text" value={u} onChange={e => setU(e.target.value)} placeholder="Usuario (admin)" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" />
+            <input type="password" value={p} onChange={e => setP(e.target.value)} placeholder="Ingresa tu contraseña" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+            <button onClick={() => login(u, p)} className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs cursor-pointer shadow">Ingresar</button>
+            <button onClick={closeAuthModal} className="w-full text-xs text-slate-400 hover:text-white">Cancelar</button>
+          </div>
+        </div>
+      );
+    }
+
+    function ProductModalStandalone({ isOpen, onClose, initialProduct }) {
+      const { coils, upsertCoil, deleteCoil } = useInventory();
+      const isEditing = Boolean(initialProduct && initialProduct.id);
+      const fileInputRef = useRef(null);
+
+      const [form, setForm] = useState({
+        id: '',
+        name: '',
+        brand: 'Chevrolet',
+        carModel: '',
+        engine: '',
+        oem: '',
+        type: 'Tipo Lápiz Individual',
+        connector: 'Conector 4 Pines',
+        price: '29.50',
+        oldPrice: '36.00',
+        stock: '15',
+        warranty: '12 meses',
+        badge: 'OEM Spec',
+        image: ''
+      });
+      const [idAutoGenerated, setIdAutoGenerated] = useState(true);
+
+      useEffect(() => {
+        if (initialProduct && initialProduct.id) {
+          setForm({
+            id: initialProduct.id,
+            name: initialProduct.name || '',
+            brand: initialProduct.brand || 'Chevrolet',
+            carModel: initialProduct.carModel || '',
+            engine: initialProduct.engine || '',
+            oem: initialProduct.oem || '',
+            type: initialProduct.type || 'Tipo Lápiz Individual',
+            connector: initialProduct.connector || 'Conector 4 Pines',
+            price: String(initialProduct.price || '29.50'),
+            oldPrice: String(initialProduct.oldPrice || '36.00'),
+            stock: String(initialProduct.stock || '15'),
+            warranty: initialProduct.warranty || '12 meses',
+            badge: initialProduct.badge || 'OEM Spec',
+            image: initialProduct.image || ''
+          });
+          setIdAutoGenerated(false);
+        } else if (isOpen) {
+          const brand = 'Chevrolet';
+          const autoId = generateAutoCoilId(coils, brand);
+          setForm({
+            id: autoId,
+            name: '',
+            brand,
+            carModel: '',
+            engine: '',
+            oem: '',
+            type: 'Tipo Lápiz Individual',
+            connector: 'Conector 4 Pines',
+            price: '29.50',
+            oldPrice: '36.00',
+            stock: '15',
+            warranty: '12 meses',
+            badge: 'OEM Spec',
+            image: ''
+          });
+          setIdAutoGenerated(true);
+        }
+      }, [initialProduct, isOpen, coils]);
+
+      if (!isOpen) return null;
+
+      const handleRegenId = () => {
+        const fresh = generateAutoCoilId(coils, form.brand);
+        setForm(p => ({ ...p, id: fresh }));
+        setIdAutoGenerated(true);
+      };
+
+      const handleBrandChange = (b) => {
+        setForm(p => {
+          const next = { ...p, brand: b };
+          if (!isEditing && idAutoGenerated) next.id = generateAutoCoilId(coils, b);
+          return next;
+        });
+      };
+
+      const handleFileUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setForm(prev => ({ ...prev, image: ev.target.result }));
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleSave = (e) => {
+        e.preventDefault();
+        upsertCoil(form);
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+            <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <i className="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+              <i className={`fa-solid ${isEditing ? 'fa-pen-to-square text-sky-400' : 'fa-database text-brand-500'}`}></i>
+              <span>{isEditing ? `Editar Bobina (${form.id})` : 'Insertar Nueva Bobina en Base de Datos'}</span>
+            </h3>
+
+            <form onSubmit={handleSave} className="space-y-4">
+              {/* Image Upload Box */}
+              <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                  <span className="flex items-center gap-1.5"><i className="fa-solid fa-camera text-brand-400"></i> Foto del Producto</span>
+                  {form.image && (
+                    <button type="button" onClick={() => setForm(p => ({ ...p, image: '' }))} className="text-rose-400 hover:text-rose-300 text-[10px] font-bold">
+                      <i className="fa-solid fa-trash-can mr-1"></i> Quitar foto
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-xl bg-slate-950 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                    {form.image ? (
+                      <img src={form.image} alt="Preview" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                    ) : (
+                      <i className="fa-solid fa-image text-slate-600 text-xl"></i>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" id="sa-photo-upload" />
+                      <label htmlFor="sa-photo-upload" className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold cursor-pointer border border-slate-600">
+                        <i className="fa-solid fa-arrow-up-from-bracket text-sky-400 mr-1"></i> Subir archivo...
+                      </label>
+                      <span className="text-[10px] text-slate-400">JPG, PNG o WEBP</span>
+                    </div>
+                    <input type="url" value={form.image} onChange={e => setForm(p => ({ ...p, image: e.target.value }))} placeholder="O pegar URL de imagen (https://...)" className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-[11px] text-slate-200" />
+                  </div>
+                </div>
+              </div>
+
+              {/* ID & Brand */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-slate-400">Código / ID (Único) *</label>
+                    {!isEditing && (
+                      <button type="button" onClick={handleRegenId} className="text-[10px] text-brand-400 hover:text-brand-300 font-bold">
+                        <i className="fa-solid fa-rotate mr-0.5"></i> Auto-generar
+                      </button>
+                    )}
+                  </div>
+                  <input type="text" value={form.id} onChange={e => { setForm(p => ({ ...p, id: e.target.value })); setIdAutoGenerated(false); }} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Marca de Auto *</label>
+                  <input type="text" value={form.brand} onChange={e => handleBrandChange(e.target.value)} placeholder="Chevrolet, Toyota..." className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Nombre Completo *</label>
+                <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Bobina de Encendido Chevrolet Captiva 3.2" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Modelos Compatibles *</label>
+                  <input type="text" value={form.carModel} onChange={e => setForm(p => ({ ...p, carModel: e.target.value }))} placeholder="Captiva Sport 3.2L" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Motor / Cilindrada *</label>
+                  <input type="text" value={form.engine} onChange={e => setForm(p => ({ ...p, engine: e.target.value }))} placeholder="3.2L V6" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Código OEM *</label>
+                <input type="text" value={form.oem} onChange={e => setForm(p => ({ ...p, oem: e.target.value }))} placeholder="12618542 / UF569" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Precio USD ($) *</label>
+                  <input type="number" step="0.01" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Precio Tachado</label>
+                  <input type="number" step="0.01" value={form.oldPrice} onChange={e => setForm(p => ({ ...p, oldPrice: e.target.value }))} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Stock *</label>
+                  <input type="number" value={form.stock} onChange={e => setForm(p => ({ ...p, stock: e.target.value }))} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                </div>
+              </div>
+
+              <div className="pt-3 flex items-center justify-between gap-2 border-t border-slate-800">
+                {isEditing ? (
+                  <button type="button" onClick={() => { deleteCoil(form.id); onClose(); }} className="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1">
+                    <i className="fa-solid fa-trash-can"></i> Eliminar
+                  </button>
+                ) : <div></div>}
+                <div className="flex gap-2">
+                  <button type="button" onClick={onClose} className="px-3.5 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancelar</button>
+                  <button type="submit" className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow">Guardar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [tab, setTab] = useState('catalog');
+      const [initialPrompt, setInitialPrompt] = useState('');
+      const [editCoil, setEditCoil] = useState(null);
+      const [createModal, setCreateModal] = useState(false);
+      const [bulkModal, setBulkModal] = useState(false);
+      const [bulkText, setBulkText] = useState('');
+      const { upsertCoil, deleteCoil, bulkImport } = useInventory();
+
+      return (
+        <div className="flex flex-col min-h-screen">
+          <TopNoticeBar />
+          <Header activeTab={tab} setActiveTab={setTab} />
+          <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+            {tab === 'catalog' && (
+              <CatalogView
+                onNavigateTab={setTab}
+                onAskAI={coil => { setInitialPrompt(`¿Tienen la bobina de ${coil.name}?`); setTab('simulator'); }}
+                onEdit={c => setEditCoil(c)}
+              />
+            )}
+            {tab === 'simulator' && (
+              <SimulatorView initialPrompt={initialPrompt} onTriggerSale={c => { setTab('sales'); }} />
+            )}
+            {tab === 'sales' && <SalesView onOpenManualSale={() => setTab('catalog')} />}
+            {tab === 'database' && (
+              <DatabaseView
+                onOpenCreate={() => setCreateModal(true)}
+                onOpenEdit={c => setEditCoil(c)}
+                onOpenBulk={() => setBulkModal(true)}
+                onOpenSchema={() => {}}
+              />
+            )}
+            {tab === 'admin' && <AdminConfigView />}
+          </main>
+
+          <footer className="bg-slate-950 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+            Bobinas Express &copy; {new Date().getFullYear()} •{' '}
+            <a
+              href="https://wa.me/584126497478"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:text-emerald-300 font-semibold underline"
+            >
+              WhatsApp
+            </a>{' '}
+            • Desarrollado con React 18 Modular
+          </footer>
+
+          <CartDrawer />
+          <AuthModal />
+
+          {/* Modal Edición / Creación Completa con Foto y Auto-ID */}
+          <ProductModalStandalone
+            isOpen={createModal || Boolean(editCoil)}
+            onClose={() => { setCreateModal(false); setEditCoil(null); }}
+            initialProduct={editCoil}
+          />
+
+          {/* Modal Carga Masiva */}
+          {bulkModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-lg w-full space-y-3">
+                <h3 className="text-sm font-bold text-white">Carga Masiva (CSV / JSON)</h3>
+                <textarea rows={8} value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="Pega aquí tu CSV o JSON..." className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded text-xs text-white font-mono" />
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setBulkModal(false)} className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded text-xs">Cancelar</button>
+                  <button onClick={() => {
+                    try {
+                      let recs = [];
+                      if (bulkText.trim().startsWith('[') || bulkText.trim().startsWith('{')) recs = JSON.parse(bulkText);
+                      else recs = parseCSV(bulkText);
+                      bulkImport(recs, false);
+                      setBulkModal(false);
+                    } catch(e) { alert('Error: ' + e.message); }
+                  }} className="px-4 py-1.5 bg-sky-600 text-white font-bold rounded text-xs">Importar</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      <ToastProvider>
+        <AuthProvider>
+          <InventoryProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </InventoryProvider>
+        </AuthProvider>
+      </ToastProvider>
+    );
+  </script>
+</body>
+</html>
