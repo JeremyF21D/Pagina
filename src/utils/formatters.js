@@ -1,3 +1,5 @@
+import { DEFAULT_BOBINAS_SEED } from '../data/seedData';
+
 /**
  * Generates an automatic, clean sequential or unique product ID
  */
@@ -89,6 +91,18 @@ export function normalizeCoilRecord(raw, existingCoils = []) {
   // Image / Imagen
   const rawImage = String(raw.image ?? raw.imageUrl ?? raw.image_url ?? raw.img ?? raw.foto ?? raw.imagen ?? raw.url_imagen ?? '').trim();
 
+  // Si la fila remota (como en Supabase o CSV) no trae columna de imagen, enlazar con la imagen oficial del catálogo
+  let finalImage = rawImage;
+  if (!finalImage && Array.isArray(DEFAULT_BOBINAS_SEED)) {
+    const seedMatch = DEFAULT_BOBINAS_SEED.find(s => 
+      s.id.toLowerCase() === safeId.toLowerCase() || 
+      (s.oem && oemVal && s.oem.toLowerCase().includes(oemVal.toLowerCase()))
+    );
+    if (seedMatch && seedMatch.image) {
+      finalImage = seedMatch.image;
+    }
+  }
+
   return {
     id: safeId,
     name: nameVal || 'Bobina de Encendido Automotriz',
@@ -104,7 +118,7 @@ export function normalizeCoilRecord(raw, existingCoils = []) {
     inStock: safeStock > 0,
     warranty: warrantyVal,
     badge: badgeVal,
-    image: rawImage
+    image: finalImage
   };
 }
 

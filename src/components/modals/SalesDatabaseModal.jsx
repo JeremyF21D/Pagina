@@ -458,10 +458,15 @@ ALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;`}
                   Si Supabase arrojó <em>"Could not find the 'estado' column of 'ventas' in the schema cache"</em>, se debe a que la tabla fue creada sin esa columna o PostgREST no ha recargado su caché. El sistema ahora <strong>adapta automáticamente las columnas</strong> al subir, y con el script SQL de abajo aseguras todas las columnas y la <strong>clave foránea al catálogo</strong> con 1 clic en el SQL Editor de Supabase:
                 </p>
                 <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-[10px] font-mono text-emerald-300 space-y-1">
+                  <div className="text-sky-300">-- 1. Asegurar UNIQUE en bobinas_inventario(id) para permitir la clave foránea (Corrige error 42830):</div>
+                  <div>ALTER TABLE public.bobinas_inventario ADD CONSTRAINT bobinas_inventario_id_unique UNIQUE (id);</div>
+                  <div className="text-sky-300 mt-1">-- 2. Asegurar columnas de ventas:</div>
                   <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'CONFIRMED';</div>
                   <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'CONFIRMED';</div>
-                  <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_id TEXT REFERENCES public.bobinas_inventario(id);</div>
-                  <div className="text-amber-400">NOTIFY pgrst, 'reload schema'; -- Recarga la caché de Supabase</div>
+                  <div>ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_id TEXT;</div>
+                  <div className="text-sky-300 mt-1">-- 3. Vincular clave foránea con el catálogo de repuestos:</div>
+                  <div>ALTER TABLE public.ventas ADD CONSTRAINT fk_ventas_producto_catalogo FOREIGN KEY (producto_id) REFERENCES public.bobinas_inventario(id) ON DELETE SET NULL;</div>
+                  <div className="text-amber-400 mt-1">NOTIFY pgrst, 'reload schema'; -- Recarga la caché de Supabase</div>
                 </div>
               </div>
 

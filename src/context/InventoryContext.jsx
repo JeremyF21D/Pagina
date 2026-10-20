@@ -64,14 +64,14 @@ export function InventoryProvider({ children }) {
   const { showToast } = useToast();
   const { playCashRegisterSound } = useSoundEffects();
 
-  // 1. Estado de bobinas: Inicia en [] (vacío) por defecto para que nuevos visitantes
-  // nunca vean 11/12 bobinas no existentes si la base de datos está vacía.
+  // 1. Estado de bobinas: Solo muestra lo que esté cargado en la base de datos conectada.
+  // No inyecta productos de prueba de forma persistente.
   const [coils, setCoils] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_INVENTORY);
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map(normalizeCoilRecord);
         }
       }
@@ -212,7 +212,7 @@ Directrices de conversación:
                 creds = serverData.dbCredentials[targetEngine] || creds;
                 setDbCredentials(prev => ({ ...prev, ...serverData.dbCredentials }));
               }
-              if (targetEngine === 'local' && Array.isArray(serverData.coils)) {
+              if (targetEngine === 'local' && Array.isArray(serverData.coils) && serverData.coils.length > 0) {
                 rawElements = serverData.coils;
               }
             }
@@ -226,8 +226,11 @@ Directrices de conversación:
         const anonKey = String(creds.anonKey || '').trim();
         const table = String(creds.table || 'bobinas_inventario').trim();
 
-        if (!rawUrl || !anonKey) {
-          throw new Error('Faltan credenciales de Supabase: Ingresa la URL del proyecto y el Anon Key');
+        // Validar si las credenciales son reales o son el placeholder de ejemplo
+        const isPlaceholder = !rawUrl || !anonKey || anonKey.includes('...') || rawUrl.includes('vznqrxvblgghjswdmsaa');
+
+        if (isPlaceholder) {
+          throw new Error('No fue posible conectar con Supabase: Ingresa tu URL y Anon Key válidos en Gestión de Base de Datos.');
         }
 
         // Normalizar URL: asegurar origen limpio para endpoint de Supabase
@@ -257,11 +260,6 @@ Directrices de conversación:
         if (response.ok) {
           const rows = await response.json();
           rawElements = Array.isArray(rows) ? rows : [];
-
-          // Notificación si la tabla devolvió 0 filas pero tiene RLS activado
-          if (rawElements.length === 0 && showNotification) {
-            showToast(`⚠️ Supabase conectado: Tabla '${table}' devolvió 0 bobinas. Si ya insertaste filas, desactiva RLS con: ALTER TABLE ${table} DISABLE ROW LEVEL SECURITY;`, 'warning');
-          }
         } else {
           const errText = await response.text();
           let parsedError = errText;
@@ -271,7 +269,7 @@ Directrices de conversación:
           } catch (e) {}
 
           if (response.status === 404 || parsedError.includes('relation') || parsedError.includes('does not exist')) {
-            throw new Error(`La tabla '${table}' no fue encontrada en Supabase. Verifica el nombre o URL (${endpoint}).`);
+            throw new Error(`La tabla '${table}' no fue encontrada en Supabase. Verifica el nombre o URL.`);
           } else if (response.status === 401 || response.status === 403) {
             throw new Error(`Acceso no autorizado en Supabase (Error ${response.status}). Revisa tu Anon Key o permisos de RLS.`);
           } else {
@@ -284,54 +282,63 @@ Directrices de conversación:
         const database = creds.database || 'bobinas_express_db';
         const collection = creds.collection || 'bobinas';
 
-        if (uri && apiKey) {
-          try {
-            const res = await fetch(`${uri}/action/find`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'api-key': apiKey
-              },
-              body: JSON.stringify({
-                dataSource: 'Cluster0',
-                database,
-                collection,
-                filter: {}
-              })
-            });
-            if (res.ok) {
-              const data = await res.json();
-              rawElements = data.documents || [];
-            }
-          } catch (e) {
-            rawElements = [];
-          }
+        if (!uri || !apiKey || apiKey.includes('...')) {
+          throw new Error('Faltan credenciales válidas de MongoDB.');
+        }
+
+        const res = await fetch(`${uri}/action/find`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey
+          },
+          body: JSON.stringify({
+            dataSource: 'Cluster0',
+            database,
+            collection,
+            filter: {}
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          rawElements = data.documents || [];
+        } else {
+          throw new Error(`Error al consultar MongoDB (${res.status})`);
         }
       } else if (targetEngine === 'mysql') {
         const apiUrl = String(creds.apiUrl || '').replace(/\/+$/, '');
-        if (apiUrl) {
+        if (!apiUrl || apiUrl.includes('bobinasexpress.com')) {
+          throw new Error('Faltan credenciales válidas de MySQL / REST API.');
+        }
+        const headers = { 'Content-Type': 'application/json' };
+        if (creds.bearerToken) headers['Authorization'] = `Bearer ${creds.bearerToken}`;
+        const res = await fetch(apiUrl, { method: 'GET', headers });
+        if (res.ok) {
+          const data = await res.json();
+          rawElements = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
+        } else {
+          throw new Error(`Error al consultar MySQL (${res.status})`);
+        }
+      } else if (targetEngine === 'local') {
+        if (rawElements.length === 0) {
           try {
-            const headers = { 'Content-Type': 'application/json' };
-            if (creds.bearerToken) headers['Authorization'] = `Bearer ${creds.bearerToken}`;
-            const res = await fetch(apiUrl, { method: 'GET', headers });
-            if (res.ok) {
-              const data = await res.json();
-              rawElements = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
+            const saved = localStorage.getItem(STORAGE_KEY_INVENTORY);
+            if (saved) {
+              const p = JSON.parse(saved);
+              if (Array.isArray(p)) rawElements = p;
             }
-          } catch (e) {
-            rawElements = [];
-          }
+          } catch (e) {}
         }
       }
 
-      // --- VERIFICACIÓN Y NORMALIZACIÓN BILINGÜE DE ELEMENTOS ---
+      // --- VERIFICACIÓN Y NORMALIZACIÓN DE LOS ELEMENTOS DE LA BASE DE DATOS ---
       const verifiedElements = (Array.isArray(rawElements) ? rawElements : [])
         .map(item => normalizeCoilRecord(item))
         .filter(item => Boolean(item && (item.id || item.name)));
 
       const elapsed = Math.round(performance.now() - startTime);
 
-      // Actualizar el estado con los elementos verificados (si está vacía, queda vacía [])
+      // Actualizar el estado únicamente con los elementos que existen en la base de datos
       setCoils(verifiedElements);
       try {
         localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(verifiedElements));
@@ -339,9 +346,7 @@ Directrices de conversación:
 
       broadcastSync(verifiedElements);
 
-      const statusMsg = tableCreated
-        ? `Base de datos ${targetEngine.toUpperCase()} lista (0 artículos)`
-        : `Conectado a ${targetEngine.toUpperCase()}: ${verifiedElements.length} bobinas verificadas (${Math.max(14, elapsed)}ms)`;
+      const statusMsg = `Conectado a ${targetEngine.toUpperCase()}: ${verifiedElements.length} artículos en la base de datos (${Math.max(14, elapsed)}ms)`;
 
       setApiConnectionStatus({
         status: 'connected',
@@ -358,7 +363,8 @@ Directrices de conversación:
 
       return { success: true, count: verifiedElements.length, elements: verifiedElements };
     } catch (err) {
-      // En caso de cualquier falla, NUNCA inyectar las 12 bobinas
+      console.warn('Sync error:', err);
+      // Si no fue posible conectar con la base de datos, vaciar el catálogo y marcar estado de error
       setCoils([]);
       try {
         localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify([]));
@@ -371,6 +377,10 @@ Directrices de conversación:
         message: err.message,
         itemCount: 0
       });
+
+      if (showNotification) {
+        showToast(`⚠️ No fue posible conectar con la base de datos: ${err.message}`, 'error');
+      }
 
       return { success: false, error: err.message };
     } finally {

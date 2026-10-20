@@ -285,7 +285,21 @@ ALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS order_id TEXT;
 -- 4. RELACIONAR CLAVE FORÁNEA CON EL CATÁLOGO (Integridad Referencial)
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_ventas_producto_catalogo') THEN
+  -- 4.1 Asegurar que bobinas_inventario tenga restricción UNIQUE o PRIMARY KEY en 'id' (Evita error 42830)
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conrelid = 'public.bobinas_inventario'::regclass 
+      AND (conname IN ('bobinas_inventario_pkey', 'bobinas_inventario_id_unique') OR contype = 'p')
+  ) THEN
+    ALTER TABLE public.bobinas_inventario ADD CONSTRAINT bobinas_inventario_id_unique UNIQUE (id);
+  END IF;
+
+  -- 4.2 Agregar clave foránea en ventas hacia bobinas_inventario
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conrelid = 'public.ventas'::regclass 
+      AND conname = 'fk_ventas_producto_catalogo'
+  ) THEN
     ALTER TABLE public.ventas 
       ADD CONSTRAINT fk_ventas_producto_catalogo 
       FOREIGN KEY (producto_id) 
