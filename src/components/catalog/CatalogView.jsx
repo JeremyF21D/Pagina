@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { CoilCard } from './CoilCard';
 import { CatalogFilters } from './CatalogFilters';
+import logoImg from '../../assets/logo.png';
 
 export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
   const { coils, isDbLoading, dbEngine } = useInventory();
@@ -53,7 +54,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
   return (
     <div className="space-y-6">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-brand-950 border border-slate-700/80 p-5 sm:p-8 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-850 to-brand-950/80 border border-slate-700/80 p-5 sm:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="relative z-10 max-w-2xl space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/40 text-brand-400 text-xs font-bold uppercase tracking-wider">
@@ -73,11 +74,11 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
+            Repuestos & Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Especialistas en bobinas tipo Lápiz, Riel múltiple y Módulo para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más. Consulta disponibilidad inmediata o escribe a nuestro <strong>Asesor por WhatsApp</strong>.
+            Catálogo oficial <strong>JF AUTO PARTS</strong>. Bobinas tipo Lápiz, Riel múltiple y Módulo para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más. Consulta disponibilidad inmediata o escribe a nuestro <strong>Asesor por WhatsApp</strong>.
           </p>
 
           <div className="pt-2 flex flex-wrap gap-3">
@@ -105,8 +106,16 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
           </div>
         </div>
 
-        <div className="absolute -right-8 -bottom-10 opacity-20 lg:opacity-30 pointer-events-none text-slate-100">
-          <i className="fa-solid fa-car-battery text-[120px] sm:text-[240px]"></i>
+        {/* Hero Logo Card */}
+        <div className="relative shrink-0 hidden md:flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-950/60 border border-slate-700/60 shadow-2xl backdrop-blur-xs">
+          <img 
+            src={logoImg} 
+            alt="JF AUTO PARTS Logo Oficial" 
+            className="w-40 h-40 lg:w-48 lg:h-48 object-cover rounded-xl shadow-lg border border-slate-800" 
+          />
+          <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-2">
+            Logo Oficial • JF Auto Parts
+          </span>
         </div>
       </div>
 

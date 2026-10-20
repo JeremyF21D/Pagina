@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { ChatMessage } from './ChatMessage';
 import { DatabaseConsole } from './DatabaseConsole';
 import { getEngineLabel } from '../../utils/formatters';
+import logoImg from '../../assets/logo.png';
 
 const QUICK_PROMPTS = [
   { label: 'Captiva 3.2', query: '¿Tienen la bobina de Captiva 3.2 V6?' },
@@ -31,7 +32,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
     {
       id: 'init-msg',
       sender: 'bot',
-      html: `¡Hola! 👋 Soy el <strong>Asesor Virtual de Bobinas Express</strong>.<br><br>Escríbeme la marca, modelo o código OEM que necesitas y confirmo disponibilidad y precio al instante.`,
+      html: `¡Hola! 👋 Soy el <strong>Asesor Virtual de JF Auto Parts</strong>.<br><br>Escríbeme la marca, modelo o código OEM que necesitas y confirmo disponibilidad y precio al instante.`,
       badge: `Conectado a ${getEngineLabel(dbEngine)} (${coils.length} bobinas)`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       product: null
@@ -123,14 +124,16 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
             <div className="bg-[#075e54] text-white px-4 py-3 flex items-center justify-between shadow-md shrink-0">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="h-9 w-9 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center font-extrabold text-brand-500 shadow shrink-0">
-                    <i className="fa-solid fa-bolt text-base"></i>
-                  </div>
+                  <img
+                    src={logoImg}
+                    alt="JF Auto Parts Logo"
+                    className="h-9 w-9 rounded-full object-cover border-2 border-emerald-400 shadow shrink-0"
+                  />
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-[#075e54]"></span>
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5 font-bold text-sm leading-tight">
-                    <span>Bobinas Express AI</span>
+                    <span>JF Auto Parts AI</span>
                     <i className="fa-solid fa-circle-check text-sky-300 text-[10px]" title="Verificado"></i>
                   </div>
                   <p className="text-[10px] text-emerald-200">{ownerSettings.ownerPhone} • En línea</p>
@@ -182,7 +185,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
                 <div className="bg-[#182229] text-[#ffd279] text-[10px] px-3 py-1 rounded-lg text-center shadow-xs max-w-xs border border-amber-500/20">
                   {isAdmin
                     ? <span><i className="fa-solid fa-shield text-[9px] mr-1"></i>Modo Administrador • Consultas auditadas</span>
-                    : <span><i className="fa-solid fa-check-circle text-[9px] mr-1"></i>Asesor Oficial de Bobinas Express</span>
+                    : <span><i className="fa-solid fa-check-circle text-[9px] mr-1"></i>Asesor Oficial de JF Auto Parts</span>
                   }
                 </div>
               </div>

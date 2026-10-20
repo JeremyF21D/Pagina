@@ -1,4 +1,4 @@
-# ⚡ Bobinas Express | WhatsApp AI Agent & Catálogo Modular en React
+# ⚡ JF AUTO PARTS | WhatsApp AI Agent & Catálogo Modular en React
 
 Aplicación web modular construida con **React 18**, **Vite** y **Tailwind CSS**, diseñada para la comercialización de bobinas de encendido automotriz con integración a **WhatsApp Cloud API** y conector multi-motor para **Supabase (PostgreSQL)**, **MongoDB Atlas**, **MySQL** y **LocalStorage**.
 

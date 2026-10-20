@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bobinas Express | React Standalone Preview</title>
+  <title>JF AUTO PARTS | Especialistas en Repuestos & Bobinas de Encendido</title>
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./logo.png" />
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -60,8 +62,8 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
   <div id="root">
     <div style="padding: 40px; text-align: center; color: #94a3b8; font-family: sans-serif;">
-      <i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-brand-500"></i>
-      <p>Cargando aplicación React de Bobinas Express...</p>
+      <img src="./logo.png" alt="JF AUTO PARTS" style="width: 64px; height: 64px; border-radius: 14px; object-fit: cover; margin-bottom: 12px; display: inline-block; box-shadow: 0 8px 20px rgba(0,0,0,0.5);" />
+      <p>Cargando catálogo oficial de JF Auto Parts...</p>
     </div>
   </div>
 
@@ -398,7 +400,7 @@
           autoDeductStock: true,
           soundAlert: true,
           requireApproval: false,
-          systemPrompt: `Eres el Asesor Oficial de "Bobinas Express" para WhatsApp (0412-6497478). Consulta la base de datos en tiempo real, verifica el stock y cierra ventas.`
+          systemPrompt: `Eres el Asesor Oficial de "JF Auto Parts" para WhatsApp (0412-6497478). Consulta la base de datos en tiempo real, verifica el stock y cierra ventas.`
         };
       });
       const [pendingOwnerAlert, setPendingOwnerAlert] = useState(null);
@@ -879,7 +881,7 @@
         const totalVal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
         const orderTag = orderIds.join(', ') || 'ORD-WA';
 
-        const msg = `⚡ *NUEVO PEDIDO CONFIRMADO (${orderTag}) - BOBINAS EXPRESS*\n\n` +
+        const msg = `⚡ *NUEVO PEDIDO CONFIRMADO (${orderTag}) - JF AUTO PARTS*\n\n` +
           `👤 *Cliente:* ${buyerDraft.name} (${buyerDraft.phone})\n` +
           `🚗 *Vehículo:* ${buyerDraft.car || 'Por especificar'}\n` +
           `💳 *Pago:* ${buyerDraft.payRef || 'A coordinar'}\n\n` +
@@ -959,14 +961,13 @@
         <header className="bg-slate-800/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-700/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
             <div className="flex items-center gap-3 shrink-0 cursor-pointer" onClick={() => setActiveTab('catalog')}>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-500 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white">
-                <i className="fa-solid fa-bolt text-lg"></i>
-              </div>
+              <img src="./logo.png" alt="JF AUTO PARTS Logo" className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-cover border border-slate-700/80 shadow-md shrink-0" />
               <div>
-                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-1">
-                  BOBINAS<span className="text-brand-500">EXPRESS</span>
+                <span className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5 font-sans">
+                  <span className="text-brand-500">JF</span>
+                  <span className="text-white tracking-wider">AUTO PARTS</span>
                 </span>
-                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold -mt-1">WhatsApp • React Modular</p>
+                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold -mt-1">Repuestos & Encendido Automotriz</p>
               </div>
             </div>
 
@@ -1115,16 +1116,16 @@
 
       return (
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-brand-950 border border-slate-700/80 p-6 md:p-8 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-brand-950 border border-slate-700/80 p-6 md:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="relative z-10 max-w-2xl space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/40 text-brand-400 text-xs font-bold uppercase">
                 <i className="fa-solid fa-circle-check"></i> Stock Conectado en Tiempo Real
               </div>
               <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
+                Repuestos & Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
               </h1>
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                Especialistas en bobinas tipo Lápiz, Riel múltiple y Módulo para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más.
+                Catálogo oficial <strong>JF AUTO PARTS</strong>. Bobinas tipo Lápiz, Riel múltiple y Módulo para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más.
               </p>
               <div className="pt-2 flex flex-wrap gap-3">
                 <button onClick={() => onNavigateTab('simulator')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow transition cursor-pointer">
@@ -1140,8 +1141,9 @@
                 )}
               </div>
             </div>
-            <div className="absolute -right-8 -bottom-10 opacity-20 pointer-events-none text-slate-100">
-              <i className="fa-solid fa-car-battery text-[240px]"></i>
+            <div className="relative shrink-0 hidden md:flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-950/60 border border-slate-700/60 shadow-2xl">
+              <img src="./logo.png" alt="JF AUTO PARTS Logo" className="w-36 h-36 lg:w-44 lg:h-44 object-cover rounded-xl shadow-lg border border-slate-800" />
+              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-2">Logo Oficial • JF Auto Parts</span>
             </div>
           </div>
 
@@ -1229,7 +1231,7 @@
         { 
           id: '1', 
           sender: 'bot', 
-          html: `¡Hola! 👋 Soy el <strong>Asesor Virtual Inteligente de Bobinas Express</strong>.<br><br>Escríbeme la marca, modelo de auto, año o código OEM que necesitas y confirmaré existencias y precios al instante.`, 
+          html: `¡Hola! 👋 Soy el <strong>Asesor Virtual Inteligente de JF Auto Parts</strong>.<br><br>Escríbeme la marca, modelo de auto, año o código OEM que necesitas y confirmaré existencias y precios al instante.`, 
           badge: `Conectado a ${getEngineLabel(dbEngine)} (${coils.length} bobinas)`, 
           time: 'Ahora' 
         }
@@ -1309,11 +1311,9 @@
           <div className={`${isAdmin && showAdminConsole ? "lg:col-span-2" : "w-full"} bg-slate-900 border border-slate-700/80 rounded-2xl flex flex-col h-[580px] overflow-hidden shadow-2xl relative`}>
             <div className="bg-[#075e54] text-white p-3.5 flex items-center justify-between shadow">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center font-bold text-brand-500">
-                  <i className="fa-solid fa-bolt text-lg"></i>
-                </div>
+                <img src="./logo.png" alt="JF AUTO PARTS Logo" className="h-10 w-10 rounded-full object-cover border-2 border-emerald-400 shadow shrink-0" />
                 <div>
-                  <div className="font-bold text-sm">Bobinas Express AI <i className="fa-solid fa-circle-check text-sky-300 text-xs"></i></div>
+                  <div className="font-bold text-sm">JF Auto Parts AI <i className="fa-solid fa-circle-check text-sky-300 text-xs"></i></div>
                   <p className="text-[10px] text-emerald-200">Oficial {ownerSettings.ownerPhone} • En línea</p>
                 </div>
               </div>
@@ -1353,7 +1353,7 @@
                     </div>
                   ) : (
                     <div className="relative bg-[#202c33] text-[#e9edef] rounded-lg rounded-tl-none p-3 shadow max-w-[85%] chat-bubble-tail-in text-xs sm:text-sm">
-                      <div className="font-semibold text-brand-400 text-[10px] uppercase mb-1"><i className="fa-solid fa-microchip"></i> Asesor Bobinas Express AI</div>
+                      <div className="font-semibold text-brand-400 text-[10px] uppercase mb-1 flex items-center gap-1.5"><img src="./logo.png" alt="Logo" className="w-3.5 h-3.5 rounded-full object-cover inline-block" /> Asesor JF Auto Parts AI</div>
                       {isAdmin && m.badge && (
                         <div className="mb-2 px-2 py-0.5 bg-slate-800 rounded text-[9px] font-mono text-sky-400 border border-slate-700">
                           <i className="fa-solid fa-database mr-1"></i>{m.badge}
@@ -1929,7 +1929,11 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="text-base font-bold text-white text-center"><i className="fa-solid fa-lock text-brand-500 mr-2"></i> Acceso Administrador</h3>
+            <div className="text-center">
+              <img src="./logo.png" alt="JF AUTO PARTS Logo" className="h-14 w-14 rounded-xl object-cover mx-auto mb-2 border border-slate-700 shadow-md" />
+              <h3 className="text-base font-bold text-white"><i className="fa-solid fa-lock text-brand-500 mr-1.5"></i> Acceso Administrador</h3>
+              <p className="text-[11px] text-slate-400">JF AUTO PARTS</p>
+            </div>
             {authLockReason && <p className="text-xs text-rose-300 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">{authLockReason}</p>}
             <input type="text" value={u} onChange={e => setU(e.target.value)} placeholder="Usuario (admin)" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" />
             <input type="password" value={p} onChange={e => setP(e.target.value)} placeholder="Ingresa tu contraseña" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
@@ -2188,17 +2192,22 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
             {tab === 'admin' && <AdminConfigView />}
           </main>
 
-          <footer className="bg-slate-950 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-            Bobinas Express &copy; {new Date().getFullYear()} •{' '}
-            <a
-              href="https://wa.me/584126497478"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-400 hover:text-emerald-300 font-semibold underline"
-            >
-              WhatsApp
-            </a>{' '}
-            • Desarrollado con React 18 Modular
+          <footer className="bg-slate-950 border-t border-slate-800 py-6 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
+            <div className="flex items-center gap-2">
+              <img src="./logo.png" alt="JF AUTO PARTS Logo" className="h-6 w-6 rounded-md object-cover border border-slate-800" />
+              <span className="text-white font-semibold">JF Auto Parts &copy; {new Date().getFullYear()}</span>
+            </div>
+            <div>
+              <a
+                href="https://wa.me/584126497478"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 hover:text-emerald-300 font-semibold underline"
+              >
+                WhatsApp Oficial
+              </a>{' '}
+              • Especialistas en Encendido & Repuestos Automotrices
+            </div>
           </footer>
 
           <CartDrawer />

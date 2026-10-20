@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import logoImg from '../../assets/logo.png';
 
 export function AuthModal() {
   const { authModalOpen, closeAuthModal, login, authLockReason, isAdmin, logout } = useAuth();
@@ -23,13 +24,20 @@ export function AuthModal() {
           <i className="fa-solid fa-xmark"></i>
         </button>
 
-        {/* Lock Icon & Title */}
+        {/* Brand Logo & Title */}
         <div className="text-center mb-5">
-          <div className="h-12 w-12 rounded-2xl bg-brand-500/20 text-brand-400 border border-brand-500/30 flex items-center justify-center mx-auto mb-3 text-xl shadow">
-            <i className={`fa-solid ${isAdmin ? 'fa-unlock-keyhole text-emerald-400' : 'fa-lock'}`}></i>
+          <div className="relative inline-block mb-3">
+            <img 
+              src={logoImg} 
+              alt="JF Auto Parts Logo" 
+              className="h-16 w-16 rounded-2xl object-cover mx-auto border-2 border-slate-700 shadow-xl shadow-black/50" 
+            />
+            <div className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-lg ${isAdmin ? 'bg-emerald-500' : 'bg-brand-500'} text-white flex items-center justify-center text-xs shadow-md border-2 border-slate-900`}>
+              <i className={`fa-solid ${isAdmin ? 'fa-unlock-keyhole' : 'fa-lock'}`}></i>
+            </div>
           </div>
           <h3 className="text-base font-bold text-white">
-            {isAdmin ? 'Sesión de Administrador Activa' : 'Acceso Restringido - Administrador'}
+            {isAdmin ? 'Sesión de Administrador Activa' : 'JF AUTO PARTS • Acceso Administrador'}
           </h3>
           <p className="text-xs text-slate-400 mt-1">
             {isAdmin ? 'Tienes acceso ilimitado a modificación de stock y ventas.' : 'Ingresa tus credenciales de dueño para gestionar inventario.'}

@@ -22,7 +22,7 @@ export function AdminConfigView() {
   const handleResetPrompt = () => {
     setForm(prev => ({
       ...prev,
-      systemPrompt: `Eres el Asesor y Agente Oficial de IA de "Bobinas Express" para WhatsApp (0412-6497478).
+      systemPrompt: `Eres el Asesor y Agente Oficial de IA de "JF Auto Parts" para WhatsApp (0412-6497478).
 Tu misión es asistir a mecánicos y dueños de vehículos a encontrar la bobina de encendido exacta para su auto consultando la base de datos activa en tiempo real.
 
 Directrices de conversación:

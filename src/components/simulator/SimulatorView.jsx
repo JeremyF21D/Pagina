@@ -6,6 +6,7 @@ import { ChatMessage } from './ChatMessage';
 import { ChatQuickPrompts } from './ChatQuickPrompts';
 import { DatabaseConsole } from './DatabaseConsole';
 import { getEngineLabel } from '../../utils/formatters';
+import logoImg from '../../assets/logo.png';
 
 export function SimulatorView({ initialPrompt, onTriggerSaleModal }) {
   const { coils, dbEngine, ownerSettings } = useInventory();
@@ -20,7 +21,7 @@ export function SimulatorView({ initialPrompt, onTriggerSaleModal }) {
     {
       id: 'init-msg',
       sender: 'bot',
-      html: `¡Hola! 👋 Soy el <strong>Asesor Virtual Inteligente de Bobinas Express</strong>.<br><br>Escríbeme la marca, modelo de auto, año o código OEM que necesitas y confirmaré existencias y precios al instante.`,
+      html: `¡Hola! 👋 Soy el <strong>Asesor Virtual Inteligente de JF Auto Parts</strong>.<br><br>Escríbeme la marca, modelo de auto, año o código OEM que necesitas y confirmaré existencias y precios al instante.`,
       badge: `Conectado a ${getEngineLabel(dbEngine)} (${coils.length} bobinas)`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       product: null
@@ -101,14 +102,16 @@ export function SimulatorView({ initialPrompt, onTriggerSaleModal }) {
         <div className="bg-[#075e54] text-white p-3.5 flex items-center justify-between shadow-md z-10">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="h-10 w-10 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center font-extrabold text-brand-500 shadow">
-                <i className="fa-solid fa-bolt text-lg"></i>
-              </div>
+              <img
+                src={logoImg}
+                alt="JF Auto Parts Logo"
+                className="h-10 w-10 rounded-full object-cover border-2 border-emerald-400 shadow shrink-0"
+              />
               <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-400 border-2 border-[#075e54]"></span>
             </div>
             <div>
               <div className="flex items-center gap-1.5 font-bold text-sm leading-tight">
-                <span>Bobinas Express AI</span>
+                <span>JF Auto Parts AI</span>
                 <i className="fa-solid fa-circle-check text-sky-300 text-xs" title="Verificado"></i>
               </div>
               <p className="text-[10px] text-emerald-200">
@@ -157,7 +160,7 @@ export function SimulatorView({ initialPrompt, onTriggerSaleModal }) {
               {isAdmin ? (
                 <span><i className="fa-solid fa-shield text-[9px] mr-1"></i> Modo Administrador activo • Consultas y comandos SQL auditados.</span>
               ) : (
-                <span><i className="fa-solid fa-check-circle text-[9px] mr-1"></i> Asesor Oficial de Bobinas Express • Consulta de repuestos en tiempo real.</span>
+                <span><i className="fa-solid fa-check-circle text-[9px] mr-1"></i> Asesor Oficial de JF Auto Parts • Consulta de repuestos en tiempo real.</span>
               )}
             </div>
           </div>

@@ -10,7 +10,7 @@ export function TopNoticeBar() {
 
   const handleOpenWhatsApp = () => {
     const phone = normalizeWaPhone(ownerSettings.ownerPhone);
-    const text = encodeURIComponent('¡Hola! Me comunico desde Bobinas Express para consultar disponibilidad de repuestos.');
+    const text = encodeURIComponent('¡Hola! Me comunico desde JF Auto Parts para consultar disponibilidad de repuestos.');
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   };
 

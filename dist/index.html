@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JF AUTO PARTS | Especialistas en Repuestos & Bobinas de Encendido</title>
+  <link rel="icon" type="image/png" href="./assets/favicon-KbgPO90d.png" />
+  <link rel="apple-touch-icon" href="./assets/logo-CF17MWs_.png" />
+  
+  <!-- Font Awesome Icons 6.4.0 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="./assets/index-DF8tno5l.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Dp4iP769.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+  <!-- Contenedor Raíz de React -->
+  <div id="root">
+    <!-- Mensaje explicativo mientras carga Vite o si se abre directamente por doble clic -->
+    <noscript>
+      <div style="padding: 24px; text-align: center; color: white;">
+        Debes habilitar JavaScript para ejecutar la aplicación Bobinas Express.
+      </div>
+    </noscript>
+  </div>
+
+  <!-- Script detector si se abre por file:/// en vez de servidor local Vite -->
+  <script>
+    if (window.location.protocol === 'file:') {
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const rootEl = document.getElementById('root');
+          if (rootEl && (!rootEl.firstElementChild || rootEl.firstElementChild.tagName === 'NOSCRIPT')) {
+            rootEl.innerHTML = `
+              <div style="max-width: 680px; margin: 40px auto; padding: 32px; background: #0f172a; border: 1px solid #334155; border-radius: 20px; font-family: Inter, sans-serif; color: #f8fafc; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;">
+                <div style="margin-bottom: 16px;">
+                  <img src="./logo.png" alt="JF AUTO PARTS" style="width: 76px; height: 76px; border-radius: 18px; object-fit: cover; border: 1px solid #334155; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.5);" />
+                </div>
+                <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 10px 0;">JF AUTO PARTS | Plataforma Web</h1>
+                <p style="font-size: 14px; color: #94a3b8; line-height: 1.6; margin: 0 0 20px 0;">
+                  Has abierto este archivo directamente con doble clic (<code>file:///</code>). En proyectos profesionales de <strong>React + Vite</strong>, <code>index.html</code> contiene únicamente el contenedor <code>&lt;div id="root"&gt;&lt;/div&gt;</code>, mientras que todo el código, componentes, catálogo e IA están modularizados dentro de la carpeta <strong style="color: #38bdf8;">src/</strong>.
+                </p>
+                <div style="text-align: left; background: #1e293b; padding: 16px 20px; border-radius: 12px; border: 1px solid #334155; font-size: 13px; margin-bottom: 24px; color: #e2e8f0; line-height: 1.7;">
+                  <strong style="color: #ef4444; display: block; margin-bottom: 6px;">¿Cómo ver la aplicación?</strong>
+                  • <strong>Opción 1 (Recomendada con Vite):</strong> Abre una terminal en esta carpeta y ejecuta:
+                    <div style="background: #090d16; padding: 8px 12px; border-radius: 8px; font-family: monospace; color: #34d399; margin: 6px 0;">npm install<br>npm run dev</div>
+                  • <strong>Opción 2 (Doble clic directo sin instalar nada):</strong><br>
+                    Abre el archivo <strong style="color: #38bdf8;">app_react_standalone.html</strong> incluido en esta carpeta.
+                </div>
+                <div style="font-size: 12px; color: #64748b;">
+                  Archivos modulares en: <span style="font-family: monospace; color: #cbd5e1;">src/App.jsx</span> • <span style="font-family: monospace; color: #cbd5e1;">src/components/</span> • <span style="font-family: monospace; color: #cbd5e1;">src/context/</span>
+                </div>
+              </div>
+            `;
+          }
+        }, 800);
+      });
+    }
+  </script>
+
+  <!-- Punto de entrada modular de React -->
+</body>
+</html>

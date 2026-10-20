@@ -4,6 +4,7 @@ import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { buildPreOrderUrl } from '../../utils/whatsapp';
 import { formatUSD } from '../../utils/formatters';
+import logoImg from '../../assets/logo.png';
 
 export function ChatMessage({ message, onTriggerSaleModal }) {
   const { addToCart } = useCart();
@@ -32,8 +33,8 @@ export function ChatMessage({ message, onTriggerSaleModal }) {
         </div>
       ) : (
         <div className="relative bg-white dark:bg-[#202c33] dark:text-[#e9edef] rounded-lg rounded-tl-none p-3 shadow max-w-[85%] chat-bubble-tail-in">
-          <div className="font-semibold text-brand-600 dark:text-brand-400 text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-            <i className="fa-solid fa-microchip"></i> Asesor Bobinas Express AI
+          <div className="font-semibold text-brand-600 dark:text-brand-400 text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <img src={logoImg} alt="Logo" className="w-3.5 h-3.5 rounded-full object-cover inline-block" /> Asesor JF Auto Parts AI
           </div>
 
           {isAdmin && message.badge && (

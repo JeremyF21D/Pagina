@@ -21,7 +21,7 @@ export function buildCartCheckoutUrl({ targetPhone, clientName, clientPhone, cli
   const phone = normalizeWaPhone(targetPhone);
   const itemsText = cartItems.map(i => `• ${i.qty}x ${i.name} ($${Number(i.price).toFixed(2)})`).join('\n');
   
-  const text = `⚡ *NUEVO PEDIDO CONFIRMADO (${orderTag || 'ORD-WA'}) - BOBINAS EXPRESS*\n\n` +
+  const text = `⚡ *NUEVO PEDIDO CONFIRMADO (${orderTag || 'ORD-WA'}) - JF AUTO PARTS*\n\n` +
     `👤 *Cliente:* ${clientName} (${clientPhone})\n` +
     `🚗 *Vehículo / Envío:* ${clientCar || 'Por especificar'}\n` +
     `💳 *Referencia / Pago:* ${clientPayRef || 'A coordinar'}\n\n` +
@@ -37,7 +37,7 @@ export function buildCartCheckoutUrl({ targetPhone, clientName, clientPhone, cli
  */
 export function buildOwnerAlertUrl({ ownerPhone, order }) {
   const phone = normalizeWaPhone(ownerPhone);
-  const text = `🔔 *CONFIRMACIÓN DE VENTA - BOBINAS EXPRESS*\n\n` +
+  const text = `🔔 *CONFIRMACIÓN DE VENTA - JF AUTO PARTS*\n\n` +
     `🧾 *Orden:* #${order.orderId}\n` +
     `👤 *Cliente:* ${order.customerName} (${order.customerPhone})\n` +
     `🔩 *Producto:* ${order.qty}x ${order.coilName} (OEM: ${order.oem})\n` +

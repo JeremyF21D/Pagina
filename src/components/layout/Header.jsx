@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useInventory } from '../../context/InventoryContext';
 import { normalizeWaPhone } from '../../utils/whatsapp';
+import logoImg from '../../assets/logo.png';
 
 export function Header({ activeTab, setActiveTab }) {
   const { isAdmin, openAuthModal, logout, requireAdminAuth } = useAuth();
@@ -23,7 +24,7 @@ export function Header({ activeTab, setActiveTab }) {
 
   const handleOpenDirectWhatsApp = () => {
     const phone = normalizeWaPhone(ownerSettings.ownerPhone);
-    const text = encodeURIComponent('¡Hola! Me comunico desde la plataforma de Bobinas Express para consultar disponibilidad de repuestos.');
+    const text = encodeURIComponent('¡Hola! Me comunico desde la plataforma de JF Auto Parts para consultar disponibilidad de repuestos.');
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   };
 
@@ -44,15 +45,18 @@ export function Header({ activeTab, setActiveTab }) {
           className="flex items-center gap-2 sm:gap-3 shrink-0 cursor-pointer"
           onClick={() => { setActiveTab('catalog'); setMobileMenuOpen(false); }}
         >
-          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-500 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white shrink-0">
-            <i className="fa-solid fa-bolt text-base sm:text-lg"></i>
-          </div>
+          <img
+            src={logoImg}
+            alt="JF AUTO PARTS Logo"
+            className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-cover border border-slate-700/80 shadow-lg shadow-black/40 shrink-0"
+          />
           <div>
-            <span className="text-base sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-1">
-              BOBINAS<span className="text-brand-500">EXPRESS</span>
+            <span className="text-base sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5 font-sans">
+              <span className="text-brand-500">JF</span>
+              <span className="text-white tracking-wider">AUTO PARTS</span>
             </span>
             <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-semibold -mt-0.5 sm:-mt-1 hidden xs:block">
-              Especialistas en Encendido
+              Repuestos & Encendido Automotriz
             </p>
           </div>
         </div>

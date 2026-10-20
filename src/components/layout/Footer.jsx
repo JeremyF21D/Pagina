@@ -3,6 +3,7 @@ import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { getEngineLabel } from '../../utils/formatters';
 import { normalizeWaPhone } from '../../utils/whatsapp';
+import logoImg from '../../assets/logo.png';
 
 export function Footer() {
   const { dbEngine, coils, ownerSettings } = useInventory();
@@ -10,7 +11,7 @@ export function Footer() {
 
   const handleOpenWhatsApp = () => {
     const phone = normalizeWaPhone(ownerSettings.ownerPhone);
-    const text = encodeURIComponent('¡Hola! Me comunico desde Bobinas Express para consultar disponibilidad de repuestos.');
+    const text = encodeURIComponent('¡Hola! Me comunico desde JF Auto Parts para consultar disponibilidad de repuestos.');
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   };
 
@@ -19,12 +20,14 @@ export function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold shrink-0">
-            <i className="fa-solid fa-bolt"></i>
-          </div>
+          <img
+            src={logoImg}
+            alt="JF AUTO PARTS Logo"
+            className="h-9 w-9 rounded-xl object-cover border border-slate-800 shadow shrink-0"
+          />
           <div>
-            <p className="text-white font-bold text-sm">Bobinas Express &copy; {new Date().getFullYear()}</p>
-            <p className="text-[11px] text-slate-500">Distribución de bobinas de encendido automotriz directas de importación</p>
+            <p className="text-white font-bold text-sm">JF Auto Parts &copy; {new Date().getFullYear()}</p>
+            <p className="text-[11px] text-slate-500">Distribución de bobinas de encendido y repuestos automotrices directos de importación</p>
           </div>
         </div>
 
