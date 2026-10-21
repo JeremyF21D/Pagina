@@ -196,6 +196,11 @@
 
       // Image / Foto
       const rawImage = String(raw.image ?? raw.imageUrl ?? raw.image_url ?? raw.img ?? raw.foto ?? raw.imagen ?? raw.url_imagen ?? '').trim();
+      let finalImage = rawImage;
+      if (!finalImage && Array.isArray(DEFAULT_BOBINAS_SEED)) {
+        const seedMatch = DEFAULT_BOBINAS_SEED.find(s => s.id.toLowerCase() === safeId.toLowerCase() || (s.oem && oemVal && s.oem.toLowerCase().includes(oemVal.toLowerCase())));
+        if (seedMatch && seedMatch.image) finalImage = seedMatch.image;
+      }
 
       return {
         id: safeId,
@@ -212,7 +217,7 @@
         inStock: safeStock > 0,
         warranty: warrantyVal,
         badge: badgeVal,
-        image: rawImage
+        image: finalImage
       };
     }
 
@@ -376,24 +381,41 @@
     }
     const useAuth = () => useContext(AuthContext);
 
+    function getSupabaseHeaders(key, extraHeaders = {}) {
+      const cleanKey = String(key || '').trim();
+      const headers = { 'apikey': cleanKey, 'Content-Type': 'application/json', ...extraHeaders };
+      if (cleanKey.startsWith('eyJ')) headers['Authorization'] = `Bearer ${cleanKey}`;
+      return headers;
+    }
+
     const InventoryContext = createContext(null);
     function InventoryProvider({ children }) {
       const { showToast } = useToast();
       const [coils, setCoils] = useState(() => {
         try {
-          const s = localStorage.getItem('BOBINAS_EXPRESS_STORE_V4');
-          if (s !== null) { const p = JSON.parse(s); if (Array.isArray(p)) return p.map(normalizeCoilRecord); }
+          const s = localStorage.getItem('BOBINAS_EXPRESS_STORE_V5');
+          if (s !== null) { const p = JSON.parse(s); if (Array.isArray(p) && p.length > 0) return p.map(normalizeCoilRecord); }
         } catch (e) {}
         return [];
       });
       const [isDbLoading, setIsDbLoading] = useState(true);
-      const [dbEngine, setDbEngine] = useState(() => localStorage.getItem('BOBINAS_EXPRESS_ENGINE_V4') || 'local');
+      const [dbEngine, setDbEngine] = useState(() => {
+        try {
+          const saved = localStorage.getItem('BOBINAS_EXPRESS_ENGINE_V5');
+          if (!saved || saved === 'local') {
+            localStorage.setItem('BOBINAS_EXPRESS_ENGINE_V5', 'supabase');
+            return 'supabase';
+          }
+          return saved;
+        } catch (e) {}
+        return 'supabase';
+      });
       const [salesHistory, setSalesHistory] = useState(() => {
-        try { const s = localStorage.getItem('BOBINAS_EXPRESS_SALES_V4'); if (s) return JSON.parse(s); } catch (e) {}
+        try { const s = localStorage.getItem('BOBINAS_EXPRESS_SALES_V5'); if (s) return JSON.parse(s); } catch (e) {}
         return INITIAL_SALES_SEED;
       });
       const [ownerSettings, setOwnerSettings] = useState(() => {
-        try { const s = localStorage.getItem('BOBINAS_EXPRESS_PREFS_V4'); if (s) return JSON.parse(s); } catch (e) {}
+        try { const s = localStorage.getItem('BOBINAS_EXPRESS_PREFS_V5'); if (s) return JSON.parse(s); } catch (e) {}
         return {
           ownerPhone: OFFICIAL_WA_RAW,
           ownerName: 'Administrador Principal',
@@ -407,14 +429,21 @@
 
       const [dbCredentials, setDbCredentials] = useState(() => {
         try {
-          const s = localStorage.getItem('BOBINAS_EXPRESS_CREDS_V4');
-          if (s) return JSON.parse(s);
+          try {
+            localStorage.removeItem('BOBINAS_EXPRESS_CREDS_V4');
+            localStorage.removeItem('BOBINAS_EXPRESS_STORE_V4');
+            localStorage.removeItem('BOBINAS_EXPRESS_ENGINE_V4');
+          } catch(e) {}
+          const s = localStorage.getItem('BOBINAS_EXPRESS_CREDS_V5');
+          if (s) {
+            const parsed = JSON.parse(s);
+            if (parsed && parsed.supabase && parsed.supabase.url && !parsed.supabase.url.includes('...')) return parsed;
+          }
         } catch (e) {}
         return {
-          supabase: { url: 'https://vznqrxvblgghjswdmsaa.supabase.co/rest/v1', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', table: 'bobinas_inventario' },
+          supabase: { url: 'https://peyvpeloxhjumgwlclkm.supabase.co/rest/v1', anonKey: 'sb_publishable_DXASx1SFxoVRKd_K22U3qA_OiQkaTc_', table: 'bobinas_inventario' },
           mongodb: { uri: 'https://data.mongodb-api.com/app/data-express/endpoint/data/v1', apiKey: 'mongo_sec_token_88921...', database: 'bobinas_express_db', collection: 'bobinas' },
-          mysql: { apiUrl: 'https://api.bobinasexpress.com/v1/inventory', bearerToken: 'bearer_token_sql_live_4492', table: 'bobinas' },
-          local: { storageKey: 'BOBINAS_EXPRESS_STORE_V4' }
+          mysql: { apiUrl: 'https://api.bobinasexpress.com/v1/inventory', bearerToken: 'bearer_token_sql_live_4492', table: 'bobinas' }
         };
       });
 
@@ -427,7 +456,7 @@
       });
 
       useEffect(() => {
-        try { localStorage.setItem('BOBINAS_EXPRESS_CREDS_V4', JSON.stringify(dbCredentials)); } catch (e) {}
+        try { localStorage.setItem('BOBINAS_EXPRESS_CREDS_V5', JSON.stringify(dbCredentials)); } catch (e) {}
       }, [dbCredentials]);
 
       const updateDbCredentials = (engine, newFields) => {
@@ -464,7 +493,7 @@
                     creds = serverData.dbCredentials[targetEngine] || creds;
                     setDbCredentials(prev => ({ ...prev, ...serverData.dbCredentials }));
                   }
-                  if (targetEngine === 'local' && Array.isArray(serverData.coils)) {
+                  if (targetEngine === 'local' && Array.isArray(serverData.coils) && serverData.coils.length > 0) {
                     rawElements = serverData.coils;
                   }
                 }
@@ -473,58 +502,59 @@
           } catch (e) {}
 
           if (targetEngine === 'supabase') {
-            const rawUrl = String(creds.url || '').trim();
-            const anonKey = String(creds.anonKey || '').trim();
+            const rawUrl = (creds.url && !creds.url.includes('...') && !creds.url.includes('vznqrxvblgghjswdmsaa')) 
+              ? creds.url 
+              : 'https://peyvpeloxhjumgwlclkm.supabase.co/rest/v1';
+            const anonKey = (creds.anonKey && !creds.anonKey.includes('...')) 
+              ? String(creds.anonKey).trim() 
+              : 'sb_publishable_DXASx1SFxoVRKd_K22U3qA_OiQkaTc_';
             const table = String(creds.table || 'bobinas_inventario').trim();
-            if (rawUrl && anonKey) {
-              try {
-                let cleanUrl = rawUrl;
-                if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
-                let baseUrl = cleanUrl;
-                try {
-                  baseUrl = new URL(cleanUrl).origin;
-                } catch (e) {
-                  baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
-                }
-                const res = await fetch(`${baseUrl}/rest/v1/${table}?select=*`, {
-                  headers: { 
-                    'apikey': anonKey, 
-                    'Authorization': `Bearer ${anonKey}`, 
-                    'Content-Type': 'application/json',
-                    'Prefer': 'count=exact'
-                  }
-                });
-                if (res.ok) {
-                  rawElements = await res.json();
-                } else if (res.status === 404 || res.status === 400) { 
-                  tableCreated = true; 
-                  rawElements = []; 
-                }
-              } catch (e) { 
-                rawElements = []; 
-              }
+
+            let cleanUrl = rawUrl;
+            if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
+            let baseUrl = cleanUrl;
+            try {
+              baseUrl = new URL(cleanUrl).origin;
+            } catch (e) {
+              baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
+            }
+            const res = await fetch(`${baseUrl}/rest/v1/${table}?select=*`, {
+              headers: getSupabaseHeaders(anonKey, { 'Prefer': 'count=exact' })
+            });
+            if (res.ok) {
+              const rows = await res.json();
+              rawElements = Array.isArray(rows) ? rows : [];
+            } else {
+              throw new Error(`Error en Supabase (HTTP ${res.status})`);
             }
           } else if (targetEngine === 'mongodb') {
             const uri = String(creds.uri || '').replace(/\/+$/, '');
-            if (uri && creds.apiKey) {
-              try {
-                const res = await fetch(`${uri}/action/find`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'api-key': creds.apiKey },
-                  body: JSON.stringify({ dataSource: 'Cluster0', database: creds.database || 'bobinas_express_db', collection: creds.collection || 'bobinas', filter: {} })
-                });
-                if (res.ok) { const d = await res.json(); rawElements = d.documents || []; }
-              } catch (e) { rawElements = []; }
+            if (!uri || !creds.apiKey || creds.apiKey.includes('...')) {
+              throw new Error('Faltan credenciales válidas de MongoDB.');
             }
+            const res = await fetch(`${uri}/action/find`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'api-key': creds.apiKey },
+              body: JSON.stringify({ dataSource: 'Cluster0', database: creds.database || 'bobinas_express_db', collection: creds.collection || 'bobinas', filter: {} })
+            });
+            if (res.ok) { const d = await res.json(); rawElements = d.documents || []; }
+            else { throw new Error(`Error MongoDB (${res.status})`); }
           } else if (targetEngine === 'mysql') {
             const apiUrl = String(creds.apiUrl || '').replace(/\/+$/, '');
-            if (apiUrl) {
+            if (!apiUrl || apiUrl.includes('bobinasexpress.com')) {
+              throw new Error('Faltan credenciales válidas de MySQL / REST API.');
+            }
+            const headers = { 'Content-Type': 'application/json' };
+            if (creds.bearerToken) headers['Authorization'] = `Bearer ${creds.bearerToken}`;
+            const res = await fetch(apiUrl, { headers });
+            if (res.ok) { const d = await res.json(); rawElements = Array.isArray(d) ? d : (d.items || []); }
+            else { throw new Error(`Error MySQL (${res.status})`); }
+          } else if (targetEngine === 'local') {
+            if (rawElements.length === 0) {
               try {
-                const headers = { 'Content-Type': 'application/json' };
-                if (creds.bearerToken) headers['Authorization'] = `Bearer ${creds.bearerToken}`;
-                const res = await fetch(apiUrl, { headers });
-                if (res.ok) { const d = await res.json(); rawElements = Array.isArray(d) ? d : (d.items || []); }
-              } catch (e) { rawElements = []; }
+                const s = localStorage.getItem('BOBINAS_EXPRESS_STORE_V4');
+                if (s) { const p = JSON.parse(s); if (Array.isArray(p)) rawElements = p; }
+              } catch (e) {}
             }
           }
 
@@ -534,19 +564,19 @@
           const elapsed = Math.round(performance.now() - start);
 
           setCoils(verified);
-          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify(verified)); } catch (e) {}
+          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V5', JSON.stringify(verified)); } catch (e) {}
           broadcastSync(verified);
 
           const msg = tableCreated 
             ? `Base de datos ${targetEngine.toUpperCase()} lista (0 artículos)` 
-            : `Conectado a ${targetEngine.toUpperCase()}: ${verified.length} bobinas verificadas (${Math.max(14, elapsed)}ms)`;
+            : `Conectado a ${targetEngine.toUpperCase()}: ${verified.length} artículos en la base de datos (${Math.max(14, elapsed)}ms)`;
 
           setApiConnectionStatus({ status: 'connected', latency: Math.max(14, elapsed), lastChecked: new Date(), message: msg, itemCount: verified.length });
           if (showNotification) showToast(`🟢 ${msg}`);
           return { success: true, count: verified.length, elements: verified };
         } catch (err) {
           setCoils([]);
-          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify([])); } catch (e) {}
+          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V5', JSON.stringify([])); } catch (e) {}
           setApiConnectionStatus({ status: 'error', latency: 0, lastChecked: new Date(), message: err.message, itemCount: 0 });
           return { success: false, error: err.message };
         } finally {
@@ -575,7 +605,7 @@
                 const table = String(creds.table || 'bobinas_inventario').trim();
                 await fetch(`${baseUrl}/rest/v1/${table}`, {
                   method: 'POST',
-                  headers: { 'apikey': creds.anonKey, 'Authorization': `Bearer ${creds.anonKey}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                  headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
                   body: JSON.stringify(coils.map(c => ({
                     id: c.id, name: c.name, brand: c.brand, car_model: c.carModel, engine: c.engine, oem: c.oem,
                     type: c.type, connector: c.connector, price: c.price, old_price: c.oldPrice, stock: c.stock,
@@ -590,10 +620,10 @@
         }
       };
 
-      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify(coils)); }, [coils]);
-      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_SALES_V4', JSON.stringify(salesHistory)); }, [salesHistory]);
-      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_ENGINE_V4', dbEngine); }, [dbEngine]);
-      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_PREFS_V4', JSON.stringify(ownerSettings)); }, [ownerSettings]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_STORE_V5', JSON.stringify(coils)); }, [coils]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_SALES_V5', JSON.stringify(salesHistory)); }, [salesHistory]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_ENGINE_V5', dbEngine); }, [dbEngine]);
+      useEffect(() => { localStorage.setItem('BOBINAS_EXPRESS_PREFS_V5', JSON.stringify(ownerSettings)); }, [ownerSettings]);
 
       // Chequeo inicial automático
       useEffect(() => {
@@ -616,7 +646,7 @@
       // Cross-tab storage fallback
       useEffect(() => {
         const handleStorage = (e) => {
-          if (e.key === 'BOBINAS_EXPRESS_STORE_V4' && e.newValue) {
+          if (e.key === 'BOBINAS_EXPRESS_STORE_V5' && e.newValue) {
             try {
               const parsed = JSON.parse(e.newValue);
               if (Array.isArray(parsed)) {
@@ -656,7 +686,7 @@
         const target = String(id || '').trim().toLowerCase();
         setCoils(prev => {
           const next = prev.filter(b => String(b.id || '').trim().toLowerCase() !== target);
-          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify(next)); } catch(e) {}
+          try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V5', JSON.stringify(next)); } catch(e) {}
           broadcastSync(next);
           pushToApi(next, dbEngine, dbCredentials);
           return next;
@@ -666,7 +696,7 @@
 
       const clearInventory = () => {
         setCoils([]);
-        try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V4', JSON.stringify([])); } catch(e) {}
+        try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V5', JSON.stringify([])); } catch(e) {}
         broadcastSync([]);
         pushToApi([], dbEngine, dbCredentials);
         fetch('/api/inventory', { method: 'DELETE' }).catch(() => {});
@@ -1123,7 +1153,7 @@
     }
 
     function CatalogView({ onNavigateTab, onAskAI, onEdit }) {
-      const { coils, isDbLoading, dbEngine } = useInventory();
+      const { coils, isDbLoading, dbEngine, dbCredentials, checkAndSyncDatabase, apiConnectionStatus } = useInventory();
       const { toggleCart } = useCart();
       const { isAdmin, openAuthModal } = useAuth();
       const [q, setQ] = useState('');
@@ -1201,32 +1231,113 @@
             </div>
           </div>
 
+          {/* Results Header Count & Active Table Pill */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <p className="text-xs text-slate-300">
+                Mostrando <strong className="text-white font-bold">{filtered.length}</strong> de {coils.length} bobinas registradas
+              </p>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] text-slate-300 font-mono shadow-xs">
+                <i className="fa-solid fa-table-cells text-emerald-400"></i>
+                <span>Tabla: <strong className="text-white">{dbCredentials?.supabase?.table || 'bobinas_inventario'}</strong></span>
+                <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded uppercase font-sans font-semibold">
+                  SUPABASE
+                </span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
+                disabled={isDbLoading}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-sky-400 hover:text-sky-300 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-xs disabled:opacity-50"
+                title="Refrescar catálogo y verificar productos en la base de datos"
+              >
+                <i className={`fa-solid fa-arrows-rotate text-[11px] ${isDbLoading ? 'fa-spin text-brand-400' : ''}`}></i>
+                <span>{isDbLoading ? 'Sincronizando...' : 'Actualizar Catálogo'}</span>
+              </button>
+            </div>
+          </div>
+
           {/* Grid of Products or Empty / Loading */}
           {isDbLoading ? (
             <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
               <div className="h-10 w-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <h3 className="text-sm font-bold text-white">Consultando base de datos ({dbEngine.toUpperCase()})...</h3>
+              <h3 className="text-sm font-bold text-white">Consultando tabla 'bobinas_inventario' ({dbEngine.toUpperCase()})...</h3>
               <p className="text-xs text-slate-400">Verificando elementos en tiempo real.</p>
             </div>
           ) : coils.length === 0 ? (
-            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-4">
-              <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
-                <i className="fa-solid fa-box-open"></i>
-              </div>
-              <h3 className="text-lg font-bold text-white">Inventario vacío (0 bobinas)</h3>
-              <p className="text-xs text-slate-400">
-                {isAdmin 
-                  ? 'Has vaciado los artículos de la Base de Datos. Puedes ingresar nuevas bobinas, importar un archivo CSV o restaurar las referencias de demostración.'
-                  : 'Actualmente no hay bobinas en el catálogo. Estamos actualizando el inventario en tiempo real. Escríbenos por WhatsApp para consultar existencia.'}
-              </p>
-              {isAdmin && (
-                <div className="flex justify-center gap-2 pt-2">
-                  <button onClick={() => onNavigateTab('database')} className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-semibold transition cursor-pointer">
-                    <i className="fa-solid fa-database mr-1.5"></i> Gestionar Base de Datos
-                  </button>
+            apiConnectionStatus.status === 'error' ? (
+              <div className="bg-slate-800/70 border border-rose-500/30 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl backdrop-blur">
+                <div className="h-16 w-16 bg-rose-500/15 border border-rose-500/40 rounded-full flex items-center justify-center mx-auto text-rose-400 text-2xl shadow-inner">
+                  <i className="fa-solid fa-triangle-exclamation"></i>
                 </div>
-              )}
-            </div>
+                <h3 className="text-xl font-extrabold text-white tracking-tight">
+                  No hay productos disponibles, contacte con el administrador
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  No fue posible conectar con la base de datos de productos ({dbEngine.toUpperCase()}). Para consultar existencias inmediatas, cotizaciones o despachos, comunícate directamente con nosotros por WhatsApp.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2.5 pt-2">
+                  <a
+                    href="https://wa.me/584126497478?text=Hola,%20vi%20en%20la%20tienda%20web%20que%20no%20hay%20productos%20disponibles%20por%20error%20de%20conexión%20con%20la%20base%20de%20datos.%20Deseo%20consultar%20disponibilidad."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                  >
+                    <i className="fa-brands fa-whatsapp text-sm"></i> Contactar por WhatsApp (0412-6497478)
+                  </a>
+                  <button 
+                    onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Reintentar Conexión
+                  </button>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => onNavigateTab('database')}
+                      className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-semibold transition cursor-pointer border border-amber-500/40 flex items-center gap-1.5"
+                    >
+                      <i className="fa-solid fa-database text-amber-400"></i> Configurar Base de Datos (Admin)
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-xl">
+                <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
+                  <i className="fa-solid fa-box-open"></i>
+                </div>
+                <h3 className="text-lg font-bold text-white">No hay productos disponibles actualmente</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  La tabla <strong className="text-white font-mono">{dbCredentials?.[dbEngine]?.table || 'bobinas_inventario'}</strong> está conectada pero no tiene artículos registrados en este momento.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2.5 pt-2">
+                  <a
+                    href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20bobinas%20de%20encendido."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20"
+                  >
+                    <i className="fa-brands fa-whatsapp text-sm"></i> Contactar al Administrador
+                  </a>
+                  <button 
+                    onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Actualizar
+                  </button>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => onNavigateTab('database')}
+                      className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-brand-500/20"
+                    >
+                      <i className="fa-solid fa-plus"></i> Gestionar / Insertar Artículos
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
           ) : filtered.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filtered.map(coil => (
@@ -1498,7 +1609,7 @@
           const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
           return `INSERT INTO public.ventas (order_id, fecha, cliente_nombre, producto_id, producto_nombre, codigo_oem, cantidad, precio_unitario, total_usd, stock_actual_catalogo, referencia_pago, estado, status) VALUES ('${safe(s.orderId)}', '${safe(s.timestamp)}', '${safe(s.customerName)}', '${safe(coil ? coil.id : s.coilId)}', '${safe(coil ? coil.name : s.coilName)}', '${safe(coil ? coil.oem : s.oem)}', ${Number(s.qty || 1)}, ${Number(s.unitPrice || 0).toFixed(2)}, ${Number(s.totalPrice || 0).toFixed(2)}, ${Number(coil ? coil.stock : 0)}, '${safe(s.paymentRef)}', '${safe(s.status || 'CONFIRMED')}', '${safe(s.status || 'CONFIRMED')}');`;
         }).join('\n');
-        const sql = `-- DDL TABLA VENTAS & CATÁLOGO SUPABASE (JF AUTO PARTS)\nCREATE TABLE IF NOT EXISTS public.bobinas_inventario (\n  id TEXT PRIMARY KEY,\n  name TEXT NOT NULL,\n  brand TEXT,\n  car_model TEXT,\n  engine TEXT,\n  oem TEXT,\n  price NUMERIC(10,2) NOT NULL DEFAULT 25.00,\n  stock INTEGER NOT NULL DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS public.ventas (\n  id BIGSERIAL PRIMARY KEY,\n  order_id TEXT NOT NULL UNIQUE,\n  fecha TEXT,\n  cliente_nombre TEXT,\n  producto_id TEXT REFERENCES public.bobinas_inventario(id),\n  producto_nombre TEXT,\n  codigo_oem TEXT,\n  cantidad INTEGER DEFAULT 1,\n  precio_unitario NUMERIC(10,2),\n  total_usd NUMERIC(10,2),\n  stock_actual_catalogo INTEGER,\n  referencia_pago TEXT,\n  estado TEXT DEFAULT 'CONFIRMED',\n  status TEXT DEFAULT 'CONFIRMED'\n);\n\n-- Asegurar columnas si la tabla ya existía (Corrige error PGRST204):\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'CONFIRMED';\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'CONFIRMED';\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_id TEXT;\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_nombre TEXT;\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS codigo_oem TEXT;\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS stock_actual_catalogo INTEGER;\nALTER TABLE public.bobinas_inventario DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;\nNOTIFY pgrst, 'reload schema';\n\n${inserts}`;
+        const sql = `-- DDL TABLA VENTAS & CATÁLOGO SUPABASE (JF AUTO PARTS)\nCREATE TABLE IF NOT EXISTS public.bobinas_inventario (\n  id TEXT PRIMARY KEY,\n  name TEXT NOT NULL,\n  brand TEXT,\n  car_model TEXT,\n  engine TEXT,\n  oem TEXT,\n  price NUMERIC(10,2) NOT NULL DEFAULT 25.00,\n  stock INTEGER NOT NULL DEFAULT 0\n);\n\n-- Asegurar restricción UNIQUE en bobinas_inventario(id) para permitir clave foránea (Corrige error 42830):\nDO $$\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.bobinas_inventario'::regclass AND (conname IN ('bobinas_inventario_pkey', 'bobinas_inventario_id_unique') OR contype = 'p')) THEN\n    ALTER TABLE public.bobinas_inventario ADD CONSTRAINT bobinas_inventario_id_unique UNIQUE (id);\n  END IF;\nEND $$;\n\nCREATE TABLE IF NOT EXISTS public.ventas (\n  id BIGSERIAL PRIMARY KEY,\n  order_id TEXT NOT NULL UNIQUE,\n  fecha TEXT,\n  cliente_nombre TEXT,\n  producto_id TEXT,\n  producto_nombre TEXT,\n  codigo_oem TEXT,\n  cantidad INTEGER DEFAULT 1,\n  precio_unitario NUMERIC(10,2),\n  total_usd NUMERIC(10,2),\n  stock_actual_catalogo INTEGER,\n  referencia_pago TEXT,\n  estado TEXT DEFAULT 'CONFIRMED',\n  status TEXT DEFAULT 'CONFIRMED'\n);\n\n-- Asegurar columnas si la tabla ya existía (Corrige error PGRST204):\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'CONFIRMED';\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'CONFIRMED';\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_id TEXT;\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS producto_nombre TEXT;\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS codigo_oem TEXT;\nALTER TABLE public.ventas ADD COLUMN IF NOT EXISTS stock_actual_catalogo INTEGER;\n\n-- Vincular clave foránea con el catálogo:\nDO $$\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_ventas_producto_catalogo') THEN\n    ALTER TABLE public.ventas ADD CONSTRAINT fk_ventas_producto_catalogo FOREIGN KEY (producto_id) REFERENCES public.bobinas_inventario(id) ON DELETE SET NULL;\n  END IF;\nEND $$;\n\nALTER TABLE public.bobinas_inventario DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.ventas DISABLE ROW LEVEL SECURITY;\nNOTIFY pgrst, 'reload schema';\n\n${inserts}`;
         downloadFile(sql, `jf_autoparts_ventas_supabase_${Date.now()}.sql`, 'application/sql;charset=utf-8;');
       };
 

@@ -8,12 +8,12 @@ import { SUPABASE_CONFIG } from '../config/supabaseConfig';
 
 const InventoryContext = createContext(null);
 
-const STORAGE_KEY_INVENTORY = 'BOBINAS_EXPRESS_STORE_V4';
-const STORAGE_KEY_ENGINE = 'BOBINAS_EXPRESS_ENGINE_V4';
-const STORAGE_KEY_SALES_LOG = 'BOBINAS_EXPRESS_SALES_V4';
-const STORAGE_KEY_OWNER_PREFS = 'BOBINAS_EXPRESS_PREFS_V4';
-const STORAGE_KEY_CREDENTIALS = 'BOBINAS_EXPRESS_CREDS_V4';
-const SYNC_CHANNEL_NAME = 'bobinas_express_sync_v4';
+const STORAGE_KEY_INVENTORY = 'BOBINAS_EXPRESS_STORE_V5';
+const STORAGE_KEY_ENGINE = 'BOBINAS_EXPRESS_ENGINE_V5';
+const STORAGE_KEY_SALES_LOG = 'BOBINAS_EXPRESS_SALES_V5';
+const STORAGE_KEY_OWNER_PREFS = 'BOBINAS_EXPRESS_PREFS_V5';
+const STORAGE_KEY_CREDENTIALS = 'BOBINAS_EXPRESS_CREDS_V5';
+const SYNC_CHANNEL_NAME = 'bobinas_express_sync_v5';
 
 const broadcastSync = (items) => {
   if (typeof BroadcastChannel !== 'undefined') {
@@ -56,6 +56,46 @@ export const getSupabaseHeaders = (key, extraHeaders = {}) => {
     headers['Authorization'] = `Bearer ${cleanKey}`;
   }
   return headers;
+};
+
+/**
+ * Retorna la configuración activa de Supabase garantizando que NUNCA quede vacía.
+ * Si las credenciales del usuario están vacías, son de prueba o están corruptas,
+ * recurre de inmediato a los valores oficiales de SUPABASE_CONFIG.
+ */
+export const getActiveSupabaseConfig = (customCreds = null, allCreds = null) => {
+  const supa = customCreds || allCreds?.supabase || {};
+  
+  const rawUrl = (supa.url && !supa.url.includes('...') && !supa.url.includes('vznqrxvblgghjswdmsaa'))
+    ? supa.url
+    : SUPABASE_CONFIG.url;
+
+  const rawKey = (supa.anonKey && !supa.anonKey.includes('...'))
+    ? supa.anonKey
+    : SUPABASE_CONFIG.anonKey;
+
+  const table = (supa.table && !supa.table.includes('...'))
+    ? supa.table
+    : (SUPABASE_CONFIG.table || 'bobinas_inventario');
+
+  let cleanUrl = String(rawUrl || '').trim();
+  if (!/^https?:\/\//i.test(cleanUrl)) {
+    cleanUrl = 'https://' + cleanUrl;
+  }
+  let baseUrl = cleanUrl;
+  try {
+    baseUrl = new URL(cleanUrl).origin;
+  } catch (e) {
+    baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
+  }
+
+  return {
+    rawUrl,
+    baseUrl,
+    restUrl: `${baseUrl}/rest/v1`,
+    anonKey: String(rawKey || '').trim(),
+    table: String(table || 'bobinas_inventario').trim()
+  };
 };
 
 const DEFAULT_CREDENTIALS = {
@@ -149,9 +189,30 @@ Directrices de conversación:
 
   const [dbCredentials, setDbCredentials] = useState(() => {
     try {
+      // Purgar claves antiguas que puedan tener credenciales vacías o corruptas
+      try {
+        localStorage.removeItem('BOBINAS_EXPRESS_CREDS_V4');
+        localStorage.removeItem('BOBINAS_EXPRESS_STORE_V4');
+        localStorage.removeItem('BOBINAS_EXPRESS_ENGINE_V4');
+      } catch (e) {}
+
       const saved = localStorage.getItem(STORAGE_KEY_CREDENTIALS);
       if (saved) {
-        return { ...DEFAULT_CREDENTIALS, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        const supa = parsed?.supabase || {};
+        const isSupaValid = Boolean(
+          supa.url &&
+          !supa.url.includes('...') &&
+          !supa.url.includes('vznqrxvblgghjswdmsaa') &&
+          supa.anonKey &&
+          !supa.anonKey.includes('...')
+        );
+
+        return {
+          ...DEFAULT_CREDENTIALS,
+          ...parsed,
+          supabase: isSupaValid ? supa : DEFAULT_CREDENTIALS.supabase
+        };
       }
     } catch (e) {}
     return DEFAULT_CREDENTIALS;
@@ -245,27 +306,10 @@ Directrices de conversación:
 
       // 1. Si el motor activo es Supabase
       if (targetEngine === 'supabase') {
-        const rawUrl = creds.url || '';
-        const anonKey = String(creds.anonKey || '').trim();
-        const table = String(creds.table || 'bobinas_inventario').trim();
+        const { baseUrl, anonKey, table } = getActiveSupabaseConfig(customCreds, dbCredentials);
 
-        // Validar si faltan credenciales o son placeholder
-        const isPlaceholder = !rawUrl || !anonKey || anonKey.includes('...');
-
-        if (isPlaceholder) {
-          throw new Error('No fue posible conectar con Supabase: Ingresa tu URL y Anon Key válidos en Gestión de Base de Datos.');
-        }
-
-        // Normalizar URL: asegurar origen limpio para endpoint de Supabase
-        let cleanUrl = String(rawUrl).trim();
-        if (!/^https?:\/\//i.test(cleanUrl)) {
-          cleanUrl = 'https://' + cleanUrl;
-        }
-        let baseUrl = cleanUrl;
-        try {
-          baseUrl = new URL(cleanUrl).origin;
-        } catch (e) {
-          baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
+        if (!baseUrl || !anonKey) {
+          throw new Error('No fue posible conectar con Supabase: URL o Anon Key no configurados.');
         }
 
         const endpoint = `${baseUrl}/rest/v1/${table}?select=*`;
@@ -468,13 +512,11 @@ Directrices de conversación:
 
     // Si Supabase está activo, guardar directamente en la tabla
     if (dbEngine === 'supabase') {
-      const creds = dbCredentials.supabase;
-      if (creds && creds.url && creds.anonKey) {
-        const url = creds.url.replace(/\/+$/, '');
-        const table = creds.table || 'bobinas_inventario';
-        fetch(`${url}/${table}`, {
+      const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        fetch(`${baseUrl}/rest/v1/${table}`, {
           method: 'POST',
-          headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
+          headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
           body: JSON.stringify({
             id: coil.id,
             name: coil.name,
@@ -512,13 +554,11 @@ Directrices de conversación:
 
     // Si Supabase está activo, borrar de la tabla remota
     if (dbEngine === 'supabase') {
-      const creds = dbCredentials.supabase;
-      if (creds && creds.url && creds.anonKey) {
-        const url = creds.url.replace(/\/+$/, '');
-        const table = creds.table || 'bobinas_inventario';
-        fetch(`${url}/${table}?id=eq.${encodeURIComponent(id)}`, {
+      const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
           method: 'DELETE',
-          headers: getSupabaseHeaders(creds.anonKey)
+          headers: getSupabaseHeaders(anonKey)
         }).catch(() => {});
       }
     }
@@ -539,14 +579,12 @@ Directrices de conversación:
 
     // Si Supabase está activo, vaciar la tabla remota
     if (dbEngine === 'supabase') {
-      const creds = dbCredentials.supabase;
-      if (creds && creds.url && creds.anonKey) {
+      const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
         try {
-          const url = creds.url.replace(/\/+$/, '');
-          const table = creds.table || 'bobinas_inventario';
-          await fetch(`${url}/${table}?id=neq.CLEAR_ALL`, {
+          await fetch(`${baseUrl}/rest/v1/${table}?id=neq.CLEAR_ALL`, {
             method: 'DELETE',
-            headers: getSupabaseHeaders(creds.anonKey)
+            headers: getSupabaseHeaders(anonKey)
           });
         } catch (e) {}
       }
@@ -682,24 +720,13 @@ Directrices de conversación:
   const refreshSalesHistory = useCallback(async () => {
     // 1. If active engine is supabase, attempt fetch from Supabase table 'ventas' (or 'ventas_ordenes')
     if (dbEngine === 'supabase') {
-      const creds = dbCredentials.supabase;
-      if (creds && creds.url && creds.anonKey) {
+      const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
         try {
-          let cleanUrl = String(creds.url || '').trim();
-          if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
-          let baseUrl = cleanUrl;
-          try {
-            baseUrl = new URL(cleanUrl).origin;
-          } catch (e) {
-            baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
-          }
-          const table = creds.salesTable || 'ventas';
+          const table = dbCredentials.supabase?.salesTable || 'ventas';
           const endpoint = `${baseUrl}/rest/v1/${table}?select=*`;
           const resp = await fetch(endpoint, {
-            headers: {
-              'apikey': creds.anonKey,
-              'Authorization': `Bearer ${creds.anonKey}`
-            }
+            headers: getSupabaseHeaders(anonKey)
           });
           if (resp.ok) {
             const data = await resp.json();
@@ -775,28 +802,19 @@ Directrices de conversación:
   }, [showToast]);
 
   const pushSalesToSupabase = useCallback(async () => {
-    const creds = dbCredentials.supabase;
-    if (!creds || !creds.url || !creds.anonKey) {
+    const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+    if (!baseUrl || !anonKey) {
       throw new Error('Configura primero la URL y Anon Key de Supabase en la pestaña "Base de Datos" o "Config IA".');
     }
 
-    let cleanUrl = String(creds.url || '').trim();
-    if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
-    let baseUrl = cleanUrl;
-    try {
-      baseUrl = new URL(cleanUrl).origin;
-    } catch (e) {
-      baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
-    }
-
-    const table = String(creds.salesTable || 'ventas').trim();
+    const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
     const endpoint = `${baseUrl}/rest/v1/${table}`;
 
     // 1. Intentar descubrir las columnas que realmente existen en la tabla de Supabase
     let knownColumns = null;
     try {
       const specResp = await fetch(`${baseUrl}/rest/v1/`, {
-        headers: { 'apikey': creds.anonKey }
+        headers: getSupabaseHeaders(anonKey)
       });
       if (specResp.ok) {
         const spec = await specResp.json();
@@ -811,7 +829,7 @@ Directrices de conversación:
     if (!knownColumns) {
       try {
         const sampleResp = await fetch(`${endpoint}?select=*&limit=1`, {
-          headers: getSupabaseHeaders(creds.anonKey)
+          headers: getSupabaseHeaders(anonKey)
         });
         if (sampleResp.ok) {
           const sampleRows = await sampleResp.json();
@@ -963,18 +981,9 @@ Directrices de conversación:
     } else {
       showToast(`Guardando ${coils.length} bobinas en ${dbEngine.toUpperCase()}...`);
       if (dbEngine === 'supabase') {
-        const creds = customCreds || dbCredentials.supabase;
-        if (creds && creds.url && creds.anonKey) {
+        const { baseUrl, anonKey, table } = getActiveSupabaseConfig(customCreds, dbCredentials);
+        if (baseUrl && anonKey) {
           try {
-            let cleanUrl = String(creds.url || '').trim();
-            if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
-            let baseUrl = cleanUrl;
-            try {
-              baseUrl = new URL(cleanUrl).origin;
-            } catch (e) {
-              baseUrl = cleanUrl.replace(/\/+$/, '').replace(/\/rest\/v1.*$/, '');
-            }
-            const table = String(creds.table || 'bobinas_inventario').trim();
             const endpoint = `${baseUrl}/rest/v1/${table}`;
             const formatted = coils.map(c => ({
               id: c.id,
@@ -994,7 +1003,7 @@ Directrices de conversación:
             }));
             await fetch(endpoint, {
               method: 'POST',
-              headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
+              headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
               body: JSON.stringify(formatted)
             });
           } catch (e) {}
