@@ -30,7 +30,8 @@ export function ManualSaleModal({ isOpen, onClose }) {
       customerName: form.customerName.trim() || 'Venta Manual Almacén',
       customerPhone: form.customerPhone.trim() || 'WhatsApp',
       paymentRef: `${form.paymentMethod} (${form.paymentRef.trim() || 'PAGO DIRECTO'})`,
-      userId: deviceId
+      userId: deviceId,
+      status: 'CONFIRMED'
     });
 
     onClose();

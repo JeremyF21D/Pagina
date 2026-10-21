@@ -898,14 +898,15 @@
         showToast(`Carga masiva: ${norm.length} productos procesados.`);
       };
 
-      const processSaleTransaction = ({ coilId, qty, customerName, customerPhone, paymentRef, userId }) => {
+      const processSaleTransaction = ({ coilId, qty, customerName, customerPhone, paymentRef, userId, status = 'PENDING_APPROVAL' }) => {
         let orderResult = null;
         setCoils(currentCoils => {
           const coil = currentCoils.find(b => b.id === coilId);
           if (!coil) return currentCoils;
           const reqQty = Math.max(1, parseInt(qty, 10) || 1);
           if (coil.stock < reqQty) { showToast(`Stock insuficiente (${coil.stock} uds)`); return currentCoils; }
-          const stockAfter = ownerSettings.autoDeductStock ? Math.max(0, coil.stock - reqQty) : coil.stock;
+          const isConfirmed = status === 'CONFIRMED';
+          const stockAfter = isConfirmed ? Math.max(0, coil.stock - reqQty) : coil.stock;
 
           const newOrder = {
             orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -922,7 +923,7 @@
             stockBefore: coil.stock,
             stockAfter,
             paymentRef: paymentRef || 'Confirmación directa',
-            status: ownerSettings.requireApproval ? 'PENDING_APPROVAL' : 'CONFIRMED'
+            status: isConfirmed ? 'CONFIRMED' : 'PENDING_APPROVAL'
           };
           orderResult = newOrder;
           setSalesHistory(prev => [newOrder, ...prev]);
@@ -938,6 +939,7 @@
             } catch(e) {}
           }
 
+          if (!isConfirmed) return currentCoils;
           const nextCoils = currentCoils.map(item => item.id === coil.id ? { ...item, stock: stockAfter, inStock: stockAfter > 0 } : item);
           broadcastSync(nextCoils);
           pushToApi(nextCoils);
@@ -946,17 +948,65 @@
         return orderResult;
       };
 
-      const revertSale = (orderId) => {
+      const confirmSale = (orderId) => {
         const ord = salesHistory.find(s => s.orderId === orderId);
-        if (!ord) return;
+        if (!ord || ord.status === 'CONFIRMED') return;
+        let calculatedStock = null;
         setCoils(currentCoils => {
-          const nextCoils = currentCoils.map(item => item.id === ord.coilId ? { ...item, stock: item.stock + ord.qty, inStock: true } : item);
+          const coil = currentCoils.find(b => b.id.toLowerCase() === String(ord.coilId || '').toLowerCase());
+          const curStock = coil ? coil.stock : ord.stockBefore;
+          const nextStock = Math.max(0, curStock - ord.qty);
+          calculatedStock = nextStock;
+          const nextCoils = currentCoils.map(item => item.id.toLowerCase() === String(ord.coilId || '').toLowerCase() ? { ...item, stock: nextStock, inStock: nextStock > 0 } : item);
           broadcastSync(nextCoils);
           pushToApi(nextCoils);
+          if (dbEngine === 'supabase') {
+            const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+            if (baseUrl && anonKey) {
+              fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(ord.coilId)}`, {
+                method: 'PATCH',
+                headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+                body: JSON.stringify({ stock: nextStock })
+              }).catch(() => {});
+            }
+          }
           return nextCoils;
         });
+        setSalesHistory(prev => prev.map(s => s.orderId === orderId ? { ...s, status: 'CONFIRMED', stockAfter: calculatedStock !== null ? calculatedStock : Math.max(0, s.stockBefore - s.qty) } : s));
+        showToast(`✅ Pedido #${orderId} confirmado. Se descontaron ${ord.qty} uds de stock.`);
+      };
+
+      const revertSale = (orderId) => {
+        const ord = salesHistory.find(s => s.orderId === orderId);
+        if (!ord || ord.status === 'REVERTED') return;
+        const wasConfirmed = ord.status === 'CONFIRMED';
+        if (wasConfirmed) {
+          let calculatedStock = null;
+          setCoils(currentCoils => {
+            const coil = currentCoils.find(b => b.id.toLowerCase() === String(ord.coilId || '').toLowerCase());
+            const curStock = coil ? coil.stock : (ord.stockAfter || 0);
+            const restoredStock = curStock + ord.qty;
+            calculatedStock = restoredStock;
+            const nextCoils = currentCoils.map(item => item.id.toLowerCase() === String(ord.coilId || '').toLowerCase() ? { ...item, stock: restoredStock, inStock: true } : item);
+            broadcastSync(nextCoils);
+            pushToApi(nextCoils);
+            if (dbEngine === 'supabase') {
+              const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+              if (baseUrl && anonKey) {
+                fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(ord.coilId)}`, {
+                  method: 'PATCH',
+                  headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+                  body: JSON.stringify({ stock: restoredStock })
+                }).catch(() => {});
+              }
+            }
+            return nextCoils;
+          });
+          showToast(`↩️ Venta #${orderId} revertida (+${ord.qty} unidades al stock)`);
+        } else {
+          showToast(`❌ Orden #${orderId} cancelada (no modificó el stock)`);
+        }
         setSalesHistory(prev => prev.map(s => s.orderId === orderId ? { ...s, status: 'REVERTED' } : s));
-        showToast(`Venta #${orderId} revertida (+${ord.qty} unidades al stock)`);
       };
 
       const refreshSalesHistory = () => {
@@ -991,7 +1041,7 @@
       };
 
       return (
-        <InventoryContext.Provider value={{ coils, dbEngine, changeDbEngine, dbCredentials, updateDbCredentials, apiConnectionStatus, testApiConnection, syncWithApi, upsertCoil, deleteCoil, clearInventory, restoreSeedData, bulkImport, salesHistory, refreshSalesHistory, importSalesBatch, ownerSettings, updateOwnerSettings, processSaleTransaction, revertSale, pendingOwnerAlert, dismissOwnerAlert: () => setPendingOwnerAlert(null) }}>
+        <InventoryContext.Provider value={{ coils, dbEngine, changeDbEngine, dbCredentials, updateDbCredentials, apiConnectionStatus, testApiConnection, syncWithApi, upsertCoil, deleteCoil, clearInventory, restoreSeedData, bulkImport, salesHistory, refreshSalesHistory, importSalesBatch, ownerSettings, updateOwnerSettings, processSaleTransaction, confirmSale, revertSale, pendingOwnerAlert, dismissOwnerAlert: () => setPendingOwnerAlert(null) }}>
           {children}
         </InventoryContext.Provider>
       );
@@ -1712,7 +1762,7 @@
     }
 
     function SalesView({ onOpenManualSale }) {
-      const { salesHistory, revertSale, coils, processSaleTransaction, refreshSalesHistory, importSalesBatch } = useInventory();
+      const { salesHistory, confirmSale, revertSale, coils, processSaleTransaction, refreshSalesHistory, importSalesBatch } = useInventory();
       const [salesModalOpen, setSalesModalOpen] = useState(false);
       const [isRefreshing, setIsRefreshing] = useState(false);
       const [modalTab, setModalTab] = useState('export'); // 'export' | 'import'
@@ -1865,13 +1915,31 @@
                     <td className="py-3 px-4 text-white">{ord.customerName}</td>
                     <td className="py-3 px-4">{ord.qty}x {ord.coilName}</td>
                     <td className="py-3 px-4 text-emerald-400 font-bold">{formatUSD(ord.totalPrice)}</td>
-                    <td className="py-3 px-4 font-mono text-[11px]">{ord.stockBefore} ➔ <span className="text-emerald-400 font-bold">{ord.stockAfter} uds</span></td>
+                    <td className="py-3 px-4 font-mono text-[11px]">
+                      {ord.status === 'PENDING_APPROVAL' ? (
+                        <span className="text-amber-300 font-semibold">{ord.stockBefore} uds (-{ord.qty} al confirmar)</span>
+                      ) : ord.status === 'REVERTED' ? (
+                        <span className="text-slate-400">{ord.stockBefore} uds (Revertida)</span>
+                      ) : (
+                        <span>{ord.stockBefore} ➔ <span className="text-emerald-400 font-bold">{ord.stockAfter} uds</span></span>
+                      )}
+                    </td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ord.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                        {ord.status}
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ord.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : ord.status === 'PENDING_APPROVAL' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                        {ord.status === 'PENDING_APPROVAL' ? 'PENDIENTE' : ord.status === 'CONFIRMED' ? 'CONFIRMADA' : 'REVERTIDA'}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right space-x-1">
+                      {ord.status === 'PENDING_APPROVAL' && (
+                        <>
+                          <button onClick={() => confirmSale(ord.orderId)} className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs" title="Confirmar venta y descontar stock">
+                            <i className="fa-solid fa-check"></i> Confirmar
+                          </button>
+                          <button onClick={() => revertSale(ord.orderId)} className="px-1.5 py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded-lg text-xs" title="Cancelar orden">
+                            <i className="fa-solid fa-ban"></i>
+                          </button>
+                        </>
+                      )}
                       {ord.status === 'CONFIRMED' && (
                         <button onClick={() => revertSale(ord.orderId)} className="text-rose-400 hover:text-rose-300 text-xs p-1" title="Revertir venta">
                           <i className="fa-solid fa-rotate-left"></i> Revertir

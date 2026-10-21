@@ -166,7 +166,11 @@ export function InventoryProvider({ children }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_OWNER_PREFS);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          requireApproval: true
+        };
       }
     } catch (e) {}
     return {
@@ -174,14 +178,14 @@ export function InventoryProvider({ children }) {
       ownerName: 'Administrador Principal',
       autoDeductStock: true,
       soundAlert: true,
-      requireApproval: false,
+      requireApproval: true,
       systemPrompt: `Eres el Asesor y Agente Oficial de IA de "JF Auto Parts" para WhatsApp (0412-6497478).
-Tu misión es asistir a mecánicos y dueños de vehículos a encontrar la bobina de encendido exacta para su auto consultando la base de datos activa en tiempo real.
+Tu misión es asistir a mecánicos y dueños de vehículos a encontrar el repuesto exacto para su auto consultando la base de datos activa en tiempo real.
 
 Directrices de conversación:
 1. Responde de forma cálida, experta en mecánica automotriz, concisa y profesional.
-2. Verifica siempre la disponibilidad y columna 'stock' del registro. Si stock > 0, confirma stock y precio. Si stock === 0, informa que está temporalmente agotada y ofrece encargarla bajo pedido.
-3. Cuando el cliente confirme una compra o envíe su referencia de pago, descuenta el stock automáticamente y notifica al dueño al 0412-6497478.`
+2. Verifica siempre la disponibilidad y columna 'stock' del registro. Si stock > 0, confirma stock y precio. Si stock === 0, informa que está temporalmente agotado y ofrece encargarla bajo pedido.
+3. Cuando el cliente confirme una compra o envíe su referencia de pago, emite la orden y notifica al dueño al 0412-6497478.`
     };
   });
 
@@ -685,13 +689,15 @@ Directrices de conversación:
   }, [showToast]);
 
   /**
-   * Cierre transaccional de ventas
+   * Cierre transaccional de ventas y pedidos
+   * Los pedidos creados por clientes entran por defecto en estado 'PENDING_APPROVAL' (Pendiente)
+   * sin descontar stock hasta que el dueño/administrador los confirme.
    */
-  const processSaleTransaction = useCallback(({ coilId, qty, customerName, customerPhone, paymentRef, userId }) => {
+  const processSaleTransaction = useCallback(({ coilId, qty, customerName, customerPhone, paymentRef, userId, status = 'PENDING_APPROVAL' }) => {
     let orderResult = null;
 
     setCoils(currentCoils => {
-      const coil = currentCoils.find(b => b.id === coilId);
+      const coil = currentCoils.find(b => b.id.toLowerCase() === String(coilId || '').toLowerCase());
       if (!coil) return currentCoils;
 
       const requestedQty = Math.max(1, parseInt(qty, 10) || 1);
@@ -702,8 +708,8 @@ Directrices de conversación:
         return currentCoils;
       }
 
-      const shouldDeduct = ownerSettings.autoDeductStock && !ownerSettings.requireApproval;
-      const stockAfter = shouldDeduct ? Math.max(0, stockBefore - requestedQty) : stockBefore;
+      const isConfirmed = status === 'CONFIRMED';
+      const stockAfter = isConfirmed ? Math.max(0, stockBefore - requestedQty) : stockBefore;
 
       const newOrder = {
         orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -713,14 +719,14 @@ Directrices de conversación:
         customerPhone: customerPhone || 'No especificado',
         coilId: coil.id,
         coilName: coil.name,
-        oem: coil.oem.split('/')[0].trim(),
+        oem: (coil.oem || '').split('/')[0].trim(),
         qty: requestedQty,
         unitPrice: coil.price,
         totalPrice: Number((coil.price * requestedQty).toFixed(2)),
         stockBefore,
         stockAfter,
-        paymentRef: paymentRef || 'Confirmación directa',
-        status: ownerSettings.requireApproval ? 'PENDING_APPROVAL' : 'CONFIRMED'
+        paymentRef: paymentRef || 'A coordinar por WhatsApp',
+        status: isConfirmed ? 'CONFIRMED' : 'PENDING_APPROVAL'
       };
 
       orderResult = newOrder;
@@ -731,8 +737,14 @@ Directrices de conversación:
         playCashRegisterSound();
       }
 
+      // Si no está confirmada (está pendiente), no descontamos stock del inventario
+      if (!isConfirmed) {
+        return currentCoils;
+      }
+
+      // Si fue confirmada directamente (ej. venta manual en almacén)
       const updated = currentCoils.map(item => {
-        if (item.id === coil.id) {
+        if (item.id.toLowerCase() === coil.id.toLowerCase()) {
           return {
             ...item,
             stock: stockAfter,
@@ -744,36 +756,184 @@ Directrices de conversación:
 
       broadcastSync(updated);
       pushToApi(updated);
+
+      // Si Supabase está conectado, actualizar la columna stock
+      if (dbEngine === 'supabase') {
+        const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+        if (baseUrl && anonKey) {
+          fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(coil.id)}`, {
+            method: 'PATCH',
+            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify({ stock: stockAfter })
+          }).catch(e => console.warn('Error al descontar stock en Supabase:', e));
+        }
+      }
+
       return updated;
     });
 
     return orderResult;
-  }, [ownerSettings, playCashRegisterSound, showToast]);
+  }, [ownerSettings.soundAlert, playCashRegisterSound, showToast, dbEngine, dbCredentials]);
 
-  const revertSale = useCallback((orderId) => {
+  /**
+   * Confirmar pedido pendiente:
+   * Cambia el estado a CONFIRMED y descuenta el stock tanto localmente como en Supabase.
+   */
+  const confirmSale = useCallback(async (orderId) => {
     const ord = salesHistory.find(s => s.orderId === orderId);
     if (!ord) return;
 
+    if (ord.status === 'CONFIRMED') {
+      showToast(`La orden #${orderId} ya está confirmada.`);
+      return;
+    }
+
+    let calculatedNewStock = null;
+    const targetCoilId = ord.coilId;
+
     setCoils(currentCoils => {
+      const coil = currentCoils.find(b => b.id.toLowerCase() === String(targetCoilId || '').toLowerCase());
+      const currentStock = coil ? coil.stock : ord.stockBefore;
+      const newStock = Math.max(0, currentStock - ord.qty);
+      calculatedNewStock = newStock;
+
       const updated = currentCoils.map(item => {
-        if (item.id === ord.coilId) {
-          const restoredStock = item.stock + ord.qty;
+        if (item.id.toLowerCase() === String(targetCoilId || '').toLowerCase()) {
           return {
             ...item,
-            stock: restoredStock,
-            inStock: restoredStock > 0
+            stock: newStock,
+            inStock: newStock > 0
           };
         }
         return item;
       });
+
+      try {
+        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(updated));
+      } catch (e) {}
+
       broadcastSync(updated);
       pushToApi(updated);
       return updated;
     });
 
-    setSalesHistory(prev => prev.map(s => s.orderId === orderId ? { ...s, status: 'REVERTED' } : s));
-    showToast(`Venta #${orderId} revertida (+${ord.qty} unidades al stock)`);
-  }, [salesHistory, showToast]);
+    setSalesHistory(prev => {
+      const next = prev.map(s => {
+        if (s.orderId === orderId) {
+          return {
+            ...s,
+            status: 'CONFIRMED',
+            stockAfter: calculatedNewStock !== null ? calculatedNewStock : Math.max(0, s.stockBefore - s.qty)
+          };
+        }
+        return s;
+      });
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    if (ownerSettings.soundAlert) {
+      playCashRegisterSound();
+    }
+
+    // Descontar en Supabase si está activo
+    if (dbEngine === 'supabase' && targetCoilId && calculatedNewStock !== null) {
+      const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        try {
+          const res = await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(targetCoilId)}`, {
+            method: 'PATCH',
+            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify({ stock: calculatedNewStock })
+          });
+          if (res.ok) {
+            console.log(`Stock actualizado en Supabase para ${targetCoilId}: ${calculatedNewStock}`);
+          }
+        } catch (err) {
+          console.warn('Error de red al actualizar stock en Supabase:', err);
+        }
+      }
+    }
+
+    showToast(`✅ Pedido #${orderId} confirmado. Se descontaron ${ord.qty} uds de stock.`);
+  }, [salesHistory, ownerSettings.soundAlert, playCashRegisterSound, dbEngine, dbCredentials, showToast]);
+
+  /**
+   * Revertir o Cancelar orden:
+   * - Si estaba CONFIRMED: regresa el stock tanto en memoria como en Supabase.
+   * - Si estaba PENDING_APPROVAL: simplemente se cancela sin alterar stock.
+   */
+  const revertSale = useCallback(async (orderId) => {
+    const ord = salesHistory.find(s => s.orderId === orderId);
+    if (!ord) return;
+
+    if (ord.status === 'REVERTED') {
+      showToast(`La orden #${orderId} ya está cancelada o revertida.`);
+      return;
+    }
+
+    const wasConfirmed = ord.status === 'CONFIRMED';
+    const targetCoilId = ord.coilId;
+    let calculatedRestoredStock = null;
+
+    if (wasConfirmed) {
+      setCoils(currentCoils => {
+        const coil = currentCoils.find(b => b.id.toLowerCase() === String(targetCoilId || '').toLowerCase());
+        const currentStock = coil ? coil.stock : (ord.stockAfter || 0);
+        const restoredStock = currentStock + ord.qty;
+        calculatedRestoredStock = restoredStock;
+
+        const updated = currentCoils.map(item => {
+          if (item.id.toLowerCase() === String(targetCoilId || '').toLowerCase()) {
+            return {
+              ...item,
+              stock: restoredStock,
+              inStock: restoredStock > 0
+            };
+          }
+          return item;
+        });
+
+        try {
+          localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(updated));
+        } catch (e) {}
+
+        broadcastSync(updated);
+        pushToApi(updated);
+        return updated;
+      });
+
+      // Si Supabase está conectado, devolver el stock en la base de datos remota
+      if (dbEngine === 'supabase' && targetCoilId && calculatedRestoredStock !== null) {
+        const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+        if (baseUrl && anonKey) {
+          try {
+            await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(targetCoilId)}`, {
+              method: 'PATCH',
+              headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+              body: JSON.stringify({ stock: calculatedRestoredStock })
+            });
+          } catch (err) {
+            console.warn('Error de red al reintegrar stock en Supabase:', err);
+          }
+        }
+      }
+
+      showToast(`↩️ Venta #${orderId} revertida (+${ord.qty} unidades devueltas al stock)`);
+    } else {
+      showToast(`❌ Orden #${orderId} cancelada (no modificó el stock)`);
+    }
+
+    setSalesHistory(prev => {
+      const next = prev.map(s => s.orderId === orderId ? { ...s, status: 'REVERTED' } : s);
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  }, [salesHistory, dbEngine, dbCredentials, showToast]);
 
   const refreshSalesHistory = useCallback(async () => {
     // 1. If active engine is supabase, attempt fetch from Supabase table 'ventas' (or 'ventas_ordenes')
@@ -1096,6 +1256,7 @@ Directrices de conversación:
       ownerSettings,
       updateOwnerSettings,
       processSaleTransaction,
+      confirmSale,
       revertSale,
       pendingOwnerAlert,
       dismissOwnerAlert

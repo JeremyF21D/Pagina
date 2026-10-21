@@ -4,7 +4,7 @@ import { buildOwnerAlertUrl } from '../../utils/whatsapp';
 import { formatUSD } from '../../utils/formatters';
 
 export function SalesTable() {
-  const { salesHistory, revertSale, ownerSettings } = useInventory();
+  const { salesHistory, confirmSale, revertSale, ownerSettings } = useInventory();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
 
@@ -57,12 +57,12 @@ export function SalesTable() {
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             <option value="ALL">Todas las órdenes</option>
+            <option value="PENDING">Pendientes por Aprobar</option>
             <option value="CONFIRMED">Confirmadas</option>
-            <option value="PENDING">Pendientes</option>
-            <option value="REVERTED">Revertidas</option>
+            <option value="REVERTED">Revertidas / Canceladas</option>
           </select>
         </div>
       </div>
@@ -115,9 +115,24 @@ export function SalesTable() {
                     {formatUSD(ord.totalPrice)}
                   </td>
                   <td className="py-3 px-4 font-mono text-[11px] whitespace-nowrap">
-                    <span className="text-rose-400">{ord.stockBefore}</span>
-                    <span className="text-slate-500 mx-1">➔</span>
-                    <span className="text-emerald-400 font-bold">{ord.stockAfter} uds</span>
+                    {ord.status === 'PENDING_APPROVAL' ? (
+                      <span className="text-amber-300 font-semibold inline-flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                        <i className="fa-solid fa-clock text-[10px]"></i>
+                        <span>{ord.stockBefore} uds</span>
+                        <span className="text-[10px] text-slate-400 font-normal">(-{ord.qty} al confirmar)</span>
+                      </span>
+                    ) : ord.status === 'REVERTED' ? (
+                      <span className="text-slate-400 inline-flex items-center gap-1">
+                        <span>{ord.stockBefore} uds</span>
+                        <span className="text-[10px] text-rose-400">(Revertida)</span>
+                      </span>
+                    ) : (
+                      <div className="inline-flex items-center">
+                        <span className="text-rose-400">{ord.stockBefore}</span>
+                        <span className="text-slate-500 mx-1">➔</span>
+                        <span className="text-emerald-400 font-bold">{ord.stockAfter} uds</span>
+                      </div>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-[11px] text-slate-300">
                     {ord.paymentRef}
@@ -134,28 +149,53 @@ export function SalesTable() {
                       </span>
                     )}
                     {ord.status === 'PENDING_APPROVAL' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
                         PENDIENTE
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-right whitespace-nowrap space-x-1">
-                    <button 
-                      onClick={() => handleNotifyOwner(ord)}
-                      className="p-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 rounded-lg text-xs transition"
-                      title="Reenviar comprobante a WhatsApp del Dueño"
-                    >
-                      <i className="fa-brands fa-whatsapp"></i>
-                    </button>
-                    {ord.status === 'CONFIRMED' && (
+                  <td className="py-3 px-4 text-right whitespace-nowrap">
+                    <div className="inline-flex items-center justify-end gap-1.5">
+                      {ord.status === 'PENDING_APPROVAL' && (
+                        <>
+                          <button 
+                            onClick={() => confirmSale(ord.orderId)}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-sm inline-flex items-center gap-1 cursor-pointer active:scale-95"
+                            title="Confirmar pedido y descontar stock en base de datos"
+                          >
+                            <i className="fa-solid fa-check"></i>
+                            <span>Confirmar</span>
+                          </button>
+
+                          <button 
+                            onClick={() => revertSale(ord.orderId)}
+                            className="p-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 rounded-lg text-xs transition cursor-pointer"
+                            title="Rechazar / Cancelar orden (sin descontar stock)"
+                          >
+                            <i className="fa-solid fa-ban"></i>
+                          </button>
+                        </>
+                      )}
+
+                      {ord.status === 'CONFIRMED' && (
+                        <button 
+                          onClick={() => revertSale(ord.orderId)}
+                          className="px-2 py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 rounded-lg text-xs transition inline-flex items-center gap-1 cursor-pointer active:scale-95"
+                          title="Revertir venta y devolver piezas al inventario en Supabase"
+                        >
+                          <i className="fa-solid fa-rotate-left"></i>
+                          <span>Regresar</span>
+                        </button>
+                      )}
+
                       <button 
-                        onClick={() => revertSale(ord.orderId)}
-                        className="p-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded-lg text-xs transition"
-                        title="Revertir venta y reintegrar piezas al stock"
+                        onClick={() => handleNotifyOwner(ord)}
+                        className="p-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 rounded-lg text-xs transition cursor-pointer"
+                        title="Abrir comprobante en WhatsApp"
                       >
-                        <i className="fa-solid fa-rotate-left"></i>
+                        <i className="fa-brands fa-whatsapp"></i>
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))
