@@ -491,8 +491,20 @@ Directrices de conversación:
     showToast('Configuración del Agente IA y Webhook guardada');
   }, [showToast]);
 
-  const upsertCoil = useCallback((rawCoil) => {
+  const upsertCoil = useCallback(async (rawCoil) => {
     const coil = normalizeCoilRecord(rawCoil);
+    if (!coil || !coil.id) return { success: false, error: 'Artículo inválido' };
+
+    // Guardar imagen personalizada localmente para no perderla si la tabla no tiene columna 'image'
+    if (coil.image && typeof localStorage !== 'undefined') {
+      try {
+        const storedImages = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+        storedImages[coil.id] = coil.image;
+        localStorage.setItem('JF_PRODUCT_CUSTOM_IMAGES', JSON.stringify(storedImages));
+      } catch (e) {}
+    }
+
+    // Actualizar estado de inventario inmediatamente
     setCoils(prev => {
       const idx = prev.findIndex(b => b.id.toLowerCase() === coil.id.toLowerCase());
       let next;
@@ -510,40 +522,78 @@ Directrices de conversación:
       return next;
     });
 
-    // Si Supabase está activo, guardar directamente en la tabla
+    // Si Supabase está activo, guardar en la base de datos remota
     if (dbEngine === 'supabase') {
       const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
       if (baseUrl && anonKey) {
-        fetch(`${baseUrl}/rest/v1/${table}`, {
-          method: 'POST',
-          headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
-          body: JSON.stringify({
-            id: coil.id,
-            name: coil.name,
-            brand: coil.brand,
-            car_model: coil.carModel,
-            engine: coil.engine,
-            oem: coil.oem,
-            type: coil.type,
-            connector: coil.connector,
-            price: coil.price,
-            old_price: coil.oldPrice,
-            stock: coil.stock,
-            warranty: coil.warranty,
-            badge: coil.badge,
-            image: coil.image
-          })
-        }).catch(() => {});
+        try {
+          // Columnas exactas de la tabla bobinas_inventario en Supabase (camelCase):
+          const supabasePayload = {
+            id: String(coil.id).trim(),
+            name: String(coil.name || '').trim(),
+            brand: String(coil.brand || '').trim(),
+            carModel: String(coil.carModel || '').trim(),
+            engine: String(coil.engine || '').trim(),
+            oem: String(coil.oem || '').trim(),
+            type: String(coil.type || '').trim(),
+            connector: String(coil.connector || '').trim(),
+            price: Number(coil.price) || 0,
+            oldPrice: Number(coil.oldPrice) || Number(coil.price) || 0,
+            stock: parseInt(coil.stock, 10) || 0,
+            warranty: String(coil.warranty || '12 meses').trim(),
+            badge: String(coil.badge || 'OEM Spec').trim()
+          };
+
+          const res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+            method: 'POST',
+            headers: getSupabaseHeaders(anonKey, { 
+              'Prefer': 'resolution=merge-duplicates,return=representation' 
+            }),
+            body: JSON.stringify(supabasePayload)
+          });
+
+          if (!res.ok) {
+            const errBody = await res.text();
+            console.error('Error insertando en Supabase:', res.status, errBody);
+            showToast(`⚠️ No se pudo guardar en Supabase (${res.status}): ${errBody.slice(0, 90)}`, 'error');
+            return { success: false, error: errBody };
+          }
+
+          showToast(`🟢 Repuesto ${coil.id} guardado con éxito en Supabase`);
+          
+          // Re-sincronizar el catálogo con la base de datos
+          setTimeout(() => {
+            checkAndSyncDatabase(dbEngine, null, false);
+          }, 300);
+          return { success: true };
+        } catch (err) {
+          console.error('Error de red al guardar en Supabase:', err);
+          showToast(`⚠️ Error de red con Supabase: ${err.message}`, 'error');
+          return { success: false, error: err.message };
+        }
       }
     }
 
-    showToast(`Bobina ${coil.id} guardada`);
-  }, [dbEngine, dbCredentials, showToast]);
+    showToast(`Repuesto ${coil.id} guardado localmente`);
+    return { success: true };
+  }, [dbEngine, dbCredentials, showToast, checkAndSyncDatabase]);
 
-  const deleteCoil = useCallback((id) => {
-    const target = String(id || '').trim().toLowerCase();
+  const deleteCoil = useCallback(async (id) => {
+    const target = String(id || '').trim();
+    
+    // Quitar de imagen local
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const storedImages = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+        if (storedImages[target]) {
+          delete storedImages[target];
+          localStorage.setItem('JF_PRODUCT_CUSTOM_IMAGES', JSON.stringify(storedImages));
+        }
+      } catch (e) {}
+    }
+
     setCoils(prev => {
-      const next = prev.filter(b => String(b.id || '').trim().toLowerCase() !== target);
+      const next = prev.filter(b => String(b.id || '').trim().toLowerCase() !== target.toLowerCase());
       try {
         localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(next));
       } catch (e) {}
@@ -556,15 +606,23 @@ Directrices de conversación:
     if (dbEngine === 'supabase') {
       const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
       if (baseUrl && anonKey) {
-        fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-          headers: getSupabaseHeaders(anonKey)
-        }).catch(() => {});
+        try {
+          const res = await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(target)}`, {
+            method: 'DELETE',
+            headers: getSupabaseHeaders(anonKey)
+          });
+          if (res.ok) {
+            showToast(`🗑️ Repuesto ${target} eliminado de Supabase`);
+            checkAndSyncDatabase(dbEngine, null, false);
+          }
+        } catch (err) {
+          console.error('Error eliminando de Supabase:', err);
+        }
       }
+    } else {
+      showToast(`Repuesto ${target} eliminado`);
     }
-
-    showToast(`Bobina ${id} eliminada`);
-  }, [dbEngine, dbCredentials, showToast]);
+  }, [dbEngine, dbCredentials, showToast, checkAndSyncDatabase]);
 
   const clearInventory = useCallback(async () => {
     setCoils([]);

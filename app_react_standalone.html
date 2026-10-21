@@ -750,8 +750,18 @@
 
       const updateOwnerSettings = (newSettings) => { setOwnerSettings(prev => ({ ...prev, ...newSettings })); showToast('Configuración guardada'); };
 
-      const upsertCoil = (raw) => {
+      const upsertCoil = async (raw) => {
         const item = normalizeCoilRecord(raw);
+        if (!item || !item.id) return { success: false, error: 'Artículo inválido' };
+
+        if (item.image && typeof localStorage !== 'undefined') {
+          try {
+            const storedImages = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+            storedImages[item.id] = item.image;
+            localStorage.setItem('JF_PRODUCT_CUSTOM_IMAGES', JSON.stringify(storedImages));
+          } catch (e) {}
+        }
+
         setCoils(prev => {
           const idx = prev.findIndex(b => b.id.toLowerCase() === item.id.toLowerCase());
           let next;
@@ -761,19 +771,87 @@
           pushToApi(next, dbEngine, dbCredentials);
           return next;
         });
-        showToast(`Bobina ${item.id} guardada`);
+
+        if (dbEngine === 'supabase') {
+          const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+          if (baseUrl && anonKey) {
+            try {
+              const supabasePayload = {
+                id: String(item.id).trim(),
+                name: String(item.name || '').trim(),
+                brand: String(item.brand || '').trim(),
+                carModel: String(item.carModel || '').trim(),
+                engine: String(item.engine || '').trim(),
+                oem: String(item.oem || '').trim(),
+                type: String(item.type || '').trim(),
+                connector: String(item.connector || '').trim(),
+                price: Number(item.price) || 0,
+                oldPrice: Number(item.oldPrice) || Number(item.price) || 0,
+                stock: parseInt(item.stock, 10) || 0,
+                warranty: String(item.warranty || '12 meses').trim(),
+                badge: String(item.badge || 'OEM Spec').trim()
+              };
+
+              const res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+                method: 'POST',
+                headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates,return=representation' }),
+                body: JSON.stringify(supabasePayload)
+              });
+
+              if (!res.ok) {
+                const errText = await res.text();
+                showToast(`⚠️ Error al guardar en Supabase: ${errText.slice(0, 80)}`, 'error');
+                return { success: false, error: errText };
+              } else {
+                showToast(`🟢 Repuesto ${item.id} guardado en Supabase`);
+                setTimeout(() => { if (typeof checkAndSyncDatabase === 'function') checkAndSyncDatabase(dbEngine, null, false); }, 400);
+                return { success: true };
+              }
+            } catch (err) {
+              showToast(`⚠️ Error de conexión: ${err.message}`, 'error');
+              return { success: false, error: err.message };
+            }
+          }
+        }
+        showToast(`Repuesto ${item.id} guardado`);
+        return { success: true };
       };
 
-      const deleteCoil = (id) => {
-        const target = String(id || '').trim().toLowerCase();
+      const deleteCoil = async (id) => {
+        const target = String(id || '').trim();
+        if (typeof localStorage !== 'undefined') {
+          try {
+            const storedImages = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+            if (storedImages[target]) {
+              delete storedImages[target];
+              localStorage.setItem('JF_PRODUCT_CUSTOM_IMAGES', JSON.stringify(storedImages));
+            }
+          } catch (e) {}
+        }
         setCoils(prev => {
-          const next = prev.filter(b => String(b.id || '').trim().toLowerCase() !== target);
+          const next = prev.filter(b => String(b.id || '').trim().toLowerCase() !== target.toLowerCase());
           try { localStorage.setItem('BOBINAS_EXPRESS_STORE_V5', JSON.stringify(next)); } catch(e) {}
           broadcastSync(next);
           pushToApi(next, dbEngine, dbCredentials);
           return next;
         });
-        showToast(`Bobina ${id} eliminada`);
+
+        if (dbEngine === 'supabase') {
+          const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+          if (baseUrl && anonKey) {
+            try {
+              const res = await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(target)}`, {
+                method: 'DELETE',
+                headers: getSupabaseHeaders(anonKey)
+              });
+              if (res.ok) {
+                showToast(`🗑️ Repuesto ${target} eliminado de Supabase`);
+              }
+            } catch (e) {}
+          }
+        } else {
+          showToast(`Repuesto ${target} eliminado`);
+        }
       };
 
       const clearInventory = () => {

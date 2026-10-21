@@ -328,8 +328,16 @@ export function normalizeCoilRecord(raw, existingCoils = []) {
   // Image / Imagen
   const rawImage = String(raw.image ?? raw.imageUrl ?? raw.image_url ?? raw.img ?? raw.foto ?? raw.imagen ?? raw.url_imagen ?? '').trim();
 
-  // Si la fila remota (como en Supabase o CSV) no trae columna de imagen, enlazar con la imagen oficial del catálogo si existe
+  // Si la fila remota (como en Supabase o CSV) no trae columna de imagen, enlazar con imagen guardada localmente o la oficial del catálogo
   let finalImage = rawImage;
+  if (!finalImage && typeof localStorage !== 'undefined') {
+    try {
+      const customMap = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+      if (customMap && customMap[safeId]) {
+        finalImage = customMap[safeId];
+      }
+    } catch (e) {}
+  }
   if (!finalImage && Array.isArray(DEFAULT_BOBINAS_SEED)) {
     const seedMatch = DEFAULT_BOBINAS_SEED.find(s => 
       s.id.toLowerCase() === safeId.toLowerCase() || 

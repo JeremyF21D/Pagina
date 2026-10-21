@@ -194,10 +194,24 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    upsertCoil(form);
-    onClose();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const res = await upsertCoil(form);
+      if (res && res.success === false) {
+        // Failed - keep modal open so user does not lose input
+        return;
+      }
+      onClose();
+    } catch (err) {
+      console.error('Error saving coil:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -614,10 +628,11 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             <button 
               type="button"
               onClick={handleSubmit}
-              className="px-5 py-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20 cursor-pointer transition flex items-center gap-2"
+              disabled={isSaving}
+              className="px-5 py-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20 cursor-pointer transition flex items-center gap-2 disabled:opacity-50"
             >
-              <i className="fa-solid fa-cloud-arrow-up"></i>
-              <span>{isEditing ? 'Guardar Cambios' : 'Insertar en Base de Datos'}</span>
+              <i className={`fa-solid ${isSaving ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`}></i>
+              <span>{isSaving ? 'Guardando en Base de Datos...' : (isEditing ? 'Guardar Cambios' : 'Insertar en Base de Datos')}</span>
             </button>
           </div>
         </div>
