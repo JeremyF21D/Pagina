@@ -60,10 +60,7 @@ export function ApiConnectionPanel() {
   };
 
   const engines = [
-    { id: 'supabase', label: 'Supabase', icon: 'fa-solid fa-bolt', color: 'text-emerald-400' },
-    { id: 'mongodb', label: 'MongoDB Atlas', icon: 'fa-solid fa-leaf', color: 'text-green-400' },
-    { id: 'mysql', label: 'MySQL / REST API', icon: 'fa-solid fa-database', color: 'text-sky-400' },
-    { id: 'local', label: 'LocalStorage', icon: 'fa-solid fa-hard-drive', color: 'text-amber-400' }
+    { id: 'supabase', label: 'Supabase (PostgreSQL)', icon: 'fa-solid fa-bolt', color: 'text-emerald-400' }
   ];
 
   const approxStorageKb = (JSON.stringify(coils).length / 1024).toFixed(1);
@@ -183,7 +180,7 @@ export function ApiConnectionPanel() {
                 type="url"
                 value={formValues.url || ''}
                 onChange={(e) => handleInputChange('url', e.target.value)}
-                placeholder="https://xyzcompany.supabase.co/rest/v1"
+                placeholder="https://peyvpeloxhjumgwlclkm.supabase.co/rest/v1"
                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 required
               />

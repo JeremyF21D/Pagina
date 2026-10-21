@@ -4,6 +4,7 @@ import { normalizeCoilRecord } from '../utils/formatters';
 import { OFFICIAL_WA_RAW } from '../utils/whatsapp';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useToast } from './ToastContext';
+import { SUPABASE_CONFIG } from '../config/supabaseConfig';
 
 const InventoryContext = createContext(null);
 
@@ -38,11 +39,30 @@ const pushToApi = (items, currentEngine = null, currentCreds = null) => {
   } catch (e) {}
 };
 
+/**
+ * Genera los encabezados compatibles tanto con las claves tradicionales JWT (eyJ...)
+ * como con las nuevas claves públicas de Supabase (sb_publishable_...).
+ * Evita el error 401 que ocurre cuando se envía una clave sb_publishable_ en el header Authorization: Bearer.
+ */
+export const getSupabaseHeaders = (key, extraHeaders = {}) => {
+  const cleanKey = String(key || '').trim();
+  const headers = {
+    'apikey': cleanKey,
+    'Content-Type': 'application/json',
+    ...extraHeaders
+  };
+  // Solo las claves legacy JWT ('eyJ...') se envían como Bearer token
+  if (cleanKey.startsWith('eyJ')) {
+    headers['Authorization'] = `Bearer ${cleanKey}`;
+  }
+  return headers;
+};
+
 const DEFAULT_CREDENTIALS = {
   supabase: {
-    url: 'https://vznqrxvblgghjswdmsaa.supabase.co/rest/v1',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    table: 'bobinas_inventario'
+    url: SUPABASE_CONFIG.url,
+    anonKey: SUPABASE_CONFIG.anonKey,
+    table: SUPABASE_CONFIG.table || 'bobinas_inventario'
   },
   mongodb: {
     uri: 'https://data.mongodb-api.com/app/data-express/endpoint/data/v1',
@@ -54,9 +74,6 @@ const DEFAULT_CREDENTIALS = {
     apiUrl: 'https://api.bobinasexpress.com/v1/inventory',
     bearerToken: 'bearer_token_sql_live_4492',
     table: 'bobinas'
-  },
-  local: {
-    storageKey: STORAGE_KEY_INVENTORY
   }
 };
 
@@ -81,9 +98,18 @@ export function InventoryProvider({ children }) {
 
   const [isDbLoading, setIsDbLoading] = useState(true);
 
-  // Motor activo: Por defecto 'local' (usa la API integrada /api/inventory + LocalStorage)
+  // Motor activo: Siempre Supabase por defecto. Eliminado LocalStorage como base de datos.
   const [dbEngine, setDbEngine] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY_ENGINE) || 'local';
+    // Si había 'local' guardado en LocalStorage, forzar 'supabase'
+    try {
+      const savedEngine = localStorage.getItem(STORAGE_KEY_ENGINE);
+      if (!savedEngine || savedEngine === 'local') {
+        localStorage.setItem(STORAGE_KEY_ENGINE, 'supabase');
+        return 'supabase';
+      }
+      return savedEngine;
+    } catch (e) {}
+    return 'supabase';
   });
 
   const [salesHistory, setSalesHistory] = useState(() => {
@@ -189,14 +215,14 @@ Directrices de conversación:
     });
 
     const startTime = performance.now();
-    let targetEngine = engine;
-    let creds = customCreds || dbCredentials[engine] || {};
+    let targetEngine = (engine === 'local' || !engine) ? 'supabase' : engine;
+    let creds = customCreds || dbCredentials[targetEngine] || {};
 
     try {
       let rawElements = [];
       let tableCreated = false;
 
-      // 0. Sincronizar estado global y motor activo desde el servidor
+      // 0. Sincronizar estado global desde el servidor
       try {
         const serverCheck = await fetch('/api/inventory', { cache: 'no-store' });
         if (serverCheck.ok) {
@@ -204,16 +230,13 @@ Directrices de conversación:
           if (contentType.includes('application/json')) {
             const serverData = await serverCheck.json();
             if (serverData) {
-              if (serverData.dbEngine && !customCreds) {
+              if (serverData.dbEngine && serverData.dbEngine !== 'local' && !customCreds) {
                 targetEngine = serverData.dbEngine;
                 if (targetEngine !== dbEngine) setDbEngine(targetEngine);
               }
               if (serverData.dbCredentials && !customCreds) {
                 creds = serverData.dbCredentials[targetEngine] || creds;
                 setDbCredentials(prev => ({ ...prev, ...serverData.dbCredentials }));
-              }
-              if (targetEngine === 'local' && Array.isArray(serverData.coils) && serverData.coils.length > 0) {
-                rawElements = serverData.coils;
               }
             }
           }
@@ -226,8 +249,8 @@ Directrices de conversación:
         const anonKey = String(creds.anonKey || '').trim();
         const table = String(creds.table || 'bobinas_inventario').trim();
 
-        // Validar si las credenciales son reales o son el placeholder de ejemplo
-        const isPlaceholder = !rawUrl || !anonKey || anonKey.includes('...') || rawUrl.includes('vznqrxvblgghjswdmsaa');
+        // Validar si faltan credenciales o son placeholder
+        const isPlaceholder = !rawUrl || !anonKey || anonKey.includes('...');
 
         if (isPlaceholder) {
           throw new Error('No fue posible conectar con Supabase: Ingresa tu URL y Anon Key válidos en Gestión de Base de Datos.');
@@ -249,12 +272,7 @@ Directrices de conversación:
 
         const response = await fetch(endpoint, {
           method: 'GET',
-          headers: {
-            'apikey': anonKey,
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'count=exact'
-          }
+          headers: getSupabaseHeaders(anonKey, { 'Prefer': 'count=exact' })
         });
 
         if (response.ok) {
@@ -318,16 +336,6 @@ Directrices de conversación:
           rawElements = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
         } else {
           throw new Error(`Error al consultar MySQL (${res.status})`);
-        }
-      } else if (targetEngine === 'local') {
-        if (rawElements.length === 0) {
-          try {
-            const saved = localStorage.getItem(STORAGE_KEY_INVENTORY);
-            if (saved) {
-              const p = JSON.parse(saved);
-              if (Array.isArray(p)) rawElements = p;
-            }
-          } catch (e) {}
         }
       }
 
@@ -466,12 +474,7 @@ Directrices de conversación:
         const table = creds.table || 'bobinas_inventario';
         fetch(`${url}/${table}`, {
           method: 'POST',
-          headers: {
-            'apikey': creds.anonKey,
-            'Authorization': `Bearer ${creds.anonKey}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          },
+          headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
           body: JSON.stringify({
             id: coil.id,
             name: coil.name,
@@ -515,10 +518,7 @@ Directrices de conversación:
         const table = creds.table || 'bobinas_inventario';
         fetch(`${url}/${table}?id=eq.${encodeURIComponent(id)}`, {
           method: 'DELETE',
-          headers: {
-            'apikey': creds.anonKey,
-            'Authorization': `Bearer ${creds.anonKey}`
-          }
+          headers: getSupabaseHeaders(creds.anonKey)
         }).catch(() => {});
       }
     }
@@ -546,10 +546,7 @@ Directrices de conversación:
           const table = creds.table || 'bobinas_inventario';
           await fetch(`${url}/${table}?id=neq.CLEAR_ALL`, {
             method: 'DELETE',
-            headers: {
-              'apikey': creds.anonKey,
-              'Authorization': `Bearer ${creds.anonKey}`
-            }
+            headers: getSupabaseHeaders(creds.anonKey)
           });
         } catch (e) {}
       }
@@ -814,10 +811,7 @@ Directrices de conversación:
     if (!knownColumns) {
       try {
         const sampleResp = await fetch(`${endpoint}?select=*&limit=1`, {
-          headers: { 
-            'apikey': creds.anonKey, 
-            'Authorization': `Bearer ${creds.anonKey}` 
-          }
+          headers: getSupabaseHeaders(creds.anonKey)
         });
         if (sampleResp.ok) {
           const sampleRows = await sampleResp.json();
@@ -878,12 +872,7 @@ Directrices de conversación:
     while (attempts < 8) {
       const resp = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'apikey': creds.anonKey,
-          'Authorization': `Bearer ${creds.anonKey}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
+        headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
         body: JSON.stringify(payload)
       });
 
@@ -1005,12 +994,7 @@ Directrices de conversación:
             }));
             await fetch(endpoint, {
               method: 'POST',
-              headers: {
-                'apikey': creds.anonKey,
-                'Authorization': `Bearer ${creds.anonKey}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates'
-              },
+              headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
               body: JSON.stringify(formatted)
             });
           } catch (e) {}

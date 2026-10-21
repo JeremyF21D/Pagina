@@ -15,10 +15,7 @@ export function DatabaseView({
   const { requireAdminAuth } = useAuth();
 
   const engines = [
-    { id: 'supabase', label: 'Supabase (PostgreSQL)', icon: 'fa-solid fa-bolt', desc: 'Funciones RPC atómicas y triggers de stock', activeBorder: 'border-emerald-500' },
-    { id: 'mongodb', label: 'MongoDB Atlas', icon: 'fa-solid fa-leaf', desc: 'Colecciones NoSQL en formato JSON BSON', activeBorder: 'border-green-500' },
-    { id: 'mysql', label: 'MySQL / MariaDB', icon: 'fa-solid fa-database', desc: 'Esquema relacional estándar ACID', activeBorder: 'border-blue-500' },
-    { id: 'local', label: 'LocalStorage (Navegador)', icon: 'fa-solid fa-hard-drive', desc: 'Persistencia offline inmediata en el dispositivo', activeBorder: 'border-amber-500' }
+    { id: 'supabase', label: 'Supabase (PostgreSQL)', icon: 'fa-solid fa-bolt', desc: 'Base de datos principal en la nube. Conexión activa para todos los visitantes.', activeBorder: 'border-emerald-500' }
   ];
 
   const handleExport = (format) => {

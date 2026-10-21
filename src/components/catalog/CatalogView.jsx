@@ -138,10 +138,10 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
             Mostrando <strong className="text-white font-bold">{filteredCoils.length}</strong> de {coils.length} bobinas registradas
           </p>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] text-slate-300 font-mono shadow-xs">
-            <i className="fa-solid fa-table-cells text-brand-400"></i>
-            <span>Tabla: <strong className="text-white">{dbCredentials?.[dbEngine]?.table || 'bobinas_inventario'}</strong></span>
-            <span className="text-[9px] px-1.5 py-0.2 bg-slate-800 text-slate-400 rounded uppercase font-sans font-semibold">
-              {dbEngine}
+            <i className="fa-solid fa-table-cells text-emerald-400"></i>
+            <span>Tabla: <strong className="text-white">{dbCredentials?.supabase?.table || 'bobinas_inventario'}</strong></span>
+            <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded uppercase font-sans font-semibold">
+              SUPABASE
             </span>
           </span>
         </div>
