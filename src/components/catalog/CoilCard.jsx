@@ -75,7 +75,11 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
         <div className="flex items-baseline justify-between">
           <div>
             <span className="text-2xl font-extrabold text-white font-mono">{formatUSD(coil.price)}</span>
-            <span className="text-xs text-slate-400 line-through ml-1 font-mono">{formatUSD(coil.oldPrice || coil.price * 1.2)}</span>
+            {Number(coil.oldPrice) > Number(coil.price) && (
+              <span className="text-xs text-slate-400 line-through ml-1.5 font-mono">
+                {formatUSD(coil.oldPrice)}
+              </span>
+            )}
           </div>
 
           {/* Only visible when Admin is logged in */}

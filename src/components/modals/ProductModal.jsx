@@ -122,7 +122,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto overflow-x-hidden">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
@@ -137,8 +137,8 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Product Photo Upload Section */}
-          <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-2.5">
-            <label className="block text-[11px] font-semibold text-slate-300 flex items-center justify-between">
+          <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-3 overflow-hidden">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
               <span className="flex items-center gap-1.5">
                 <i className="fa-solid fa-camera text-brand-400"></i> Foto / Imagen del Producto
               </span>
@@ -146,61 +146,63 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 <button 
                   type="button" 
                   onClick={handleRemoveImage}
-                  className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 cursor-pointer"
+                  className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 cursor-pointer transition"
                 >
                   <i className="fa-solid fa-trash-can"></i> Quitar foto
                 </button>
               )}
-            </label>
+            </div>
 
-            <div className="flex items-center gap-3">
-              {/* Image Preview box */}
-              <div className="w-18 h-18 rounded-xl bg-slate-950 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0 relative group">
-                {form.image ? (
-                  <img 
-                    src={form.image} 
-                    alt="Vista previa" 
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-500 text-center p-1">
-                    <i className="fa-solid fa-image text-xl mb-0.5 text-slate-600"></i>
-                    <span className="text-[9px]">Sin foto</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Upload Controls */}
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="file" 
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleImageFileUpload}
-                    className="hidden" 
-                    id="product-photo-upload"
-                  />
-                  <label 
-                    htmlFor="product-photo-upload"
-                    className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-slate-600"
-                  >
-                    <i className="fa-solid fa-arrow-up-from-bracket text-sky-400"></i>
-                    <span>Subir archivo...</span>
-                  </label>
-                  <span className="text-[10px] text-slate-400">JPG, PNG o WEBP</span>
-                </div>
-
-                {/* External URL Input */}
-                <input 
-                  type="url"
-                  value={form.image}
-                  onChange={(e) => setForm(prev => ({ ...prev, image: e.target.value }))}
-                  placeholder="O pega URL de imagen (https://...)"
-                  className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500"
+            {/* Image Preview Box - Constrained and fully adapted to container */}
+            {form.image ? (
+              <div className="relative w-full h-48 rounded-xl bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center shadow-inner group">
+                <img 
+                  src={form.image} 
+                  alt="Vista previa del producto" 
+                  className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
+                <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/75 backdrop-blur-xs text-[10px] text-slate-300 font-mono border border-slate-700/80 pointer-events-none">
+                  Adaptada al contenedor
+                </div>
               </div>
+            ) : (
+              <div className="w-full h-24 rounded-xl bg-slate-950/60 border border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 text-center p-3">
+                <i className="fa-solid fa-image text-2xl mb-1 text-slate-600"></i>
+                <span className="text-[11px] font-medium text-slate-400">Sin foto asignada</span>
+                <span className="text-[10px] text-slate-500">Sube una foto o pega una URL abajo</span>
+              </div>
+            )}
+
+            {/* Upload Controls */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleImageFileUpload}
+                  className="hidden" 
+                  id="product-photo-upload"
+                />
+                <label 
+                  htmlFor="product-photo-upload"
+                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-slate-600 shadow-xs"
+                >
+                  <i className="fa-solid fa-arrow-up-from-bracket text-sky-400"></i>
+                  <span>Subir archivo...</span>
+                </label>
+                <span className="text-[10px] text-slate-400">JPG, PNG o WEBP (máx. 3MB)</span>
+              </div>
+
+              {/* External URL Input */}
+              <input 
+                type="url"
+                value={form.image}
+                onChange={(e) => setForm(prev => ({ ...prev, image: e.target.value }))}
+                placeholder="O pega URL de imagen (https://...)"
+                className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+              />
             </div>
           </div>
 
@@ -366,8 +368,12 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 step="0.01"
                 value={form.oldPrice}
                 onChange={(e) => setForm(prev => ({ ...prev, oldPrice: e.target.value }))}
+                placeholder="Opcional"
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
               />
+              <span className="text-[10px] text-slate-500 block mt-1">
+                Solo se tacha si es mayor al precio normal.
+              </span>
             </div>
 
             <div>
