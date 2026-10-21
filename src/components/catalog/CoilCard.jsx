@@ -1,22 +1,31 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { formatUSD } from '../../utils/formatters';
+import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
 
 export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
 
   const primaryOem = (coil.oem || '').split('/')[0].trim();
+  const categoryId = coil.category || detectProductCategory(coil);
+  const catConfig = getCategoryConfig(categoryId);
 
   return (
     <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/50 rounded-2xl p-5 flex flex-col justify-between shadow-lg hover:shadow-brand-500/10 transition-all duration-300 group">
       <div>
         {/* Badge & Stock Status */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30">
-            {coil.badge || 'OEM Spec'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30">
+              {coil.badge || 'OEM Spec'}
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-slate-900 text-slate-300 border border-slate-700/80 flex items-center gap-1">
+              <i className={`${catConfig.icon} text-[9px] ${catConfig.color}`}></i>
+              <span className="truncate max-w-[90px]">{catConfig.singular.split(' ')[0]}</span>
+            </span>
+          </div>
+
           <div className={`flex items-center gap-1.5 text-xs ${coil.stock > 0 ? 'text-emerald-400' : 'text-rose-400'} font-medium`}>
             <span className={`h-2 w-2 rounded-full ${coil.stock > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`}></span>
             <span>{coil.stock > 0 ? `${coil.stock} en stock` : 'Agotado (0)'}</span>
@@ -34,11 +43,14 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
             />
           ) : null}
           <div className={`h-full w-full flex-col items-center justify-center ${coil.image ? 'hidden' : 'flex'}`}>
-            <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-500/80' : 'text-slate-600'} mb-2 group-hover:scale-110 transition duration-300`}></i>
+            <i className={`${catConfig.icon} text-4xl ${coil.stock > 0 ? catConfig.color : 'text-slate-600'} mb-2 group-hover:scale-110 transition duration-300`}></i>
+            <span className="text-[10px] text-slate-500 font-medium">{catConfig.singular}</span>
           </div>
-          <span className="absolute bottom-1.5 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-700 shadow">
-            OEM: {primaryOem}
-          </span>
+          {primaryOem && (
+            <span className="absolute bottom-1.5 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-700 shadow">
+              OEM: {primaryOem}
+            </span>
+          )}
           <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-300 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-700/80 shadow">
             <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty || '12 meses'}
           </span>
@@ -49,7 +61,10 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
 
         {/* Titles & Compatibility */}
         <div className="space-y-1 mb-3">
-          <span className="text-xs font-bold text-brand-400 uppercase tracking-wider">{coil.brand}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-brand-400 uppercase tracking-wider">{coil.brand}</span>
+            <span className="text-[10px] text-slate-500 font-mono">• {catConfig.prefix}</span>
+          </div>
           <h3 className="text-base font-bold text-white group-hover:text-brand-400 transition leading-snug">
             {coil.name}
           </h3>
@@ -65,8 +80,18 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
 
         {/* Specs tag pills */}
         <div className="flex flex-wrap gap-1.5 my-3 text-[10px]">
-          <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700/60">{coil.connector}</span>
-          <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700/60">{coil.type}</span>
+          {coil.connector && (
+            <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700/60 flex items-center gap-1">
+              <i className="fa-solid fa-circle-dot text-[7px] text-brand-400"></i>
+              <span className="truncate max-w-[140px]">{coil.connector}</span>
+            </span>
+          )}
+          {coil.type && (
+            <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700/60 flex items-center gap-1">
+              <i className="fa-solid fa-tag text-[7px] text-sky-400"></i>
+              <span className="truncate max-w-[140px]">{coil.type}</span>
+            </span>
+          )}
         </div>
       </div>
 

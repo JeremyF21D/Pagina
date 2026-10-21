@@ -70,7 +70,7 @@ export function DatabaseView({
             onClick={onOpenCreateModal}
             className="px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-brand-500/20 transition cursor-pointer"
           >
-            <i className="fa-solid fa-plus"></i> Insertar Bobina
+            <i className="fa-solid fa-plus"></i> Insertar Repuesto
           </button>
 
           <button 

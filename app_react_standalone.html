@@ -119,6 +119,88 @@
     // --- UTILITIES ---
     function formatUSD(amt) { return `$${Number(amt || 0).toFixed(2)}`; }
 
+    const PRODUCT_CATEGORIES = [
+      { id: 'bobina', name: 'Bobinas de Encendido', singular: 'Bobina de Encendido', prefix: 'BOB', icon: 'fa-solid fa-bolt', color: 'text-amber-400', typeLabel: 'Tipo Físico de Bobina', typePlaceholder: 'Tipo Lápiz Individual (COP), Paquete 4 Torres...', connectorLabel: 'Conector Eléctrico', connectorPlaceholder: 'Conector 3 Pines Ovalado, 4 Pines...', defaultType: 'Tipo Lápiz Individual (COP)', defaultConnector: 'Conector 4 Pines' },
+      { id: 'inyector', name: 'Inyectores de Gasolina', singular: 'Inyector de Gasolina', prefix: 'INY', icon: 'fa-solid fa-syringe', color: 'text-sky-400', typeLabel: 'Tipo de Inyección / Sistema', typePlaceholder: 'Multipunto MPFI, Secuencial, GDI...', connectorLabel: 'Impedancia / Conector', connectorPlaceholder: 'Alta Impedancia (12-14 Ohms), EV1...', defaultType: 'Multipunto MPFI', defaultConnector: 'Alta Impedancia (12 Ohms)' },
+      { id: 'estopera', name: 'Estoperas / Retenes', singular: 'Estopera / Retén de Aceite', prefix: 'EST', icon: 'fa-solid fa-circle-notch', color: 'text-emerald-400', typeLabel: 'Posición / Ubicación del Retén', typePlaceholder: 'Cigüeñal Delantero, Cigüeñal Trasero, Copa Caja...', connectorLabel: 'Medidas / Dimensiones (mm)', connectorPlaceholder: 'Ej: 42 x 55 x 7 mm, 38 x 52 x 8 mm...', defaultType: 'Cigüeñal Delantero', defaultConnector: 'Medidas Estándar OEM' },
+      { id: 'bujia', name: 'Bujías de Encendido', singular: 'Bujía de Encendido', prefix: 'BUJ', icon: 'fa-solid fa-fire-flame-curved', color: 'text-rose-400', typeLabel: 'Material del Electrodo', typePlaceholder: 'Iridio Premium, Doble Platino, Cobre...', connectorLabel: 'Calibración / Rosca', connectorPlaceholder: 'Calibre 1.1mm / Rosca 14mm Hexágono 16mm...', defaultType: 'Iridio Long Life', defaultConnector: 'Rosca 14mm / Calibre 1.1mm' },
+      { id: 'sensor', name: 'Sensores Automotrices', singular: 'Sensor Automotriz', prefix: 'SEN', icon: 'fa-solid fa-satellite-dish', color: 'text-purple-400', typeLabel: 'Tipo de Sensor', typePlaceholder: 'CKP Cigüeñal, CMP Levas, Oxígeno O2, TPS...', connectorLabel: 'Conector / Salida', connectorPlaceholder: 'Conector 3 Pines, 4 Cables...', defaultType: 'Sensor Posición Cigüeñal (CKP)', defaultConnector: 'Conector 3 Pines' },
+      { id: 'bomba', name: 'Bombas de Gasolina', singular: 'Bomba / Pila de Gasolina', prefix: 'BOM', icon: 'fa-solid fa-gas-pump', color: 'text-orange-400', typeLabel: 'Tipo de Bomba / Presión', typePlaceholder: 'Pila Eléctrica 3.5 Bar, Módulo Completo 4.0 Bar...', connectorLabel: 'Voltaje / Terminales', connectorPlaceholder: '12V / 2 Pines con Manguera y Cedazo...', defaultType: 'Pila Universal 3.5 Bar', defaultConnector: '12V / 2 Pines' },
+      { id: 'empacadura', name: 'Empacaduras / Sellos', singular: 'Empacadura / Junta de Motor', prefix: 'EMP', icon: 'fa-solid fa-layer-group', color: 'text-teal-400', typeLabel: 'Tipo de Empacadura', typePlaceholder: 'Cámara / Culata, Tapa Válvulas, Múltiple...', connectorLabel: 'Material / Composición', connectorPlaceholder: 'Multilámina MLS Acero, Grafito Reforzado...', defaultType: 'Empacadura de Cámara (MLS)', defaultConnector: 'Multilámina Acero' },
+      { id: 'otro', name: 'Otros Repuestos', singular: 'Repuesto Automotriz', prefix: 'REP', icon: 'fa-solid fa-wrench', color: 'text-indigo-400', typeLabel: 'Especificación Técnica 1', typePlaceholder: 'Tipo, Material, Posición o Detalle...', connectorLabel: 'Especificación Técnica 2', connectorPlaceholder: 'Medidas, Conector o Característica adicional...', defaultType: 'Repuesto Original / OEM', defaultConnector: 'Especificación Estándar' }
+    ];
+
+    function getCategoryConfig(categoryId) {
+      return PRODUCT_CATEGORIES.find(c => c.id === categoryId) || PRODUCT_CATEGORIES[0];
+    }
+
+    function detectProductCategory(item) {
+      if (!item) return 'otro';
+      if (item.category) return item.category;
+      const text = `${item.id || ''} ${item.name || ''} ${item.type || ''}`.toLowerCase();
+      if (text.includes('bob-') || text.includes('bobina')) return 'bobina';
+      if (text.includes('iny-') || text.includes('inyector')) return 'inyector';
+      if (text.includes('est-') || text.includes('estopera') || text.includes('reten')) return 'estopera';
+      if (text.includes('buj-') || text.includes('bujia') || text.includes('bujía')) return 'bujia';
+      if (text.includes('sen-') || text.includes('sensor')) return 'sensor';
+      if (text.includes('bom-') || text.includes('bomba') || text.includes('pila')) return 'bomba';
+      if (text.includes('emp-') || text.includes('empacadura') || text.includes('junta')) return 'empacadura';
+      return 'otro';
+    }
+
+    function generateSmartProductId({ category = 'bobina', name = '', carModel = '', engine = '', brand = '', existingItems = [] } = {}) {
+      let prefix = 'BOB';
+      const catConfig = PRODUCT_CATEGORIES.find(c => c.id === category);
+      if (catConfig) prefix = catConfig.prefix;
+
+      let modelStr = '';
+      const rawModel = (carModel || '').trim();
+      if (rawModel) {
+        const firstChunk = rawModel.split(/[,/\\-]/)[0].trim();
+        const words = firstChunk.split(/\s+/).filter(Boolean);
+        let primaryWord = words[0] || '';
+        if (words.length > 1 && /^(grand|new|super|sport|all)$/i.test(primaryWord)) primaryWord = words[1];
+        modelStr = primaryWord.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 7);
+      } else if (name) {
+        const nameWords = name.replace(/[^a-zA-Z0-9\s]/g, ' ').split(/\s+/);
+        const ignoreList = new Set(['BOBINA', 'DE', 'ENCENDIDO', 'INYECTOR', 'ESTOPERA', 'RETEN', 'RETÉN', 'BUJIA', 'BUJÍA', 'SENSOR', 'BOMBA', 'PILA', 'EMPACADURA', 'JUNTA', 'REPUESTO', 'CHEVROLET', 'TOYOTA', 'FORD', 'NISSAN', 'HYUNDAI', 'RENAULT', 'SUZUKI', 'MITSUBISHI', 'KIA', 'ORIGINAL', 'OEM']);
+        for (const w of nameWords) {
+          const up = w.toUpperCase();
+          if (up.length >= 3 && !ignoreList.has(up)) {
+            modelStr = up.slice(0, 7);
+            break;
+          }
+        }
+      }
+      if (!modelStr) {
+        const cleanBrand = (brand || '').replace(/[^a-zA-Z]/g, '').toUpperCase();
+        modelStr = cleanBrand.slice(0, 4) || 'REP';
+      }
+
+      let numStr = '';
+      const searchSources = [engine || '', carModel || '', name || ''];
+      for (const src of searchSources) {
+        if (!src) continue;
+        const decMatch = src.match(/(\d+)[.,](\d+)/);
+        if (decMatch) { numStr = `${decMatch[1]}${decMatch[2]}`; break; }
+        const vMatch = src.match(/(\d+)V\b/i);
+        if (vMatch) { numStr = vMatch[1]; break; }
+        const intMatch = src.match(/\b(\d{2,3})\b/);
+        if (intMatch) { numStr = intMatch[1]; break; }
+      }
+
+      const baseId = `${prefix}-${modelStr}${numStr}`;
+      let candidate = baseId;
+      const isTaken = (testId) => Array.isArray(existingItems) && existingItems.some(i => i && String(i.id).toLowerCase() === testId.toLowerCase());
+      if (isTaken(candidate)) {
+        let suffix = 2;
+        while (isTaken(`${baseId}-${suffix}`) && suffix < 99) suffix++;
+        candidate = `${baseId}-${suffix}`;
+      }
+      return candidate;
+    }
+
+
     function generateAutoCoilId(existingCoils = [], brand = '') {
       const brandPrefix = brand ? String(brand).replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() : '';
       const prefix = brandPrefix ? `BOB-${brandPrefix}` : 'BOB';
@@ -2248,15 +2330,16 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
       const [form, setForm] = useState({
         id: '',
+        category: 'bobina',
         name: '',
         brand: 'Chevrolet',
         carModel: '',
         engine: '',
         oem: '',
-        type: 'Tipo Lápiz Individual',
+        type: 'Tipo Lápiz Individual (COP)',
         connector: 'Conector 4 Pines',
         price: '29.50',
-        oldPrice: '36.00',
+        oldPrice: '',
         stock: '15',
         warranty: '12 meses',
         badge: 'OEM Spec',
@@ -2266,38 +2349,50 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
       useEffect(() => {
         if (initialProduct && initialProduct.id) {
+          const detectedCat = initialProduct.category || detectProductCategory(initialProduct);
           setForm({
             id: initialProduct.id,
+            category: detectedCat,
             name: initialProduct.name || '',
             brand: initialProduct.brand || 'Chevrolet',
             carModel: initialProduct.carModel || '',
             engine: initialProduct.engine || '',
             oem: initialProduct.oem || '',
-            type: initialProduct.type || 'Tipo Lápiz Individual',
-            connector: initialProduct.connector || 'Conector 4 Pines',
-            price: String(initialProduct.price || '29.50'),
-            oldPrice: String(initialProduct.oldPrice || '36.00'),
-            stock: String(initialProduct.stock || '15'),
+            type: initialProduct.type || '',
+            connector: initialProduct.connector || '',
+            price: String(initialProduct.price ?? '29.50'),
+            oldPrice: String(initialProduct.oldPrice || ''),
+            stock: String(initialProduct.stock ?? '15'),
             warranty: initialProduct.warranty || '12 meses',
             badge: initialProduct.badge || 'OEM Spec',
             image: initialProduct.image || ''
           });
           setIdAutoGenerated(false);
         } else if (isOpen) {
-          const brand = 'Chevrolet';
-          const autoId = generateAutoCoilId(coils, brand);
+          const defaultCat = 'bobina';
+          const defaultBrand = 'Chevrolet';
+          const cfg = getCategoryConfig(defaultCat);
+          const autoId = generateSmartProductId({
+            category: defaultCat,
+            brand: defaultBrand,
+            carModel: '',
+            engine: '',
+            name: '',
+            existingItems: coils
+          });
           setForm({
             id: autoId,
+            category: defaultCat,
             name: '',
-            brand,
+            brand: defaultBrand,
             carModel: '',
             engine: '',
             oem: '',
-            type: 'Tipo Lápiz Individual',
-            connector: 'Conector 4 Pines',
+            type: cfg.defaultType,
+            connector: cfg.defaultConnector,
             price: '29.50',
-            oldPrice: '36.00',
-            stock: '15',
+            oldPrice: '',
+            stock: '10',
             warranty: '12 meses',
             badge: 'OEM Spec',
             image: ''
@@ -2308,23 +2403,67 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
       if (!isOpen) return null;
 
-      const handleRegenId = () => {
-        const fresh = generateAutoCoilId(coils, form.brand);
-        setForm(p => ({ ...p, id: fresh }));
-        setIdAutoGenerated(true);
-      };
+      const currentCategory = getCategoryConfig(form.category);
 
-      const handleBrandChange = (b) => {
-        setForm(p => {
-          const next = { ...p, brand: b };
-          if (!isEditing && idAutoGenerated) next.id = generateAutoCoilId(coils, b);
+      const updateFormAndRecomputeId = (updates) => {
+        setForm(prev => {
+          const next = { ...prev, ...updates };
+          if (!isEditing && idAutoGenerated) {
+            next.id = generateSmartProductId({
+              category: next.category,
+              name: next.name,
+              carModel: next.carModel,
+              engine: next.engine,
+              brand: next.brand,
+              existingItems: coils
+            });
+          }
           return next;
         });
+      };
+
+      const handleCategoryChange = (newCatId) => {
+        const newCfg = getCategoryConfig(newCatId);
+        setForm(prev => {
+          const isDefaultType = !prev.type || PRODUCT_CATEGORIES.some(c => c.defaultType === prev.type);
+          const isDefaultConnector = !prev.connector || PRODUCT_CATEGORIES.some(c => c.defaultConnector === prev.connector);
+          const next = {
+            ...prev,
+            category: newCatId,
+            type: isDefaultType ? newCfg.defaultType : prev.type,
+            connector: isDefaultConnector ? newCfg.defaultConnector : prev.connector
+          };
+          if (!isEditing && idAutoGenerated) {
+            next.id = generateSmartProductId({
+              category: newCatId,
+              name: next.name,
+              carModel: next.carModel,
+              engine: next.engine,
+              brand: next.brand,
+              existingItems: coils
+            });
+          }
+          return next;
+        });
+      };
+
+      const handleRegenId = () => {
+        const fresh = generateSmartProductId({
+          category: form.category,
+          name: form.name,
+          carModel: form.carModel,
+          engine: form.engine,
+          brand: form.brand,
+          existingItems: coils
+        });
+        setForm(p => ({ ...p, id: fresh }));
+        setIdAutoGenerated(true);
       };
 
       const handleFileUpload = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (file.size > 3 * 1024 * 1024) { alert('La foto debe pesar menos de 3MB'); return; }
         const reader = new FileReader();
         reader.onload = (ev) => {
           setForm(prev => ({ ...prev, image: ev.target.result }));
@@ -2340,22 +2479,54 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
-          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
             <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white">
               <i className="fa-solid fa-xmark text-lg"></i>
             </button>
             <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-              <i className={`fa-solid ${isEditing ? 'fa-pen-to-square text-sky-400' : 'fa-database text-brand-500'}`}></i>
-              <span>{isEditing ? `Editar Bobina (${form.id})` : 'Insertar Nueva Bobina en Base de Datos'}</span>
+              <i className={`fa-solid ${isEditing ? 'fa-pen-to-square text-sky-400' : `${currentCategory.icon} ${currentCategory.color}`}`}></i>
+              <span>{isEditing ? `Editar ${currentCategory.singular} (${form.id})` : `Registrar Nuevo Repuesto (${currentCategory.name})`}</span>
             </h3>
 
             <form onSubmit={handleSave} className="space-y-4">
+              {/* Category Selector Bar */}
+              <div className="p-3 bg-slate-800/90 border border-slate-700 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <i className="fa-solid fa-layer-group"></i> Categoría del Repuesto *
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Prefijo: <strong className="text-white">{currentCategory.prefix}-</strong>
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {PRODUCT_CATEGORIES.map(cat => {
+                    const isSelected = form.category === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleCategoryChange(cat.id)}
+                        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer border text-left ${
+                          isSelected
+                            ? 'bg-brand-500 text-white border-brand-400 shadow-sm'
+                            : 'bg-slate-900/90 hover:bg-slate-700 text-slate-300 border-slate-700/80'
+                        }`}
+                      >
+                        <i className={`${cat.icon} text-xs ${isSelected ? 'text-white' : cat.color}`}></i>
+                        <span className="truncate">{cat.name.split(' ')[0]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Image Upload Box */}
               <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-3 overflow-hidden">
                 <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
                   <span className="flex items-center gap-1.5"><i className="fa-solid fa-camera text-brand-400"></i> Foto / Imagen del Producto</span>
                   {form.image && (
-                    <button type="button" onClick={() => setForm(p => ({ ...p, image: '' }))} className="text-rose-400 hover:text-rose-300 text-[10px] font-bold flex items-center gap-1">
+                    <button type="button" onClick={() => setForm(p => ({ ...p, image: '' }))} className="text-rose-400 hover:text-rose-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
                       <i className="fa-solid fa-trash-can mr-1"></i> Quitar foto
                     </button>
                   )}
@@ -2371,7 +2542,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
                   </div>
                 ) : (
                   <div className="w-full h-24 rounded-xl bg-slate-950/60 border border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 text-center p-3">
-                    <i className="fa-solid fa-image text-2xl mb-1 text-slate-600"></i>
+                    <i className={`${currentCategory.icon} text-2xl mb-1 text-slate-600`}></i>
                     <span className="text-[11px] font-medium text-slate-400">Sin foto asignada</span>
                     <span className="text-[10px] text-slate-500">Sube una foto o pega una URL abajo</span>
                   </div>
@@ -2395,38 +2566,56 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-semibold text-slate-400">Código / ID (Único) *</label>
                     {!isEditing && (
-                      <button type="button" onClick={handleRegenId} className="text-[10px] text-brand-400 hover:text-brand-300 font-bold">
-                        <i className="fa-solid fa-rotate mr-0.5"></i> Auto-generar
+                      <button type="button" onClick={handleRegenId} className="text-[10px] text-brand-400 hover:text-brand-300 font-bold flex items-center gap-1 cursor-pointer">
+                        <i className="fa-solid fa-wand-magic-sparkles text-[9px]"></i> Auto-generar
                       </button>
                     )}
                   </div>
-                  <input type="text" value={form.id} onChange={e => { setForm(p => ({ ...p, id: e.target.value })); setIdAutoGenerated(false); }} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                  <div className="relative">
+                    <input type="text" value={form.id} onChange={e => { setForm(p => ({ ...p, id: e.target.value.toUpperCase() })); setIdAutoGenerated(false); }} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono uppercase" required />
+                    {!isEditing && idAutoGenerated && (
+                      <span className="absolute right-2 top-2 text-[9px] bg-brand-500/20 text-brand-400 border border-brand-500/30 px-1 py-0.5 rounded font-mono font-bold">Auto</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{currentCategory.prefix}-[MODELO][MOTOR]</p>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">Marca de Auto *</label>
-                  <input type="text" value={form.brand} onChange={e => handleBrandChange(e.target.value)} placeholder="Chevrolet, Toyota..." className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
+                  <input type="text" value={form.brand} onChange={e => updateFormAndRecomputeId({ brand: e.target.value })} placeholder="Chevrolet, Toyota, Ford..." className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Nombre Completo *</label>
-                <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Bobina de Encendido Chevrolet Captiva 3.2" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Nombre del Repuesto *</label>
+                <input type="text" value={form.name} onChange={e => updateFormAndRecomputeId({ name: e.target.value })} placeholder={`Ej: ${currentCategory.singular} ${form.brand || 'Chevrolet'} Aveo 1.6`} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">Modelos Compatibles *</label>
-                  <input type="text" value={form.carModel} onChange={e => setForm(p => ({ ...p, carModel: e.target.value }))} placeholder="Captiva Sport 3.2L" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
+                  <input type="text" value={form.carModel} onChange={e => updateFormAndRecomputeId({ carModel: e.target.value })} placeholder="Ej: Aveo, Optra, Tiida..." className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" required />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">Motor / Cilindrada *</label>
-                  <input type="text" value={form.engine} onChange={e => setForm(p => ({ ...p, engine: e.target.value }))} placeholder="3.2L V6" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                  <input type="text" value={form.engine} onChange={e => updateFormAndRecomputeId({ engine: e.target.value })} placeholder="Ej: 1.6L, 1.8L, 2.0L..." className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
                 </div>
               </div>
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 mb-1">Código OEM *</label>
-                <input type="text" value={form.oem} onChange={e => setForm(p => ({ ...p, oem: e.target.value }))} placeholder="12618542 / UF569" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+                <input type="text" value={form.oem} onChange={e => setForm(p => ({ ...p, oem: e.target.value }))} placeholder="12618542 / UF569 / 96414260" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" required />
+              </div>
+
+              {/* Dynamic Specs */}
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-850 border border-slate-700 rounded-xl">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">{currentCategory.typeLabel}</label>
+                  <input type="text" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} placeholder={currentCategory.typePlaceholder} className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">{currentCategory.connectorLabel}</label>
+                  <input type="text" value={form.connector} onChange={e => setForm(p => ({ ...p, connector: e.target.value }))} placeholder={currentCategory.connectorPlaceholder} className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white" />
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
@@ -2436,7 +2625,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">Precio Tachado</label>
-                  <input type="number" step="0.01" value={form.oldPrice} onChange={e => setForm(p => ({ ...p, oldPrice: e.target.value }))} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+                  <input type="number" step="0.01" value={form.oldPrice} onChange={e => setForm(p => ({ ...p, oldPrice: e.target.value }))} placeholder="Opcional" className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">Stock *</label>
@@ -2451,8 +2640,8 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
                   </button>
                 ) : <div></div>}
                 <div className="flex gap-2">
-                  <button type="button" onClick={onClose} className="px-3.5 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancelar</button>
-                  <button type="submit" className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow">Guardar</button>
+                  <button type="button" onClick={onClose} className="px-3.5 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs cursor-pointer">Cancelar</button>
+                  <button type="submit" className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow cursor-pointer">Guardar</button>
                 </div>
               </div>
             </form>

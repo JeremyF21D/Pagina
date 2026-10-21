@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { CoilCard } from './CoilCard';
 import { CatalogFilters } from './CatalogFilters';
+import { detectProductCategory } from '../../utils/formatters';
 import logoImg from '../../assets/logo.png';
 
 export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
@@ -12,6 +13,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
   const { isAdmin } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedBrand, setSelectedBrand] = useState('ALL');
   const [stockFilter, setStockFilter] = useState('ALL');
 
@@ -24,10 +26,11 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
     return Array.from(set).sort();
   }, [coils]);
 
-  // Filter coils
+  // Filter products
   const filteredCoils = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return coils.filter(item => {
+      // Search text query
       const matchesQuery = !q ||
         item.name.toLowerCase().includes(q) ||
         item.carModel.toLowerCase().includes(q) ||
@@ -36,20 +39,29 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
         item.brand.toLowerCase().includes(q) ||
         item.id.toLowerCase().includes(q);
 
+      // Brand filter
       const matchesBrand = (selectedBrand === 'ALL') || (item.brand.toLowerCase() === selectedBrand.toLowerCase());
 
+      // Category filter
+      let matchesCategory = true;
+      if (selectedCategory !== 'ALL') {
+        const itemCat = detectProductCategory(item);
+        matchesCategory = itemCat === selectedCategory;
+      }
+
+      // Stock filter
       let matchesStock = true;
       if (stockFilter === 'IN_STOCK') {
         matchesStock = item.stock > 0;
       } else if (stockFilter === 'OUT_OF_STOCK') {
         matchesStock = item.stock <= 0;
       } else if (stockFilter === 'PROMO') {
-        matchesStock = item.badge === 'Oferta' || item.price < item.oldPrice;
+        matchesStock = item.badge === 'Oferta' || (Number(item.oldPrice) > Number(item.price));
       }
 
-      return matchesQuery && matchesBrand && matchesStock;
+      return matchesQuery && matchesBrand && matchesCategory && matchesStock;
     });
-  }, [coils, searchQuery, selectedBrand, stockFilter]);
+  }, [coils, searchQuery, selectedCategory, selectedBrand, stockFilter]);
 
   return (
     <div className="space-y-6">
@@ -74,11 +86,11 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Repuestos & Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
+            Repuestos Automotrices & Bobinas <span className="text-brand-500">Originales & OEM</span>
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Catálogo oficial <strong>JF AUTO PARTS</strong>. Bobinas tipo Lápiz, Riel múltiple y Módulo para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más. Consulta disponibilidad inmediata o escribe a nuestro <strong>Asesor por WhatsApp</strong>.
+            Catálogo oficial <strong>JF AUTO PARTS</strong>. Bobinas, inyectores, estoperas, bujías y sensores para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más. Consulta disponibilidad inmediata o escribe a nuestro <strong>Asesor por WhatsApp</strong>.
           </p>
 
           <div className="pt-2 flex flex-wrap gap-3">
@@ -123,6 +135,8 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
       <CatalogFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
         selectedBrand={selectedBrand}
         onBrandChange={setSelectedBrand}
         stockFilter={stockFilter}
@@ -135,7 +149,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
         <div className="flex flex-wrap items-center gap-2.5">
           <p className="text-xs text-slate-300">
-            Mostrando <strong className="text-white font-bold">{filteredCoils.length}</strong> de {coils.length} bobinas registradas
+            Mostrando <strong className="text-white font-bold">{filteredCoils.length}</strong> de {coils.length} repuestos registrados
           </p>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] text-slate-300 font-mono shadow-xs">
             <i className="fa-solid fa-table-cells text-emerald-400"></i>
@@ -216,7 +230,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
             </p>
             <div className="flex flex-wrap justify-center gap-2.5 pt-2">
               <a
-                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20bobinas%20de%20encendido."
+                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20repuestos%20y%20bobinas."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20"
@@ -256,12 +270,12 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
           <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
             <i className="fa-solid fa-magnifying-glass"></i>
           </div>
-          <h3 className="text-lg font-bold text-white">No se encontraron bobinas</h3>
+          <h3 className="text-lg font-bold text-white">No se encontraron repuestos</h3>
           <p className="text-xs text-slate-400">
-            No hay productos que coincidan con los filtros aplicados. Intenta buscar por código OEM o marca.
+            No hay productos que coincidan con los filtros aplicados. Intenta buscar por otra categoría, modelo o código OEM.
           </p>
           <button 
-            onClick={() => { setSearchQuery(''); setSelectedBrand('ALL'); setStockFilter('ALL'); }}
+            onClick={() => { setSearchQuery(''); setSelectedCategory('ALL'); setSelectedBrand('ALL'); setStockFilter('ALL'); }}
             className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
           >
             Limpiar Filtros
