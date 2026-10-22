@@ -35,8 +35,12 @@ CREATE TABLE IF NOT EXISTS public.bobinas_inventario (
   stock INTEGER NOT NULL DEFAULT 0,
   warranty TEXT DEFAULT '12 meses',
   badge TEXT DEFAULT 'OEM Spec',
+  image TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Si tu tabla ya existe en Supabase, ejecuta esta línea para habilitar las fotos para todos:
+ALTER TABLE public.bobinas_inventario ADD COLUMN IF NOT EXISTS image TEXT;
 
 -- Tabla para registrar cada venta cerrada por WhatsApp IA
 CREATE TABLE IF NOT EXISTS public.ventas_ordenes (

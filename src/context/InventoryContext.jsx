@@ -545,10 +545,11 @@ Directrices de conversación:
             oldPrice: Number(coil.oldPrice) || Number(coil.price) || 0,
             stock: parseInt(coil.stock, 10) || 0,
             warranty: String(coil.warranty || '12 meses').trim(),
-            badge: String(coil.badge || 'OEM Spec').trim()
+            badge: String(coil.badge || 'OEM Spec').trim(),
+            image: String(coil.image || '').trim()
           };
 
-          const res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+          let res = await fetch(`${baseUrl}/rest/v1/${table}`, {
             method: 'POST',
             headers: getSupabaseHeaders(anonKey, { 
               'Prefer': 'resolution=merge-duplicates,return=representation' 
@@ -556,8 +557,31 @@ Directrices de conversación:
             body: JSON.stringify(supabasePayload)
           });
 
+          // Si falla porque la columna 'image' aún no ha sido agregada en Supabase (PGRST204)
           if (!res.ok) {
             const errBody = await res.text();
+            if (errBody.includes("'image' column") || errBody.includes('image')) {
+              console.warn("Columna 'image' no encontrada en Supabase. Guardando resto de campos y alertando...");
+              const fallbackPayload = { ...supabasePayload };
+              delete fallbackPayload.image;
+
+              res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+                method: 'POST',
+                headers: getSupabaseHeaders(anonKey, { 
+                  'Prefer': 'resolution=merge-duplicates,return=representation' 
+                }),
+                body: JSON.stringify(fallbackPayload)
+              });
+
+              if (res.ok) {
+                showToast(`⚠️ Repuesto guardado. Para que la foto sea visible para todos, agrega la columna 'image' en Supabase.`);
+                setTimeout(() => {
+                  checkAndSyncDatabase(dbEngine, null, false);
+                }, 300);
+                return { success: true };
+              }
+            }
+
             console.error('Error insertando en Supabase:', res.status, errBody);
             showToast(`⚠️ No se pudo guardar en Supabase (${res.status}): ${errBody.slice(0, 90)}`, 'error');
             return { success: false, error: errBody };

@@ -789,10 +789,11 @@
                 oldPrice: Number(item.oldPrice) || Number(item.price) || 0,
                 stock: parseInt(item.stock, 10) || 0,
                 warranty: String(item.warranty || '12 meses').trim(),
-                badge: String(item.badge || 'OEM Spec').trim()
+                badge: String(item.badge || 'OEM Spec').trim(),
+                image: String(item.image || '').trim()
               };
 
-              const res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+              let res = await fetch(`${baseUrl}/rest/v1/${table}`, {
                 method: 'POST',
                 headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates,return=representation' }),
                 body: JSON.stringify(supabasePayload)
@@ -800,6 +801,20 @@
 
               if (!res.ok) {
                 const errText = await res.text();
+                if (errText.includes("'image' column") || errText.includes('image')) {
+                  const fallback = { ...supabasePayload };
+                  delete fallback.image;
+                  res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+                    method: 'POST',
+                    headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates,return=representation' }),
+                    body: JSON.stringify(fallback)
+                  });
+                  if (res.ok) {
+                    showToast(`⚠️ Repuesto guardado. Para que todos vean la foto, añade la columna 'image' en Supabase.`);
+                    setTimeout(() => { if (typeof checkAndSyncDatabase === 'function') checkAndSyncDatabase(dbEngine, null, false); }, 400);
+                    return { success: true };
+                  }
+                }
                 showToast(`⚠️ Error al guardar en Supabase: ${errText.slice(0, 80)}`, 'error');
                 return { success: false, error: errText };
               } else {
@@ -2621,10 +2636,25 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
       const handleFileUpload = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 3 * 1024 * 1024) { alert('La foto debe pesar menos de 3MB'); return; }
+        if (file.size > 8 * 1024 * 1024) { alert('La foto debe pesar menos de 8MB'); return; }
         const reader = new FileReader();
         reader.onload = (ev) => {
-          setForm(prev => ({ ...prev, image: ev.target.result }));
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 800;
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+              else { width = Math.round((width * maxDim) / height); height = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            setForm(prev => ({ ...prev, image: canvas.toDataURL('image/jpeg', 0.75) }));
+          };
+          img.onerror = () => setForm(prev => ({ ...prev, image: ev.target.result }));
+          img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
       };
