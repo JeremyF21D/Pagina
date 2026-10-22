@@ -8,28 +8,30 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const { isAdmin } = useAuth();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
-  const primaryOem = (coil.oem || '').split('/')[0].trim();
+  const oemList = (coil.oem || '').split(/[,/]+/).map(s => s.trim()).filter(Boolean);
+  const primaryOem = oemList[0] || '';
+  const extraOemCount = oemList.length > 1 ? oemList.length - 1 : 0;
   const categoryId = coil.category || detectProductCategory(coil);
   const catConfig = getCategoryConfig(categoryId);
 
   return (
     <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/50 rounded-2xl p-5 flex flex-col justify-between shadow-lg hover:shadow-brand-500/10 transition-all duration-300 group">
       <div>
-        {/* Badge & Stock Status */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30">
+        {/* Badge & Stock Status - Altura fija de 28px sin wrap para nivelar perfectamente todas las fotos */}
+        <div className="flex items-center justify-between gap-1.5 mb-3 h-7">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 whitespace-nowrap flex-shrink-0">
               {coil.badge || 'OEM Spec'}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-slate-900 text-slate-300 border border-slate-700/80 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-slate-900 text-slate-300 border border-slate-700/80 flex items-center gap-1 whitespace-nowrap flex-shrink-0">
               <i className={`${catConfig.icon} text-[9px] ${catConfig.color}`}></i>
-              <span className="truncate max-w-[90px]">{catConfig.singular.split(' ')[0]}</span>
+              <span className="truncate max-w-[80px]">{catConfig.singular.split(' ')[0]}</span>
             </span>
           </div>
 
-          <div className={`flex items-center gap-1.5 text-xs ${coil.stock > 0 ? 'text-emerald-400' : 'text-rose-400'} font-medium`}>
-            <span className={`h-2 w-2 rounded-full ${coil.stock > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`}></span>
-            <span>{coil.stock > 0 ? `${coil.stock} en stock` : 'Agotado (0)'}</span>
+          <div className={`flex items-center gap-1.5 text-xs ${coil.stock > 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold whitespace-nowrap flex-shrink-0`}>
+            <span className={`h-2 w-2 rounded-full ${coil.stock > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'} flex-shrink-0`}></span>
+            <span>{coil.stock > 0 ? `${coil.stock} en stock` : 'Agotado'}</span>
           </div>
         </div>
 
@@ -60,8 +62,11 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
             <span className="text-[10px] text-slate-500 font-medium">{catConfig.singular}</span>
           </div>
           {primaryOem && (
-            <span className="absolute bottom-2 right-2 text-[10px] font-mono font-medium text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
-              OEM: {primaryOem}
+            <span 
+              className="absolute bottom-2 right-2 text-[10px] font-mono font-medium text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none max-w-[170px] truncate"
+              title={coil.oem}
+            >
+              OEM: {primaryOem}{extraOemCount > 0 ? ` (+${extraOemCount})` : ''}
             </span>
           )}
           <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
