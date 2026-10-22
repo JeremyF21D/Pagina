@@ -1322,18 +1322,18 @@
               </div>
             </div>
 
-            <div className="h-36 rounded-xl bg-slate-950 border border-slate-700/60 flex flex-col items-center justify-center p-2 text-center mb-4 relative overflow-hidden group-hover:border-slate-600 transition">
+            <div className="h-44 rounded-xl bg-slate-950 border border-slate-700/60 relative overflow-hidden group-hover:border-slate-600 transition flex items-center justify-center mb-4">
               {coil.image ? (
-                <img src={coil.image} alt={coil.name} className="h-full w-full object-contain drop-shadow" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                <img src={coil.image} alt={coil.name} className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500" onError={e => { e.currentTarget.style.display = 'none'; }} />
               ) : null}
               <div className={`h-full w-full flex flex-col items-center justify-center ${coil.image ? 'hidden' : 'flex'}`}>
                 <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-500/80' : 'text-slate-600'} mb-2`}></i>
               </div>
-              <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 absolute bottom-1.5 right-2">OEM: {coil.oem.split('/')[0].trim()}</span>
-              <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono font-medium text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md absolute bottom-2 right-2 pointer-events-none">OEM: {coil.oem.split('/')[0].trim()}</span>
+              <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
                 <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty}
               </span>
-              <span className="absolute top-2 left-2 text-[9px] font-mono text-slate-500">{coil.id}</span>
+              <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">{coil.id}</span>
             </div>
 
             <div className="space-y-1 mb-3">
@@ -2806,7 +2806,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
                 {form.image ? (
                   <div className="relative w-full h-44 rounded-xl bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center shadow-inner group">
-                    <img src={form.image} alt="Preview" className="max-h-full max-w-full w-auto h-auto object-contain mx-auto" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                    <img src={form.image} alt="Preview" className="w-full h-full object-cover mx-auto" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     <button
                       type="button"
                       onClick={handleRemoveImage}

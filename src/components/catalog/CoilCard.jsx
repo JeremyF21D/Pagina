@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
@@ -6,6 +6,7 @@ import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils
 export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
 
   const primaryOem = (coil.oem || '').split('/')[0].trim();
   const categoryId = coil.category || detectProductCategory(coil);
@@ -32,29 +33,41 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           </div>
         </div>
 
-        {/* Product Visual Header / Image or Icon */}
-        <div className="h-40 rounded-xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/60 flex flex-col items-center justify-center p-2 text-center mb-4 relative overflow-hidden group-hover:border-slate-600 transition">
+        {/* Product Visual Header / Image Adaptada al Contenedor */}
+        <div 
+          className="h-44 rounded-xl bg-slate-950 border border-slate-700/60 relative overflow-hidden group-hover:border-slate-600 transition flex items-center justify-center mb-4 cursor-pointer"
+          onClick={() => coil.image && setIsZoomOpen(true)}
+          title={coil.image ? "Haz clic para ampliar la foto" : ""}
+        >
           {coil.image ? (
-            <img 
-              src={coil.image} 
-              alt={coil.name} 
-              className="h-full w-full object-contain drop-shadow group-hover:scale-105 transition duration-300"
-              onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
-            />
+            <>
+              <img 
+                src={coil.image} 
+                alt={coil.name} 
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500"
+                onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
+              />
+              {/* Overlay hover sutil para indicar zoom */}
+              <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <span className="p-2 rounded-full bg-slate-900/80 text-white text-xs border border-slate-700/80 shadow-lg">
+                  <i className="fa-solid fa-magnifying-glass-plus"></i>
+                </span>
+              </div>
+            </>
           ) : null}
-          <div className={`h-full w-full flex-col items-center justify-center ${coil.image ? 'hidden' : 'flex'}`}>
+          <div className={`h-full w-full flex-col items-center justify-center p-4 text-center ${coil.image ? 'hidden' : 'flex'}`}>
             <i className={`${catConfig.icon} text-4xl ${coil.stock > 0 ? catConfig.color : 'text-slate-600'} mb-2 group-hover:scale-110 transition duration-300`}></i>
             <span className="text-[10px] text-slate-500 font-medium">{catConfig.singular}</span>
           </div>
           {primaryOem && (
-            <span className="absolute bottom-1.5 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-700 shadow">
+            <span className="absolute bottom-2 right-2 text-[10px] font-mono font-medium text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
               OEM: {primaryOem}
             </span>
           )}
-          <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-300 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-700/80 shadow">
+          <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
             <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty || '12 meses'}
           </span>
-          <span className="absolute top-2 left-2 text-[9px] font-mono text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/60">
+          <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
             {coil.id}
           </span>
         </div>
@@ -142,6 +155,51 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           </button>
         </div>
       </div>
+
+      {/* Lightbox / Modal de Foto Ampliada Completa */}
+      {isZoomOpen && coil.image && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={(e) => { e.stopPropagation(); setIsZoomOpen(false); }}
+        >
+          <div 
+            className="relative max-w-xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl space-y-3 animate-in fade-in zoom-in-95 duration-200" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div className="min-w-0 pr-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-brand-400">{coil.id}</span>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 px-1.5 py-0.5 rounded bg-slate-800">{coil.brand}</span>
+                </div>
+                <h3 className="text-sm font-bold text-white truncate mt-0.5">{coil.name}</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsZoomOpen(false)} 
+                className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                aria-label="Cerrar vista previa"
+              >
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            
+            <div className="max-h-[65vh] flex items-center justify-center bg-slate-950 rounded-xl overflow-hidden p-2 border border-slate-800">
+              <img 
+                src={coil.image} 
+                alt={coil.name} 
+                className="max-h-[60vh] w-auto max-w-full object-contain mx-auto" 
+              />
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-between text-xs text-slate-300 pt-1 gap-2">
+              <span>OEM: <strong className="text-white font-mono bg-slate-800 px-1.5 py-0.5 rounded">{primaryOem || 'N/A'}</strong></span>
+              <span>Garantía: <strong className="text-emerald-400">{coil.warranty || '12 meses'}</strong></span>
+              <span>Stock: <strong className={coil.stock > 0 ? "text-emerald-400" : "text-rose-400"}>{coil.stock > 0 ? `${coil.stock} disponibles` : 'Agotado'}</strong></span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
