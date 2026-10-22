@@ -1413,70 +1413,67 @@
       return (
         <div className="space-y-6">
           {/* Hero Banner Carousel Automático */}
-          <div className="relative overflow-hidden rounded-2xl border border-slate-700/80 shadow-2xl group">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-700/80 shadow-2xl min-h-[350px] sm:min-h-[380px] flex flex-col justify-between">
             {/* Background Slides */}
             <div className="absolute inset-0 z-0 bg-slate-950 overflow-hidden">
               {[
                 { id: 1, img: './banner_nissan_lineup.jpg', tag: 'Nissan Almera • Nissan Tiida • Nissan X-Trail' },
-                { id: 2, img: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1920&q=80', tag: 'Bobinas de Alto Rendimiento, Bujías & Inyectores' },
-                { id: 3, img: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1920&q=80', tag: 'Catálogo Multimarca: Chevrolet, Toyota, Nissan, Ford' }
+                { id: 2, img: './banner_engine_parts.jpg', tag: 'Bobinas de Alto Rendimiento, Bujías & Inyectores' },
+                { id: 3, img: './banner_multibrand_fleet.jpg', tag: 'Catálogo Multimarca: Chevrolet, Toyota, Nissan, Ford' }
               ].map((s, idx) => (
-                <div key={s.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}>
-                  <img src={s.img} alt={s.tag} className="w-full h-full object-cover object-center filter brightness-[0.75] contrast-[1.1]" />
+                <div key={s.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  <img src={s.img} alt={s.tag} className="w-full h-full object-cover object-right sm:object-center filter brightness-100 contrast-[1.02]" />
                 </div>
               ))}
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/40 z-10" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/50 z-10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/75 to-transparent w-full md:w-[62%] z-10 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/30 z-10 pointer-events-none" />
             </div>
 
             {/* Foreground Content */}
-            <div className="relative z-20 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="max-w-2xl space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Stock Conectado en Tiempo Real</span>
-                  </div>
-                  <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/80 text-slate-300 text-xs font-medium backdrop-blur-md">
-                    <i className="fa-solid fa-car-side text-brand-400"></i>
-                    <span>{currentSlide === 0 ? 'Nissan Almera • Tiida • X-Trail' : currentSlide === 1 ? 'Encendido & Inyección de Alta Precisión' : 'Repuestos Originales Multimarca'}</span>
-                  </div>
+            <div className="relative z-20 p-5 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-xs text-white backdrop-blur-md shadow-sm">
+                  <img src="./logo.png" alt="Logo" className="w-5 h-5 rounded-full object-cover border border-slate-600" />
+                  <span className="font-bold tracking-tight">JF Auto Parts</span>
                 </div>
-                <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
-                  Repuestos & Bobinas de Encendido <span className="text-brand-500">Originales & OEM</span>
-                </h1>
-                <p className="text-sm sm:text-base text-slate-200 leading-relaxed drop-shadow">
-                  Catálogo oficial <strong>JF AUTO PARTS</strong>. Bobinas, inyectores, estoperas, bujías y sensores para Chevrolet, Ford, Toyota, Hyundai, Nissan, Renault y más.
-                </p>
-                <div className="pt-2 flex flex-wrap gap-3">
-                  <button onClick={toggleCart} className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-brand-500/30 transition cursor-pointer">
-                    <i className="fa-solid fa-cart-shopping"></i> Ver Mi Carrito
-                  </button>
-                  <a href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20repuestos." target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-2 backdrop-blur-md transition">
-                    <i className="fa-brands fa-whatsapp text-base"></i> Consultar Asesor WhatsApp →
-                  </a>
-                  {isAdmin && (
-                    <button onClick={() => onNavigateTab('database')} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-red-300 font-semibold rounded-xl text-xs sm:text-sm border border-red-500/40 flex items-center gap-2 transition cursor-pointer">
-                      <i className="fa-solid fa-user-shield"></i> Panel Administrador (Stock / DB)
-                    </button>
-                  )}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Stock Conectado</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-xs font-medium backdrop-blur-md">
+                  <i className="fa-solid fa-car text-brand-400"></i>
+                  <span>{currentSlide === 0 ? 'Nissan Almera • Tiida • X-Trail' : currentSlide === 1 ? 'Encendido & Inyección de Alta Precisión' : 'Repuestos Originales Multimarca'}</span>
                 </div>
               </div>
-
-              <div className="relative shrink-0 hidden md:flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-950/75 border border-slate-700/80 shadow-2xl backdrop-blur-md">
-                <img src="./logo.png" alt="JF AUTO PARTS Logo" className="w-36 h-36 lg:w-44 lg:h-44 object-cover rounded-xl shadow-lg border border-slate-800" />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-2">Logo Oficial • JF Auto Parts</span>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">
+                Repuestos & Bobinas de Encendido <span className="text-brand-500 drop-shadow-md">Originales & OEM</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed drop-shadow max-w-xl">
+                Especialistas en <strong>Nissan (Almera, Tiida, X-Trail)</strong>, Chevrolet, Toyota, Ford, Hyundai y Renault. Bobinas, inyectores, estoperas, bujías y sensores con garantía comprobada y envíos inmediatos.
+              </p>
+              <div className="pt-2 flex flex-wrap items-center gap-3">
+                <button onClick={toggleCart} className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-xl shadow-brand-500/30 transition cursor-pointer active:scale-95">
+                  <i className="fa-solid fa-cart-shopping"></i> Ver Mi Carrito
+                </button>
+                <a href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20repuestos." target="_blank" rel="noopener noreferrer" className="px-4 py-2.5 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/50 text-emerald-300 font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-2 backdrop-blur-md transition cursor-pointer shadow-lg active:scale-95">
+                  <i className="fa-brands fa-whatsapp text-base text-emerald-400"></i> Consultar Asesor WhatsApp →
+                </a>
+                {isAdmin && (
+                  <button onClick={() => onNavigateTab('database')} className="px-3.5 py-2.5 bg-slate-900/85 hover:bg-slate-800 text-red-300 font-semibold rounded-xl text-xs sm:text-sm border border-red-500/40 flex items-center gap-2 transition cursor-pointer backdrop-blur-md">
+                    <i className="fa-solid fa-user-shield"></i> Panel Administrador (Stock / DB)
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Dots */}
-            <div className="relative z-20 pb-4 px-6 flex items-center justify-center gap-2">
+            <div className="relative z-20 pb-3.5 px-6 flex items-center justify-center gap-2">
               {[0, 1, 2].map(idx => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => setCurrentSlide(idx)}
-                  className={`transition-all duration-300 rounded-full cursor-pointer ${idx === currentSlide ? 'w-7 h-2 bg-brand-500 shadow-md shadow-brand-500/50' : 'w-2 h-2 bg-white/40 hover:bg-white/70'}`}
+                  className={`transition-all duration-300 rounded-full cursor-pointer ${idx === currentSlide ? 'w-8 h-2 bg-brand-500 shadow-md shadow-brand-500/60' : 'w-2.5 h-2 bg-white/40 hover:bg-white/70'}`}
                 />
               ))}
             </div>
