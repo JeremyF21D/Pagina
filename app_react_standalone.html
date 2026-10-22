@@ -793,7 +793,7 @@
                 image: String(item.image || '').trim()
               };
 
-              let res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+              let res = await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=id`, {
                 method: 'POST',
                 headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates,return=representation' }),
                 body: JSON.stringify(supabasePayload)
@@ -804,7 +804,7 @@
                 if (errText.includes("'image' column") || errText.includes('image')) {
                   const fallback = { ...supabasePayload };
                   delete fallback.image;
-                  res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+                  res = await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=id`, {
                     method: 'POST',
                     headers: getSupabaseHeaders(anonKey, { 'Prefer': 'resolution=merge-duplicates,return=representation' }),
                     body: JSON.stringify(fallback)

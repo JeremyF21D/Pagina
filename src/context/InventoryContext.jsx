@@ -549,7 +549,7 @@ Directrices de conversación:
             image: String(coil.image || '').trim()
           };
 
-          let res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+          let res = await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=id`, {
             method: 'POST',
             headers: getSupabaseHeaders(anonKey, { 
               'Prefer': 'resolution=merge-duplicates,return=representation' 
@@ -565,7 +565,7 @@ Directrices de conversación:
               const fallbackPayload = { ...supabasePayload };
               delete fallbackPayload.image;
 
-              res = await fetch(`${baseUrl}/rest/v1/${table}`, {
+              res = await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=id`, {
                 method: 'POST',
                 headers: getSupabaseHeaders(anonKey, { 
                   'Prefer': 'resolution=merge-duplicates,return=representation' 
@@ -1226,7 +1226,7 @@ Directrices de conversación:
         const { baseUrl, anonKey, table } = getActiveSupabaseConfig(customCreds, dbCredentials);
         if (baseUrl && anonKey) {
           try {
-            const endpoint = `${baseUrl}/rest/v1/${table}`;
+            const endpoint = `${baseUrl}/rest/v1/${table}?on_conflict=id`;
             const formatted = coils.map(c => ({
               id: c.id,
               name: c.name,
