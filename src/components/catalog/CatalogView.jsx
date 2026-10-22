@@ -145,18 +145,15 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
         onQuickSearch={(tag) => setSearchQuery(tag)}
       />
 
-      {/* Results Header Count & Active Table Pill */}
+      {/* Results Header Count & Commercial Badge */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
         <div className="flex flex-wrap items-center gap-2.5">
           <p className="text-xs text-slate-300">
-            Mostrando <strong className="text-white font-bold">{filteredCoils.length}</strong> de {coils.length} repuestos registrados
+            Mostrando <strong className="text-white font-bold">{filteredCoils.length}</strong> de {coils.length} repuestos disponibles
           </p>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] text-slate-300 font-mono shadow-xs">
-            <i className="fa-solid fa-table-cells text-emerald-400"></i>
-            <span>Tabla: <strong className="text-white">{dbCredentials?.supabase?.table || 'bobinas_inventario'}</strong></span>
-            <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded uppercase font-sans font-semibold">
-              SUPABASE
-            </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] text-emerald-400 font-medium shadow-xs">
+            <i className="fa-solid fa-circle-check text-xs"></i>
+            <span>Catálogo Oficial • Disponibilidad Inmediata</span>
           </span>
         </div>
 
@@ -177,25 +174,25 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
       {isDbLoading ? (
         <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3 animate-fade-in">
           <div className="h-10 w-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <h3 className="text-sm font-bold text-white">Consultando tabla 'bobinas_inventario' ({dbEngine.toUpperCase()})...</h3>
-          <p className="text-xs text-slate-400">Verificando elementos e inventario en tiempo real.</p>
+          <h3 className="text-sm font-bold text-white">Cargando catálogo de repuestos...</h3>
+          <p className="text-xs text-slate-400">Verificando disponibilidad e inventario en tiempo real.</p>
         </div>
       ) : coils.length === 0 ? (
         apiConnectionStatus.status === 'error' ? (
-          /* Error de Conexión con la Base de Datos */
-          <div className="bg-slate-800/70 border border-rose-500/30 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl backdrop-blur">
-            <div className="h-16 w-16 bg-rose-500/15 border border-rose-500/40 rounded-full flex items-center justify-center mx-auto text-rose-400 text-2xl shadow-inner">
-              <i className="fa-solid fa-triangle-exclamation"></i>
+          /* Estado de Atención Comercial si hay problemas de red */
+          <div className="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl backdrop-blur">
+            <div className="h-16 w-16 bg-brand-500/15 border border-brand-500/30 rounded-full flex items-center justify-center mx-auto text-brand-400 text-2xl shadow-inner">
+              <i className="fa-solid fa-headset"></i>
             </div>
             <h3 className="text-xl font-extrabold text-white tracking-tight">
-              No hay productos disponibles, contacte con el administrador
+              Atención y Cotizaciones por WhatsApp
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              No fue posible conectar con la base de datos de productos ({dbEngine.toUpperCase()}). Para consultar existencias inmediatas, cotizaciones o despachos, comunícate directamente con nosotros por WhatsApp.
+              Para consultar disponibilidad inmediata, cotizaciones de repuestos o despachos a nivel nacional, comunícate directamente con nuestro equipo de atención al cliente.
             </p>
             <div className="flex flex-wrap justify-center gap-2.5 pt-2">
               <a
-                href="https://wa.me/584126497478?text=Hola,%20vi%20en%20la%20tienda%20web%20que%20no%20hay%20productos%20disponibles%20por%20error%20de%20conexión%20con%20la%20base%20de%20datos.%20Deseo%20consultar%20disponibilidad."
+                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20y%20precios%20de%20repuestos."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-emerald-600/20"
@@ -206,7 +203,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
                 onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
                 className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700"
               >
-                <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Reintentar Conexión
+                <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Reintentar
               </button>
               {isAdmin && (
                 <button 
@@ -219,36 +216,41 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
             </div>
           </div>
         ) : (
-          /* Conectado con éxito, pero la base de datos está vacía */
-          <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-xl">
-            <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
-              <i className="fa-solid fa-box-open"></i>
+          /* Inventario en Actualización Comercial */
+          <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-xl backdrop-blur-xs">
+            <div className="h-16 w-16 bg-brand-500/10 border border-brand-500/20 rounded-full flex items-center justify-center mx-auto text-brand-400 text-2xl shadow-inner">
+              <i className="fa-solid fa-boxes-packing"></i>
             </div>
-            <h3 className="text-lg font-bold text-white">No hay productos disponibles actualmente</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              La tabla <strong className="text-white font-mono">{dbCredentials?.[dbEngine]?.table || 'bobinas_inventario'}</strong> está conectada pero no tiene artículos registrados en este momento.
+            <h3 className="text-xl font-extrabold text-white tracking-tight">
+              Inventario en Actualización
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Estamos actualizando nuestro catálogo e incorporando nuevos lotes de repuestos automotrices.
+            </p>
+            <p className="text-xs text-slate-400">
+              ¿Buscas un repuesto o modelo de vehículo específico? Escríbenos directamente y te confirmamos disponibilidad y precio al instante.
             </p>
             <div className="flex flex-wrap justify-center gap-2.5 pt-2">
               <a
-                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20repuestos%20y%20bobinas."
+                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20y%20precio%20de%20un%20repuesto%20automotriz."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 cursor-pointer"
               >
-                <i className="fa-brands fa-whatsapp text-sm"></i> Contactar al Administrador
+                <i className="fa-brands fa-whatsapp text-sm"></i> Consultar Repuesto por WhatsApp
               </a>
               <button 
                 onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700 active:scale-95"
               >
-                <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Actualizar
+                <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Actualizar Catálogo
               </button>
               {isAdmin && (
                 <button 
                   onClick={() => onNavigateTab('database')}
-                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-brand-500/20"
+                  className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-brand-500/20 active:scale-95"
                 >
-                  <i className="fa-solid fa-plus"></i> Gestionar / Insertar Artículos
+                  <i className="fa-solid fa-plus"></i> Cargar Repuestos (Admin)
                 </button>
               )}
             </div>
