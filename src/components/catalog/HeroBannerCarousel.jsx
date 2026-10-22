@@ -7,10 +7,12 @@ import logoImg from '../../assets/logo.png';
 const SLIDES = [
   {
     id: 'nissan-lineup',
-    badge: 'Línea Especializada Nissan',
-    tagline: 'Nissan Almera • Nissan Tiida • Nissan X-Trail',
+    badge: 'Línea Especializada Nissan 2007',
+    tagline: 'Nissan Año 2007: Almera • Tiida • X-Trail',
+    yearBadge: 'Año 2007',
+    photoTag: 'Modelos 2007',
     image: nissanBannerImg,
-    alt: 'Línea Nissan: Almera, Tiida y X-Trail'
+    alt: 'Línea Nissan Año 2007: Almera, Tiida y X-Trail'
   },
   {
     id: 'engine-parts',
@@ -76,6 +78,15 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/30 z-10 pointer-events-none" />
       </div>
 
+      {/* Badge Flotante en la esquina superior derecha de la foto (Año 2007) */}
+      {SLIDES[currentSlide].photoTag && (
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/85 border border-amber-500/60 text-white text-xs font-semibold shadow-xl backdrop-blur-md transition-all">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span className="text-amber-300 font-extrabold tracking-wide">{SLIDES[currentSlide].photoTag}</span>
+          <span className="text-slate-300 text-[11px] hidden sm:inline">• Almera, Tiida y X-Trail</span>
+        </div>
+      )}
+
       {/* 2. Contenido Frontal */}
       <div className="relative z-20 p-5 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3.5">
         
@@ -95,6 +106,14 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>Stock Conectado</span>
           </div>
+
+          {/* Insignia del Año 2007 */}
+          {SLIDES[currentSlide].yearBadge && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/25 border border-amber-500/60 text-amber-300 text-xs font-bold backdrop-blur-md shadow-xs">
+              <i className="fa-solid fa-calendar-check text-amber-400"></i>
+              <span>{SLIDES[currentSlide].yearBadge}</span>
+            </div>
+          )}
 
           {/* Insignia dinámica del slide activo */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-xs font-medium backdrop-blur-md">
@@ -121,7 +140,7 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
 
         {/* Subtítulo Comercial */}
         <p className="text-xs sm:text-sm text-slate-200 leading-relaxed drop-shadow max-w-xl">
-          Especialistas en <strong>Nissan (Almera, Tiida, X-Trail)</strong>, Chevrolet, Toyota, Ford, Hyundai y Renault. Bobinas, inyectores, estoperas, bujías y sensores con garantía comprobada y envíos inmediatos.
+          Especialistas en <strong>Nissan Año 2007 (Almera, Tiida, X-Trail)</strong>, Chevrolet, Toyota, Ford, Hyundai y Renault. Bobinas, inyectores, estoperas, bujías y sensores con garantía comprobada y envíos inmediatos.
         </p>
 
         {/* Botones de Acción */}

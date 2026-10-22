@@ -1417,7 +1417,7 @@
             {/* Background Slides */}
             <div className="absolute inset-0 z-0 bg-slate-950 overflow-hidden">
               {[
-                { id: 1, img: './banner_nissan_lineup.jpg', tag: 'Nissan Almera • Nissan Tiida • Nissan X-Trail' },
+                { id: 1, img: './banner_nissan_lineup.jpg', tag: 'Nissan Año 2007: Almera • Tiida • X-Trail' },
                 { id: 2, img: './banner_engine_parts.jpg', tag: 'Bobinas de Alto Rendimiento, Bujías & Inyectores' },
                 { id: 3, img: './banner_multibrand_fleet.jpg', tag: 'Catálogo Multimarca: Chevrolet, Toyota, Nissan, Ford' }
               ].map((s, idx) => (
@@ -1428,6 +1428,15 @@
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/75 to-transparent w-full md:w-[62%] z-10 pointer-events-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/30 z-10 pointer-events-none" />
             </div>
+
+            {/* Badge Flotante en la foto para Nissan Año 2007 */}
+            {currentSlide === 0 && (
+              <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/85 border border-amber-500/60 text-white text-xs font-semibold shadow-xl backdrop-blur-md transition-all">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span className="text-amber-300 font-extrabold tracking-wide">Modelos 2007</span>
+                <span className="text-slate-300 text-[11px] hidden sm:inline">• Almera, Tiida y X-Trail</span>
+              </div>
+            )}
 
             {/* Foreground Content */}
             <div className="relative z-20 p-5 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3.5">
@@ -1440,16 +1449,22 @@
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>Stock Conectado</span>
                 </div>
+                {currentSlide === 0 && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/25 border border-amber-500/60 text-amber-300 text-xs font-bold backdrop-blur-md shadow-xs">
+                    <i className="fa-solid fa-calendar-check text-amber-400"></i>
+                    <span>Año 2007</span>
+                  </div>
+                )}
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-xs font-medium backdrop-blur-md">
                   <i className="fa-solid fa-car text-brand-400"></i>
-                  <span>{currentSlide === 0 ? 'Nissan Almera • Tiida • X-Trail' : currentSlide === 1 ? 'Encendido & Inyección de Alta Precisión' : 'Repuestos Originales Multimarca'}</span>
+                  <span>{currentSlide === 0 ? 'Nissan Año 2007: Almera • Tiida • X-Trail' : currentSlide === 1 ? 'Encendido & Inyección de Alta Precisión' : 'Repuestos Originales Multimarca'}</span>
                 </div>
               </div>
               <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">
                 Repuestos & Bobinas de Encendido <span className="text-brand-500 drop-shadow-md">Originales & OEM</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed drop-shadow max-w-xl">
-                Especialistas en <strong>Nissan (Almera, Tiida, X-Trail)</strong>, Chevrolet, Toyota, Ford, Hyundai y Renault. Bobinas, inyectores, estoperas, bujías y sensores con garantía comprobada y envíos inmediatos.
+                Especialistas en <strong>Nissan Año 2007 (Almera, Tiida, X-Trail)</strong>, Chevrolet, Toyota, Ford, Hyundai y Renault. Bobinas, inyectores, estoperas, bujías y sensores con garantía comprobada y envíos inmediatos.
               </p>
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button onClick={toggleCart} className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-xl shadow-brand-500/30 transition cursor-pointer active:scale-95">
