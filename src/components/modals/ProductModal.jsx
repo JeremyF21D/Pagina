@@ -328,11 +328,11 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
 
             {/* Image Preview Box - Constrained and fully adapted to container */}
             {form.image ? (
-              <div className="relative w-full h-44 rounded-xl bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center shadow-inner group">
+              <div className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 shadow-inner group">
                 <img 
                   src={form.image} 
                   alt="Vista previa del producto" 
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 <button

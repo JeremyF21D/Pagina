@@ -35,7 +35,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
 
         {/* Product Visual Header / Image Adaptada al Contenedor */}
         <div 
-          className="h-44 rounded-xl bg-slate-950 border border-slate-700/60 relative overflow-hidden group-hover:border-slate-600 transition flex items-center justify-center mb-4 cursor-pointer"
+          className={`h-44 sm:h-48 rounded-xl ${coil.image ? 'bg-white shadow-inner' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}
           onClick={() => coil.image && setIsZoomOpen(true)}
           title={coil.image ? "Haz clic para ampliar la foto" : ""}
         >
@@ -44,12 +44,12 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
               <img 
                 src={coil.image} 
                 alt={coil.name} 
-                className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500"
+                className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm"
                 onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
               />
               {/* Overlay hover sutil para indicar zoom */}
-              <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <span className="p-2 rounded-full bg-slate-900/80 text-white text-xs border border-slate-700/80 shadow-lg">
+              <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <span className="p-1.5 rounded-full bg-slate-900/80 text-white text-xs border border-slate-700/80 shadow-lg">
                   <i className="fa-solid fa-magnifying-glass-plus"></i>
                 </span>
               </div>
