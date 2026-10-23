@@ -6,13 +6,13 @@ const AuthContext = createContext(null);
 
 const STORAGE_KEY_ADMIN_AUTH = 'AUTOIGNITION_ADMIN_SESSION_V2';
 const STORAGE_KEY_DEVICE_CLIENT_ID = 'AUTOIGNITION_PRIVATE_CLIENT_ID_V2';
-const STORAGE_KEY_CUSTOM_HASH = 'JF_ADMIN_SECURE_HASH_V2';
-const STORAGE_KEY_CUSTOM_USER = 'JF_ADMIN_SECURE_USER_V2';
+const STORAGE_KEY_CUSTOM_HASH = 'JF_ADMIN_SECURE_HASH_V3';
+const STORAGE_KEY_CUSTOM_USER = 'JF_ADMIN_SECURE_USER_V3';
 
 // Hashes criptográficos predeterminados (SHA-256 con Salt secreta)
 // NUNCA se almacena la contraseña en texto plano en el código.
-export const DEFAULT_ADMIN_PASSWORD_HASH = 'ff0341034e85b5af2773fdcafe7101fe0b449033d44a205a4d7d54ecc66fc10c'; // Hash de espera hasta que el usuario suministre la nueva
-export const DEFAULT_AUTHORIZED_USERS = ['admin', 'dueno', 'jfautoparts'];
+export const DEFAULT_ADMIN_PASSWORD_HASH = '67eea4f321f8874478e7b068af85c0d67346362124f2033ad838b6f96ca0ff1d';
+export const DEFAULT_AUTHORIZED_USERS = ['admin', 'dueno', 'jfautoparts', 'jeremy', 'j05032001'];
 
 export function AuthProvider({ children }) {
   const { showToast } = useToast();

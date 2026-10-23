@@ -439,11 +439,11 @@
       const login = async (user, pass) => {
         const u = String(user || '').trim().toLowerCase();
         const p = String(pass || '').trim();
-        const customHash = localStorage.getItem('JF_ADMIN_SECURE_HASH_V2') || 'ff0341034e85b5af2773fdcafe7101fe0b449033d44a205a4d7d54ecc66fc10c';
+        const customHash = localStorage.getItem('JF_ADMIN_SECURE_HASH_V3') || '67eea4f321f8874478e7b068af85c0d67346362124f2033ad838b6f96ca0ff1d';
         const customUser = (localStorage.getItem('JF_ADMIN_SECURE_USER_V2') || 'admin').toLowerCase();
         const pHash = await sha256Hex(p);
 
-        if ((u === customUser || u === 'admin' || u === 'dueno' || u === 'jfautoparts') && pHash === customHash) {
+        if ((u === customUser || u === 'admin' || u === 'dueno' || u === 'jfautoparts' || u === 'jeremy' || u === 'j05032001') && pHash === customHash) {
           setIsAdmin(true);
           localStorage.setItem('AUTOIGNITION_ADMIN_SESSION_V2', 'true');
           showToast('🔓 Sesión de Administrador iniciada (Verificado con SHA-256)');
