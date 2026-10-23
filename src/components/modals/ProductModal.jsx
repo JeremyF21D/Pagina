@@ -332,7 +332,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 <img 
                   src={form.image} 
                   alt="Vista previa del producto" 
-                  className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
+                  className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 <button

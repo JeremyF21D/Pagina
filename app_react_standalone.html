@@ -1339,7 +1339,7 @@
 
             <div className={`h-44 rounded-xl ${coil.image ? 'bg-white shadow-inner' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}>
               {coil.image ? (
-                <img src={coil.image} alt={coil.name} className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                <img src={coil.image} alt={coil.name} className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]" onError={e => { e.currentTarget.style.display = 'none'; }} />
               ) : null}
               <div className={`h-full w-full flex flex-col items-center justify-center ${coil.image ? 'hidden' : 'flex'}`}>
                 <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-500/80' : 'text-slate-600'} mb-2`}></i>
@@ -1348,7 +1348,7 @@
               <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
                 <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty}
               </span>
-              <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">{coil.id}</span>
+              {isAdmin && <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-amber-300 bg-slate-950/90 backdrop-blur-md px-2 py-0.5 rounded border border-amber-500/50 shadow-md pointer-events-none">{coil.id}</span>}
             </div>
 
             <div className="space-y-1 mb-3">
@@ -2852,7 +2852,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
                 {form.image ? (
                   <div className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 shadow-inner group">
-                    <img src={form.image} alt="Preview" className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 drop-shadow-sm" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                    <img src={form.image} alt="Preview" className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     <button
                       type="button"
                       onClick={handleRemoveImage}

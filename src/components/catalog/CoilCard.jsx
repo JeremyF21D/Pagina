@@ -46,7 +46,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
               <img 
                 src={coil.image} 
                 alt={coil.name} 
-                className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm"
+                className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]"
                 onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
               />
               {/* Overlay hover sutil para indicar zoom */}
@@ -72,9 +72,12 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
             <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty || '12 meses'}
           </span>
-          <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
-            {coil.id}
-          </span>
+          {/* El código interno / ID solo es visible para el Administrador */}
+          {isAdmin && (
+            <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-amber-300 bg-slate-950/90 backdrop-blur-md px-2 py-0.5 rounded border border-amber-500/50 shadow-md pointer-events-none">
+              {coil.id}
+            </span>
+          )}
         </div>
 
         {/* Titles & Compatibility */}
