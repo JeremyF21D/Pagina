@@ -37,7 +37,8 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
 
         {/* Product Visual Header / Image Adaptada al Contenedor */}
         <div 
-          className={`h-44 sm:h-48 rounded-xl ${coil.image ? 'bg-white shadow-inner' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}
+          className={`h-44 sm:h-48 rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}
+          style={coil.image ? { backgroundColor: '#ffffff', isolation: 'isolate' } : {}}
           onClick={() => coil.image && setIsZoomOpen(true)}
           title={coil.image ? "Haz clic para ampliar la foto" : ""}
         >
@@ -46,7 +47,8 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
               <img 
                 src={coil.image} 
                 alt={coil.name} 
-                className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]"
+                className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply"
+                style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
               />
               {/* Overlay hover sutil para indicar zoom */}

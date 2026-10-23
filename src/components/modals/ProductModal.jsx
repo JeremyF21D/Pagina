@@ -328,11 +328,15 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
 
             {/* Image Preview Box - Constrained and fully adapted to container */}
             {form.image ? (
-              <div className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 shadow-inner group">
+              <div 
+                className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 group"
+                style={{ backgroundColor: '#ffffff', isolation: 'isolate' }}
+              >
                 <img 
                   src={form.image} 
                   alt="Vista previa del producto" 
-                  className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]"
+                  className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105 drop-shadow-sm mix-blend-multiply"
+                  style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 <button

@@ -1337,9 +1337,9 @@
               </div>
             </div>
 
-            <div className={`h-44 rounded-xl ${coil.image ? 'bg-white shadow-inner' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}>
+            <div style={coil.image ? { backgroundColor: '#ffffff', isolation: 'isolate' } : {}} className={`h-44 rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}>
               {coil.image ? (
-                <img src={coil.image} alt={coil.name} className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                <img src={coil.image} alt={coil.name} className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }} data-blend="1" onError={e => { e.currentTarget.style.display = 'none'; }} />
               ) : null}
               <div className={`h-full w-full flex flex-col items-center justify-center ${coil.image ? 'hidden' : 'flex'}`}>
                 <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-500/80' : 'text-slate-600'} mb-2`}></i>
@@ -2832,8 +2832,8 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
                 </div>
 
                 {form.image ? (
-                  <div className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 shadow-inner group">
-                    <img src={form.image} alt="Preview" className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 drop-shadow-sm mix-blend-multiply contrast-[1.12] brightness-[1.05]" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  <div style={{ backgroundColor: '#ffffff', isolation: 'isolate' }} className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 group">
+                    <img src={form.image} alt="Preview" className="max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 drop-shadow-sm mix-blend-multiply" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }} data-blend="1" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     <button
                       type="button"
                       onClick={handleRemoveImage}
