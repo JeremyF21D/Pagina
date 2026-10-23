@@ -1444,35 +1444,20 @@
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/30 z-10 pointer-events-none" />
             </div>
 
-            {/* Badge Flotante en la foto para Nissan Año 2007 */}
-            {currentSlide === 0 && (
-              <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/85 border border-amber-500/60 text-white text-xs font-semibold shadow-xl backdrop-blur-md transition-all">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                <span className="text-amber-300 font-extrabold tracking-wide">Modelos 2007</span>
-                <span className="text-slate-300 text-[11px] hidden sm:inline">• Almera, Tiida y X-Trail</span>
-              </div>
-            )}
-
-            {/* Foreground Content */}
-            <div className="relative z-20 p-5 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-xs text-white backdrop-blur-md shadow-sm">
-                  <img src="./logo.png" alt="Logo" className="w-5 h-5 rounded-full object-cover border border-slate-600" />
+                        {/* Foreground Content */}
+            <div className="relative z-20 p-4 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3 sm:space-y-3.5">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] sm:text-xs text-white backdrop-blur-md shadow-sm">
+                  <img src="./logo.png" alt="Logo" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-slate-600" />
                   <span className="font-bold tracking-tight">JF Auto Parts</span>
                 </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>Stock Conectado</span>
                 </div>
-                {currentSlide === 0 && (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/25 border border-amber-500/60 text-amber-300 text-xs font-bold backdrop-blur-md shadow-xs">
-                    <i className="fa-solid fa-calendar-check text-amber-400"></i>
-                    <span>Año 2007</span>
-                  </div>
-                )}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-xs font-medium backdrop-blur-md">
-                  <i className="fa-solid fa-car text-brand-400"></i>
-                  <span>{currentSlide === 0 ? 'Nissan Año 2007: Almera • Tiida • X-Trail' : currentSlide === 1 ? 'Encendido & Inyección de Alta Precisión' : 'Repuestos Originales Multimarca'}</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-[11px] sm:text-xs font-medium backdrop-blur-md">
+                  <i className="fa-solid fa-car text-brand-400 text-[10px]"></i>
+                  <span>{currentSlide === 0 ? 'Nissan 2007: Almera • Tiida • X-Trail' : currentSlide === 1 ? 'Encendido & Inyección de Alta Precisión' : 'Repuestos Originales Multimarca'}</span>
                 </div>
               </div>
               <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">

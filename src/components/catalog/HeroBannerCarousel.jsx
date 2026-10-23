@@ -7,10 +7,8 @@ import logoImg from '../../assets/logo.png';
 const SLIDES = [
   {
     id: 'nissan-lineup',
-    badge: 'Línea Especializada Nissan 2007',
-    tagline: 'Nissan Año 2007: Almera • Tiida • X-Trail',
-    yearBadge: 'Año 2007',
-    photoTag: 'Modelos 2007',
+    badge: 'Línea Nissan 2007',
+    tagline: 'Nissan 2007: Almera • Tiida • X-Trail',
     image: nissanBannerImg,
     alt: 'Línea Nissan Año 2007: Almera, Tiida y X-Trail'
   },
@@ -78,46 +76,29 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/30 z-10 pointer-events-none" />
       </div>
 
-      {/* Badge Flotante en la esquina superior derecha de la foto (Año 2007) */}
-      {SLIDES[currentSlide].photoTag && (
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/85 border border-amber-500/60 text-white text-xs font-semibold shadow-xl backdrop-blur-md transition-all">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span className="text-amber-300 font-extrabold tracking-wide">{SLIDES[currentSlide].photoTag}</span>
-          <span className="text-slate-300 text-[11px] hidden sm:inline">• Almera, Tiida y X-Trail</span>
-        </div>
-      )}
-
       {/* 2. Contenido Frontal */}
-      <div className="relative z-20 p-5 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3.5">
+      <div className="relative z-20 p-4 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3 sm:space-y-3.5">
         
         {/* Ribbon de Insignias y Logo */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Logo JF Auto Parts Integrado */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-xs text-white backdrop-blur-md shadow-sm">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] sm:text-xs text-white backdrop-blur-md shadow-sm">
             <img 
               src={logoImg} 
               alt="Logo JF Auto Parts" 
-              className="w-5 h-5 rounded-full object-cover border border-slate-600" 
+              className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-slate-600" 
             />
             <span className="font-bold tracking-tight">JF Auto Parts</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-xs">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>Stock Conectado</span>
           </div>
 
-          {/* Insignia del Año 2007 */}
-          {SLIDES[currentSlide].yearBadge && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/25 border border-amber-500/60 text-amber-300 text-xs font-bold backdrop-blur-md shadow-xs">
-              <i className="fa-solid fa-calendar-check text-amber-400"></i>
-              <span>{SLIDES[currentSlide].yearBadge}</span>
-            </div>
-          )}
-
           {/* Insignia dinámica del slide activo */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-xs font-medium backdrop-blur-md">
-            <i className="fa-solid fa-car text-brand-400"></i>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-[11px] sm:text-xs font-medium backdrop-blur-md">
+            <i className="fa-solid fa-car text-brand-400 text-[10px]"></i>
             <span>{SLIDES[currentSlide].tagline}</span>
           </div>
 
@@ -125,9 +106,9 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
           {isAdmin && (
             <button 
               onClick={() => onNavigateTab('database')} 
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/25 hover:bg-sky-500/40 border border-sky-500/50 text-sky-200 text-xs font-semibold transition cursor-pointer backdrop-blur-md"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/25 hover:bg-sky-500/40 border border-sky-500/50 text-sky-200 text-[11px] sm:text-xs font-semibold transition cursor-pointer backdrop-blur-md"
             >
-              <i className="fa-solid fa-server"></i>
+              <i className="fa-solid fa-server text-[10px]"></i>
               <span>Gestión DB</span>
             </button>
           )}
