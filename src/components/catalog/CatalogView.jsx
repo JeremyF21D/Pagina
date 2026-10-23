@@ -199,15 +199,42 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
           </div>
         )
       ) : filteredCoils.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-          {filteredCoils.map(coil => (
-            <CoilCard
-              key={coil.id}
-              coil={coil}
-              onAskAI={() => onAskAIAboutCoil(coil)}
-              onEditProduct={onEditCoil}
-            />
-          ))}
+        <div className="space-y-2.5">
+          {/* Indicador de desplazamiento en móvil cuando hay más de 4 productos */}
+          <div className="flex sm:hidden items-center justify-between px-1 text-[11px] text-slate-400">
+            <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+              <i className="fa-solid fa-boxes-stacked text-brand-400"></i> Catálogo ({filteredCoils.length} repuestos)
+            </span>
+            {filteredCoils.length > 4 && (
+              <span className="text-brand-400 font-bold bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20 animate-pulse flex items-center gap-1 text-[10px]">
+                <i className="fa-solid fa-arrow-down text-[9px]"></i> Desliza para ver más
+              </span>
+            )}
+          </div>
+
+          {/* Contenedor del Catálogo: En móvil altura fija para 4 artículos (2x2) con scroll interno; en PC cuadrícula completa */}
+          <div className="max-h-[530px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0 rounded-2xl sm:rounded-none border border-slate-800/80 sm:border-0 p-1.5 sm:p-0 bg-slate-900/30 sm:bg-transparent">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-5">
+              {filteredCoils.map(coil => (
+                <CoilCard
+                  key={coil.id}
+                  coil={coil}
+                  onAskAI={() => onAskAIAboutCoil(coil)}
+                  onEditProduct={onEditCoil}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Pie informativo rápido en móvil para orientar al cliente */}
+          {filteredCoils.length > 4 && (
+            <div className="flex sm:hidden items-center justify-between text-[10px] text-slate-500 px-1 pt-1">
+              <span>Mostrando en ventana de 4 repuestos</span>
+              <span className="text-slate-400 flex items-center gap-1">
+                <i className="fa-solid fa-hand-pointer text-[10px] text-brand-400"></i> Desplaza hacia abajo
+              </span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-3">

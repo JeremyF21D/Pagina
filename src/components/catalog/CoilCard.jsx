@@ -15,10 +15,10 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const catConfig = getCategoryConfig(categoryId);
 
   return (
-    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/50 rounded-2xl p-5 flex flex-col justify-between shadow-lg hover:shadow-brand-500/10 transition-all duration-300 group">
+    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/50 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-brand-500/10 transition-all duration-300 group">
       <div>
         {/* Badge & Stock Status - Altura fija de 28px sin wrap para nivelar perfectamente todas las fotos */}
-        <div className="flex items-center justify-between gap-1.5 mb-3 h-7">
+        <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 h-6 sm:h-7">
           <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 whitespace-nowrap flex-shrink-0">
               {coil.badge || 'OEM Spec'}
@@ -37,7 +37,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
 
         {/* Product Visual Header / Image Adaptada al Contenedor */}
         <div 
-          className={`h-44 sm:h-48 rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-3 mb-4 cursor-pointer`}
+          className={`h-28 sm:h-48 rounded-lg sm:rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-2 sm:p-3 mb-2 sm:mb-4 cursor-pointer`}
           style={coil.image ? { backgroundColor: '#ffffff', isolation: 'isolate' } : {}}
           onClick={() => coil.image && setIsZoomOpen(true)}
           title={coil.image ? "Haz clic para ampliar la foto" : ""}
@@ -83,26 +83,26 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
         </div>
 
         {/* Titles & Compatibility */}
-        <div className="space-y-1 mb-3">
+        <div className="space-y-0.5 sm:space-y-1 mb-1.5 sm:mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-brand-400 uppercase tracking-wider">{coil.brand}</span>
             <span className="text-[10px] text-slate-500 font-mono">• {catConfig.prefix}</span>
           </div>
-          <h3 className="text-base font-bold text-white group-hover:text-brand-400 transition leading-snug">
+          <h3 className="text-xs sm:text-base font-bold text-white group-hover:text-brand-400 transition leading-snug line-clamp-2 sm:line-clamp-none">
             {coil.name}
           </h3>
-          <p className="text-xs text-slate-300 flex items-center gap-1.5 pt-1">
+          <p className="text-[10px] sm:text-xs text-slate-300 flex items-center gap-1 sm:gap-1.5 pt-0.5 sm:pt-1 truncate">
             <i className="fa-solid fa-car-side text-slate-400 text-[11px]"></i>
             <span>{coil.carModel}</span>
           </p>
-          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+          <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:flex items-center gap-1.5">
             <i className="fa-solid fa-gears text-slate-500 text-[11px]"></i>
             <span className="font-mono text-[11px]">{coil.engine}</span>
           </p>
         </div>
 
         {/* Specs tag pills */}
-        <div className="flex flex-wrap gap-1.5 my-3 text-[10px]">
+        <div className="hidden sm:flex flex-wrap gap-1.5 my-3 text-[10px]">
           {coil.connector && (
             <span className="px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-700/60 flex items-center gap-1">
               <i className="fa-solid fa-circle-dot text-[7px] text-brand-400"></i>
@@ -119,10 +119,10 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
       </div>
 
       {/* Price & Actions Footer */}
-      <div className="pt-4 border-t border-slate-700/70 space-y-3">
+      <div className="pt-2 sm:pt-4 border-t border-slate-700/70 space-y-1.5 sm:space-y-3">
         <div className="flex items-baseline justify-between">
           <div>
-            <span className="text-2xl font-extrabold text-white font-mono">{formatUSD(coil.price)}</span>
+            <span className="text-base sm:text-2xl font-extrabold text-white font-mono">{formatUSD(coil.price)}</span>
             {Number(coil.oldPrice) > Number(coil.price) && (
               <span className="text-xs text-slate-400 line-through ml-1.5 font-mono">
                 {formatUSD(coil.oldPrice)}
@@ -142,11 +142,11 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button 
             onClick={() => addToCart(coil.id)} 
             disabled={coil.stock <= 0}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow transition ${
+            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 shadow transition ${
               coil.stock > 0 
                 ? 'bg-brand-500 hover:bg-brand-600 text-white cursor-pointer active:scale-95' 
                 : 'bg-slate-700 text-slate-400 cursor-not-allowed'
@@ -158,7 +158,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
 
           <button 
             onClick={() => onAskAI && onAskAI(coil)}
-            className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+            className="px-2 py-1.5 sm:px-3 sm:py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer"
             title="Consultar disponibilidad y precio al Asistente IA"
           >
             <i className="fa-solid fa-robot text-xs"></i>

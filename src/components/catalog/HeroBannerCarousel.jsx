@@ -46,7 +46,7 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
 
   return (
     <div 
-      className="relative overflow-hidden rounded-2xl border border-slate-700/80 shadow-2xl min-h-[350px] sm:min-h-[380px] flex flex-col justify-between transition-all"
+      className="relative overflow-hidden rounded-2xl border border-slate-700/80 shadow-2xl min-h-[220px] sm:min-h-[380px] flex flex-col justify-between transition-all"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -77,7 +77,7 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
       </div>
 
       {/* 2. Contenido Frontal */}
-      <div className="relative z-20 p-4 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-3 sm:space-y-3.5">
+      <div className="relative z-20 p-3 sm:p-8 flex-1 flex flex-col justify-center max-w-2xl space-y-2 sm:space-y-3.5">
         
         {/* Ribbon de Insignias y Logo */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -110,20 +110,20 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
         </div>
 
         {/* Título Principal */}
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">
+        <h1 className="text-lg sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">
           Repuestos Automotrices & Bobinas <span className="text-brand-500 drop-shadow-md">Originales & OEM</span>
         </h1>
 
         {/* Subtítulo Comercial */}
-        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed drop-shadow max-w-xl">
+        <p className="text-[11px] sm:text-sm text-slate-200 leading-relaxed drop-shadow max-w-xl line-clamp-2 sm:line-clamp-none">
           Especialistas en <strong>Nissan Año 2007 (Almera, Tiida, X-Trail)</strong>, Chevrolet, Toyota, Ford, Hyundai y Renault. Bobinas, inyectores, estoperas, bujías y sensores con garantía comprobada y envíos inmediatos.
         </p>
 
         {/* Botones de Acción */}
-        <div className="pt-2 flex flex-wrap items-center gap-3">
+        <div className="pt-1 sm:pt-2 flex flex-wrap items-center gap-2 sm:gap-3">
           <button 
             onClick={onOpenCart} 
-            className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-xl shadow-brand-500/30 transition cursor-pointer active:scale-95"
+            className="px-3 py-1.5 sm:px-4 sm:py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-xl shadow-brand-500/30 transition cursor-pointer active:scale-95"
           >
             <i className="fa-solid fa-cart-shopping"></i> Ver Mi Carrito y Comprar
           </button>
@@ -132,7 +132,7 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
             href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20de%20repuestos."
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2.5 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/50 text-emerald-300 font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-2 backdrop-blur-md transition cursor-pointer shadow-lg active:scale-95"
+            className="px-3 py-1.5 sm:px-4 sm:py-2.5 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/50 text-emerald-300 font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 backdrop-blur-md transition cursor-pointer shadow-lg active:scale-95"
           >
             <i className="fa-brands fa-whatsapp text-base text-emerald-400"></i>
             <span>Consultar Asesor WhatsApp →</span>
