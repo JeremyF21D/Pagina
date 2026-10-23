@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
+import { useAuth } from '../../context/AuthContext';
 import { OFFICIAL_WA_RAW } from '../../utils/whatsapp';
 
 export function AdminConfigView() {
   const { ownerSettings, updateOwnerSettings } = useInventory();
+  const { updateAdminCredentials } = useAuth();
 
   const [form, setForm] = useState({
     ownerPhone: ownerSettings.ownerPhone || OFFICIAL_WA_RAW,
@@ -13,6 +15,14 @@ export function AdminConfigView() {
     requireApproval: ownerSettings.requireApproval ?? false,
     systemPrompt: ownerSettings.systemPrompt || ''
   });
+
+  // Estado para cambio seguro de contraseña
+  const [securityForm, setSecurityForm] = useState({
+    newUsername: 'admin',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [securityMsg, setSecurityMsg] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -30,6 +40,32 @@ Directrices de conversación:
 2. Verifica siempre la disponibilidad y columna 'stock' del registro. Si stock > 0, confirma stock y precio. Si stock === 0, informa que está temporalmente agotada y ofrece encargarla bajo pedido.
 3. Cuando el cliente confirme una compra o envíe su referencia de pago, descuenta el stock automáticamente y notifica al dueño al 0412-6497478.`
     }));
+  };
+
+  const handleUpdateSecurity = async (e) => {
+    e.preventDefault();
+    setSecurityMsg(null);
+
+    if (!securityForm.newPassword) {
+      setSecurityMsg({ type: 'error', text: 'Ingresa una nueva contraseña' });
+      return;
+    }
+
+    if (securityForm.newPassword !== securityForm.confirmPassword) {
+      setSecurityMsg({ type: 'error', text: 'Las contraseñas no coinciden' });
+      return;
+    }
+
+    if (securityForm.newPassword.length < 5) {
+      setSecurityMsg({ type: 'error', text: 'La contraseña debe tener al menos 5 caracteres' });
+      return;
+    }
+
+    const success = await updateAdminCredentials(securityForm.newUsername, securityForm.newPassword);
+    if (success) {
+      setSecurityMsg({ type: 'success', text: '¡Contraseña actualizada exitosamente con cifrado SHA-256!' });
+      setSecurityForm(prev => ({ ...prev, newPassword: '', confirmPassword: '' }));
+    }
   };
 
   return (
@@ -188,6 +224,96 @@ Directrices de conversación:
           </button>
         </div>
       </form>
+
+      {/* Tarjeta de Seguridad y Cambio de Contraseña de Administrador (Cifrado SHA-256) */}
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <i className="fa-solid fa-shield-halved text-emerald-400 text-lg"></i>
+            <div>
+              <h3 className="text-sm font-bold text-white">
+                Seguridad de Acceso • Contraseña del Dueño / Administrador
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                La contraseña se almacena codificada con hash criptográfico SHA-256 y protección con sal.
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold uppercase">
+            SHA-256 Activo
+          </span>
+        </div>
+
+        {securityMsg && (
+          <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+            securityMsg.type === 'success' 
+              ? 'bg-emerald-900/30 border border-emerald-500/50 text-emerald-300' 
+              : 'bg-rose-900/30 border border-rose-500/50 text-rose-300'
+          }`}>
+            <i className={`fa-solid ${securityMsg.type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-triangle-exclamation text-rose-400'}`}></i>
+            <span>{securityMsg.text}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleUpdateSecurity} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Usuario Administrador
+              </label>
+              <input 
+                type="text" 
+                value={securityForm.newUsername}
+                onChange={(e) => setSecurityForm(prev => ({ ...prev, newUsername: e.target.value }))}
+                placeholder="admin"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Nueva Contraseña
+              </label>
+              <input 
+                type="password" 
+                value={securityForm.newPassword}
+                onChange={(e) => setSecurityForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                placeholder="Mínimo 5 caracteres"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500 font-mono"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Confirmar Contraseña
+              </label>
+              <input 
+                type="password" 
+                value={securityForm.confirmPassword}
+                onChange={(e) => setSecurityForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="Repite la contraseña"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500 font-mono"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[11px] text-slate-500 flex items-center gap-1.5">
+              <i className="fa-solid fa-lock text-slate-400"></i>
+              Nunca compartas tu clave de acceso. Al guardarla, quedará encriptada.
+            </span>
+            <button 
+              type="submit"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 transition cursor-pointer flex items-center gap-1.5"
+            >
+              <i className="fa-solid fa-key"></i> Actualizar Clave Segura
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

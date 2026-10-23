@@ -425,18 +425,33 @@
       const [authLockReason, setAuthLockReason] = useState('');
       const [pendingAction, setPendingAction] = useState(null);
 
-      const login = (user, pass) => {
+      async function sha256Hex(text) {
+        const salted = text + '::JF_AUTOPARTS_V2_SALT_984712_SECURE';
+        const encoder = new TextEncoder();
+        const data = encoder.encode(salted);
+        if (typeof crypto !== 'undefined' && crypto.subtle) {
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        return '';
+      }
+
+      const login = async (user, pass) => {
         const u = String(user || '').trim().toLowerCase();
         const p = String(pass || '').trim();
-        if ((u === 'admin' || u === 'dueno') && (p === '123456' || p === 'admin123')) {
+        const customHash = localStorage.getItem('JF_ADMIN_SECURE_HASH_V2') || 'ff0341034e85b5af2773fdcafe7101fe0b449033d44a205a4d7d54ecc66fc10c';
+        const customUser = (localStorage.getItem('JF_ADMIN_SECURE_USER_V2') || 'admin').toLowerCase();
+        const pHash = await sha256Hex(p);
+
+        if ((u === customUser || u === 'admin' || u === 'dueno' || u === 'jfautoparts') && pHash === customHash) {
           setIsAdmin(true);
           localStorage.setItem('AUTOIGNITION_ADMIN_SESSION_V2', 'true');
-          showToast('🔓 Sesión de Administrador iniciada: Módulos críticos desbloqueados');
+          showToast('🔓 Sesión de Administrador iniciada (Verificado con SHA-256)');
           setAuthModalOpen(false);
           if (typeof pendingAction === 'function') { const act = pendingAction; setPendingAction(null); act(); }
           return true;
         } else {
-          showToast('❌ Contraseña incorrecta');
+          showToast('❌ Contraseña o usuario incorrecto');
           return false;
         }
       };
@@ -2524,19 +2539,39 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
       const { authModalOpen, closeAuthModal, login, authLockReason } = useAuth();
       const [u, setU] = useState('admin');
       const [p, setP] = useState('');
+      const [showP, setShowP] = useState(false);
+      const [loading, setLoading] = useState(false);
       if (!authModalOpen) return null;
+
+      const handleLogin = async () => {
+        setLoading(true);
+        try {
+          await login(u, p);
+        } finally {
+          setLoading(false);
+        }
+      };
+
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full space-y-4">
             <div className="text-center">
               <img src="./logo.png" alt="JF AUTO PARTS Logo" className="h-14 w-14 rounded-xl object-cover mx-auto mb-2 border border-slate-700 shadow-md" />
-              <h3 className="text-base font-bold text-white"><i className="fa-solid fa-lock text-brand-500 mr-1.5"></i> Acceso Administrador</h3>
-              <p className="text-[11px] text-slate-400">JF AUTO PARTS</p>
+              <h3 className="text-base font-bold text-white"><i className="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> Acceso Administrador Seguro</h3>
+              <p className="text-[11px] text-slate-400">Protegido con Cifrado SHA-256</p>
             </div>
             {authLockReason && <p className="text-xs text-rose-300 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">{authLockReason}</p>}
-            <input type="text" value={u} onChange={e => setU(e.target.value)} placeholder="Usuario (admin)" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" />
-            <input type="password" value={p} onChange={e => setP(e.target.value)} placeholder="Ingresa tu contraseña" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
-            <button onClick={() => login(u, p)} className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs cursor-pointer shadow">Ingresar</button>
+            <input type="text" value={u} onChange={e => setU(e.target.value)} placeholder="Usuario autorizado" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" />
+            <div className="relative">
+              <input type={showP ? 'text' : 'password'} value={p} onChange={e => setP(e.target.value)} placeholder="Ingresa tu contraseña" className="w-full pl-3 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+              <button type="button" onClick={() => setShowP(!showP)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer">
+                <i className={"fa-solid " + (showP ? "fa-eye-slash" : "fa-eye")}></i>
+              </button>
+            </div>
+            <button disabled={loading} onClick={handleLogin} className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center gap-2">
+              {loading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : <i className="fa-solid fa-key"></i>}
+              <span>{loading ? 'Verificando Hash...' : 'Ingresar'}</span>
+            </button>
             <button onClick={closeAuthModal} className="w-full text-xs text-slate-400 hover:text-white">Cancelar</button>
           </div>
         </div>
