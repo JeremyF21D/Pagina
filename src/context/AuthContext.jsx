@@ -107,6 +107,9 @@ export function AuthProvider({ children }) {
     try {
       localStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
     } catch (e) {}
+    setAuthModalOpen(false);
+    setPendingAction(null);
+    setAuthLockReason('');
     showToast('🔒 Sesión de Administrador cerrada. Módulos protegidos.');
   };
 

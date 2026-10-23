@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import logoImg from '../../assets/logo.png';
 
@@ -19,16 +19,43 @@ export function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Limpieza estricta de memoria: cada vez que el modal se abre, se cierra o cambia la sesión
+  useEffect(() => {
+    setPass('');
+    setShowPassword(false);
+  }, [authModalOpen, isAdmin]);
+
   if (!authModalOpen) return null;
+
+  const handleClose = () => {
+    setPass('');
+    setShowPassword(false);
+    closeAuthModal();
+  };
+
+  const handleLogout = () => {
+    setPass('');
+    setShowPassword(false);
+    logout();
+    closeAuthModal();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isVerifying) return;
     setIsVerifying(true);
+    const passToVerify = pass;
+    
+    // Inmediatamente borramos el texto del input por seguridad
+    setPass('');
+    setShowPassword(false);
+
     try {
-      await login(user, pass);
+      await login(user, passToVerify);
     } finally {
       setIsVerifying(false);
+      setPass('');
+      setShowPassword(false);
     }
   };
 
@@ -38,8 +65,10 @@ export function AuthModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-fade-in">
       <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
         <button 
-          onClick={closeAuthModal}
+          type="button"
+          onClick={handleClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer"
+          aria-label="Cerrar modal"
         >
           <i className="fa-solid fa-xmark"></i>
         </button>
@@ -79,14 +108,15 @@ export function AuthModal() {
               <span>Sesión activa como Dueño / Administrador</span>
             </div>
             <button 
-              onClick={() => { logout(); closeAuthModal(); }}
+              type="button"
+              onClick={handleLogout}
               className="w-full py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition cursor-pointer"
             >
               Cerrar Sesión de Administrador
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3.5">
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                 Usuario Autorizado
@@ -96,6 +126,7 @@ export function AuthModal() {
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
                 placeholder="Ingresa tu usuario" 
+                autoComplete="off"
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
                 required
                 disabled={isLocked || isVerifying}
@@ -119,6 +150,7 @@ export function AuthModal() {
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
                   placeholder="••••••••" 
+                  autoComplete="new-password"
                   className="w-full pl-3 pr-10 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
                   required
                   autoFocus
@@ -149,7 +181,7 @@ export function AuthModal() {
                 {isVerifying ? (
                   <>
                     <i className="fa-solid fa-circle-notch animate-spin"></i>
-                    <span>Verificando Hash SHA-256...</span>
+                    <span>Verificando...</span>
                   </>
                 ) : isLocked ? (
                   <>

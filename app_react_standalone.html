@@ -2541,14 +2541,25 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
       const [p, setP] = useState('');
       const [showP, setShowP] = useState(false);
       const [loading, setLoading] = useState(false);
+
+      useEffect(() => {
+        setP('');
+        setShowP(false);
+      }, [authModalOpen]);
+
       if (!authModalOpen) return null;
 
       const handleLogin = async () => {
         setLoading(true);
+        const passVal = p;
+        setP('');
+        setShowP(false);
         try {
-          await login(u, p);
+          await login(u, passVal);
         } finally {
           setLoading(false);
+          setP('');
+          setShowP(false);
         }
       };
 
@@ -2563,7 +2574,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
             {authLockReason && <p className="text-xs text-rose-300 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">{authLockReason}</p>}
             <input type="text" value={u} onChange={e => setU(e.target.value)} placeholder="Usuario autorizado" className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white" />
             <div className="relative">
-              <input type={showP ? 'text' : 'password'} value={p} onChange={e => setP(e.target.value)} placeholder="Ingresa tu contraseña" className="w-full pl-3 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
+              <input type={showP ? 'text' : 'password'} value={p} onChange={e => setP(e.target.value)} placeholder="Ingresa tu contraseña" autoComplete="new-password" className="w-full pl-3 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono" />
               <button type="button" onClick={() => setShowP(!showP)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer">
                 <i className={"fa-solid " + (showP ? "fa-eye-slash" : "fa-eye")}></i>
               </button>
@@ -2572,7 +2583,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
               {loading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : <i className="fa-solid fa-key"></i>}
               <span>{loading ? 'Verificando Hash...' : 'Ingresar'}</span>
             </button>
-            <button onClick={closeAuthModal} className="w-full text-xs text-slate-400 hover:text-white">Cancelar</button>
+            <button onClick={() => { setP(""); setShowP(false); closeAuthModal(); }} className="w-full text-xs text-slate-400 hover:text-white">Cancelar</button>
           </div>
         </div>
       );
