@@ -91,11 +91,6 @@ export function HeroBannerCarousel({ onNavigateTab, onOpenCart, isAdmin }) {
             <span className="font-bold tracking-tight">JF Auto Parts</span>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/25 border border-brand-500/50 text-brand-300 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-xs">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Stock Conectado</span>
-          </div>
-
           {/* Insignia dinámica del slide activo */}
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 border border-slate-700/80 text-slate-200 text-[11px] sm:text-xs font-medium backdrop-blur-md">
             <i className="fa-solid fa-car text-brand-400 text-[10px]"></i>
