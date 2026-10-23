@@ -62,6 +62,16 @@ function MainApp() {
     );
   };
 
+  const handleAskAIAboutCoil = (coil) => {
+    if (!coil) return;
+    window.dispatchEvent(new CustomEvent('ASK_AI_ABOUT_PRODUCT', {
+      detail: {
+        product: coil,
+        query: `Hola, ¿tienen disponibilidad de ${coil.name}? (Código OEM: ${coil.oem || coil.id})`
+      }
+    }));
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-brand-500 selection:text-white">
       {/* Top Banner Ribbon */}
@@ -75,7 +85,7 @@ function MainApp() {
         {activeTab === 'catalog' && (
           <CatalogView
             onNavigateTab={setActiveTab}
-            onAskAIAboutCoil={() => {}}
+            onAskAIAboutCoil={handleAskAIAboutCoil}
             onEditCoil={handleOpenEditProduct}
           />
         )}

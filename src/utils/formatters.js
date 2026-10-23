@@ -5,6 +5,20 @@ import { DEFAULT_BOBINAS_SEED } from '../data/seedData';
  */
 export const PRODUCT_CATEGORIES = [
   {
+    id: 'conector',
+    name: 'Conectores / Ramales',
+    singular: 'Conector Eléctrico',
+    prefix: 'CON',
+    icon: 'fa-solid fa-plug',
+    color: 'text-amber-300',
+    typeLabel: 'Aplicación del Conector',
+    typePlaceholder: 'Conector de Inyector, Conector de Bobina, Conector de Sensor MAF...',
+    connectorLabel: 'Pines / Terminales',
+    connectorPlaceholder: 'Conector 2 Pines, Conector 3 Pines con Pigtail, 4 Pines...',
+    defaultType: 'Conector de Inyector',
+    defaultConnector: 'Conector 2 Pines'
+  },
+  {
     id: 'bobina',
     name: 'Bobinas de Encendido',
     singular: 'Bobina de Encendido',
@@ -128,6 +142,8 @@ export function detectProductCategory(item) {
   
   const text = `${item.id || ''} ${item.name || ''} ${item.type || ''}`.toLowerCase();
   
+  // Conectores primero para priorizar 'Conector de Inyector' o 'Conector de Bobina'
+  if (text.includes('con-') || text.includes('conector') || text.includes('enchufe') || text.includes('pigtail') || text.includes('ramal') || text.includes('arnes') || text.includes('arnés')) return 'conector';
   if (text.includes('bob-') || text.includes('bobina')) return 'bobina';
   if (text.includes('iny-') || text.includes('inyector') || text.includes('inyeccion')) return 'inyector';
   if (text.includes('est-') || text.includes('estopera') || text.includes('reten') || text.includes('retén')) return 'estopera';

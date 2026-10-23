@@ -120,6 +120,7 @@
     function formatUSD(amt) { return `$${Number(amt || 0).toFixed(2)}`; }
 
     const PRODUCT_CATEGORIES = [
+      { id: 'conector', name: 'Conectores / Ramales', singular: 'Conector Eléctrico', prefix: 'CON', icon: 'fa-solid fa-plug', color: 'text-amber-300', typeLabel: 'Aplicación del Conector', typePlaceholder: 'Conector de Inyector, Conector de Bobina, Conector de Sensor...', connectorLabel: 'Pines / Terminales', connectorPlaceholder: 'Conector 2 Pines, Conector 3 Pines con Pigtail...', defaultType: 'Conector de Inyector', defaultConnector: 'Conector 2 Pines' },
       { id: 'bobina', name: 'Bobinas de Encendido', singular: 'Bobina de Encendido', prefix: 'BOB', icon: 'fa-solid fa-bolt', color: 'text-amber-400', typeLabel: 'Tipo Físico de Bobina', typePlaceholder: 'Tipo Lápiz Individual (COP), Paquete 4 Torres...', connectorLabel: 'Conector Eléctrico', connectorPlaceholder: 'Conector 3 Pines Ovalado, 4 Pines...', defaultType: 'Tipo Lápiz Individual (COP)', defaultConnector: 'Conector 4 Pines' },
       { id: 'inyector', name: 'Inyectores de Gasolina', singular: 'Inyector de Gasolina', prefix: 'INY', icon: 'fa-solid fa-syringe', color: 'text-sky-400', typeLabel: 'Tipo de Inyección / Sistema', typePlaceholder: 'Multipunto MPFI, Secuencial, GDI...', connectorLabel: 'Impedancia / Conector', connectorPlaceholder: 'Alta Impedancia (12-14 Ohms), EV1...', defaultType: 'Multipunto MPFI', defaultConnector: 'Alta Impedancia (12 Ohms)' },
       { id: 'estopera', name: 'Estoperas / Retenes', singular: 'Estopera / Retén de Aceite', prefix: 'EST', icon: 'fa-solid fa-circle-notch', color: 'text-emerald-400', typeLabel: 'Posición / Ubicación del Retén', typePlaceholder: 'Cigüeñal Delantero, Cigüeñal Trasero, Copa Caja...', connectorLabel: 'Medidas / Dimensiones (mm)', connectorPlaceholder: 'Ej: 42 x 55 x 7 mm, 38 x 52 x 8 mm...', defaultType: 'Cigüeñal Delantero', defaultConnector: 'Medidas Estándar OEM' },
@@ -138,6 +139,7 @@
       if (!item) return 'otro';
       if (item.category) return item.category;
       const text = `${item.id || ''} ${item.name || ''} ${item.type || ''}`.toLowerCase();
+      if (text.includes('con-') || text.includes('conector') || text.includes('enchufe') || text.includes('pigtail') || text.includes('ramal') || text.includes('arnes')) return 'conector';
       if (text.includes('bob-') || text.includes('bobina')) return 'bobina';
       if (text.includes('iny-') || text.includes('inyector')) return 'inyector';
       if (text.includes('est-') || text.includes('estopera') || text.includes('reten')) return 'estopera';

@@ -10,10 +10,36 @@ export function CatalogFilters({
   onBrandChange,
   stockFilter,
   onStockFilterChange,
-  brands,
+  brands = [],
   onQuickSearch
 }) {
-  const quickTags = ['Captiva 3.2', 'Corsa 1.6', 'Aveo 1.6', 'Toyota Corolla', 'Fiesta 1.6', 'Renault 16V', 'Dong Feng 1.6'];
+  // Etiquetas rápidas basadas exclusivamente en las marcas y modelos que sí vende la tienda
+  const dynamicTags = React.useMemo(() => {
+    const list = [];
+    // 1. Agregar marcas activas del catálogo oficial (Nissan, Toyota, Ford, etc.)
+    if (Array.isArray(brands) && brands.length > 0) {
+      brands.forEach(b => {
+        if (b && b !== 'ALL' && !list.includes(b)) list.push(b);
+      });
+    }
+    // 2. Modelos más buscados y vendidos de JF Auto Parts
+    const verifiedModels = [
+      'Nissan Tiida',
+      'Sentra B16',
+      'Toyota Yaris',
+      'Nissan Rogue',
+      'Sentra B13',
+      'Ford Explorer',
+      'Toyota Corolla',
+      'Nissan Almera',
+      'Conectores'
+    ];
+    verifiedModels.forEach(m => {
+      if (!list.includes(m)) list.push(m);
+    });
+
+    return list.slice(0, 8);
+  }, [brands]);
 
   return (
     <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-lg backdrop-blur space-y-4">
@@ -106,7 +132,7 @@ export function CatalogFilters({
         <span className="text-slate-400 flex items-center gap-1">
           <i className="fa-solid fa-bolt text-brand-400 text-[10px]"></i> Búsquedas frecuentes:
         </span>
-        {quickTags.map(tag => (
+        {dynamicTags.map(tag => (
           <button 
             key={tag}
             onClick={() => onQuickSearch(tag)}

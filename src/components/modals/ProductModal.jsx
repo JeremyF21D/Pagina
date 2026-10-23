@@ -287,7 +287,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {PRODUCT_CATEGORIES.map(cat => {
                 const isSelected = form.category === cat.id;
                 return (

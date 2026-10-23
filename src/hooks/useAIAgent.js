@@ -63,11 +63,18 @@ const ALIASES = {
 
   // Nissan
   'sentra': 'sentra', 'sentr': 'sentra', 'ssentra': 'sentra',
+  'tiida': 'tiida', 'tida': 'tiida', 'tyda': 'tiida',
+  'versa': 'versa', 'bersa': 'versa',
+  'rogue': 'rogue', 'roge': 'rogue',
+  'qashqai': 'qashqai', 'kashkai': 'qashqai',
+  'kicks': 'kicks', 'kick': 'kicks',
+  'almera': 'almera',
   'frontier': 'frontier', 'frontera': 'frontier',
   'pathfinder': 'pathfinder',
   'xtrail': 'x-trail', 'xtrail': 'x-trail', 'xtrai': 'x-trail',
   'altima': 'altima', 'altimma': 'altima',
   'murano': 'murano',
+  'conector': 'conector', 'conectores': 'conector', 'enchufe': 'conector', 'ramal': 'conector',
 
   // Hyundai
   'tucson': 'tucson', 'tuczon': 'tucson', 'tukson': 'tucson',
@@ -238,7 +245,7 @@ export function useAIAgent() {
     setConsoleLogs(prev => [entry, ...prev.slice(0, 49)]);
   }, [dbEngine]);
 
-  const generateResponse = useCallback((userPrompt) => {
+  const generateResponse = useCallback((userPrompt, explicitProduct = null) => {
     const rawPrompt = String(userPrompt || '');
     const { cleanText, tokens } = normalizeQuery(rawPrompt);
     const latency = Math.floor(20 + Math.random() * 40);
@@ -259,21 +266,23 @@ export function useAIAgent() {
       cleanText.includes('voy a llevar');
 
     // ── Score every product against query ────────────────────────────────────
-    let bestMatch = null;
-    let highestScore = 0;
+    let bestMatch = explicitProduct || null;
+    let highestScore = explicitProduct ? 99 : 0;
     let secondMatch = null;
     let secondScore = 0;
 
-    for (const item of coils) {
-      const score = scoreProduct(item, tokens);
-      if (score > highestScore) {
-        secondMatch = bestMatch;
-        secondScore = highestScore;
-        highestScore = score;
-        bestMatch = item;
-      } else if (score > secondScore) {
-        secondMatch = item;
-        secondScore = score;
+    if (!explicitProduct) {
+      for (const item of coils) {
+        const score = scoreProduct(item, tokens);
+        if (score > highestScore) {
+          secondMatch = bestMatch;
+          secondScore = highestScore;
+          highestScore = score;
+          bestMatch = item;
+        } else if (score > secondScore) {
+          secondMatch = item;
+          secondScore = score;
+        }
       }
     }
 

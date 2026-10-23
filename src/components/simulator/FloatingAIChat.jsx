@@ -9,12 +9,12 @@ import { getEngineLabel } from '../../utils/formatters';
 import logoImg from '../../assets/logo.png';
 
 const QUICK_PROMPTS = [
-  { label: 'Captiva 3.2', query: '¿Tienen la bobina de Captiva 3.2 V6?' },
-  { label: 'Corsa 1.6', query: '¿Precio de la bobina Corsa 1.6?' },
-  { label: 'Aveo 1.6', query: '¿Tienen bobina para Aveo 1.6?' },
-  { label: 'Toyota Corolla', query: '¿Tienen bobina Toyota Corolla?' },
-  { label: 'Dong Feng 1.6', query: '¿Tienen para Dong Feng 1.6?' },
-  { label: 'Ver todo el stock', query: '¿Qué bobinas tienen disponibles?' },
+  { label: 'Nissan Tiida 1.8', query: '¿Tienen la bobina de Nissan Tiida 1.8?' },
+  { label: 'Sentra B16 / B15', query: '¿Precio y stock para Nissan Sentra?' },
+  { label: 'Toyota Yaris / MAF', query: '¿Tienen el sensor MAF para Toyota Yaris?' },
+  { label: 'Nissan Rogue A/A', query: '¿Tienen la resistencia de soplador para Rogue / Qashqai?' },
+  { label: 'Conectores / Ramal', query: '¿Qué conectores eléctricos tienen disponibles?' },
+  { label: 'Ver todo el stock', query: '¿Qué repuestos tienen disponibles en inventario?' },
 ];
 
 export function FloatingAIChat({ onTriggerSaleModal }) {
@@ -55,7 +55,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
     }
   }, [isOpen]);
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = (textToSend, forcedProduct = null) => {
     const text = String(textToSend || inputVal).trim();
     if (!text) return;
 
@@ -73,7 +73,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
 
     setTimeout(() => {
       setIsTyping(false);
-      const res = generateResponse(text);
+      const res = generateResponse(text, forcedProduct);
       const botMsg = {
         id: Math.random().toString(36).substring(2, 9),
         sender: 'bot',
@@ -88,6 +88,23 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
       if (!isOpen) setHasNewMessage(true);
     }, 650);
   };
+
+  // Listener para consultar a la IA desde cualquier tarjeta del catálogo o modal
+  useEffect(() => {
+    const handleAskAiEvent = (e) => {
+      const product = e.detail?.product;
+      const customQuery = e.detail?.query || (product ? `Hola, ¿tienen disponibilidad de ${product.name}? (Código OEM: ${product.oem || product.id})` : '');
+      if (customQuery) {
+        setIsOpen(true);
+        setTimeout(() => {
+          handleSendMessage(customQuery, product);
+        }, 120);
+      }
+    };
+
+    window.addEventListener('ASK_AI_ABOUT_PRODUCT', handleAskAiEvent);
+    return () => window.removeEventListener('ASK_AI_ABOUT_PRODUCT', handleAskAiEvent);
+  }, [coils, dbEngine, generateResponse]);
 
   const handleResetChat = () => {
     setMessages([{
