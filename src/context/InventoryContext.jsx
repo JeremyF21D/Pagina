@@ -495,28 +495,54 @@ Directrices de conversación:
     showToast('Configuración del Agente IA y Webhook guardada');
   }, [showToast]);
 
-  const upsertCoil = useCallback(async (rawCoil) => {
+  const upsertCoil = useCallback(async (rawCoil, originalId = null) => {
     const coil = normalizeCoilRecord(rawCoil);
     if (!coil || !coil.id) return { success: false, error: 'Artículo inválido' };
 
+    const cleanOriginalId = originalId ? String(originalId).trim() : null;
+    const isIdChanged = Boolean(cleanOriginalId && cleanOriginalId.toLowerCase() !== coil.id.toLowerCase());
+
     // Guardar imagen personalizada localmente para no perderla si la tabla no tiene columna 'image'
-    if (coil.image && typeof localStorage !== 'undefined') {
+    if (typeof localStorage !== 'undefined') {
       try {
         const storedImages = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
-        storedImages[coil.id] = coil.image;
+        if (isIdChanged && storedImages[cleanOriginalId]) {
+          storedImages[coil.id] = coil.image || storedImages[cleanOriginalId];
+          delete storedImages[cleanOriginalId];
+        } else if (coil.image) {
+          storedImages[coil.id] = coil.image;
+        }
         localStorage.setItem('JF_PRODUCT_CUSTOM_IMAGES', JSON.stringify(storedImages));
       } catch (e) {}
     }
 
     // Actualizar estado de inventario inmediatamente
     setCoils(prev => {
-      const idx = prev.findIndex(b => b.id.toLowerCase() === coil.id.toLowerCase());
       let next;
-      if (idx >= 0) {
-        next = [...prev];
-        next[idx] = coil;
+      if (isIdChanged) {
+        const origIdx = prev.findIndex(b => b.id.toLowerCase() === cleanOriginalId.toLowerCase());
+        if (origIdx >= 0) {
+          next = [...prev];
+          next[origIdx] = coil;
+          // Eliminar cualquier duplicado previo del nuevo ID si existiera
+          next = next.filter((b, idx) => idx === origIdx || b.id.toLowerCase() !== coil.id.toLowerCase());
+        } else {
+          const idx = prev.findIndex(b => b.id.toLowerCase() === coil.id.toLowerCase());
+          if (idx >= 0) {
+            next = [...prev];
+            next[idx] = coil;
+          } else {
+            next = [coil, ...prev];
+          }
+        }
       } else {
-        next = [coil, ...prev];
+        const idx = prev.findIndex(b => b.id.toLowerCase() === coil.id.toLowerCase());
+        if (idx >= 0) {
+          next = [...prev];
+          next[idx] = coil;
+        } else {
+          next = [coil, ...prev];
+        }
       }
       try {
         localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(next));
@@ -531,6 +557,18 @@ Directrices de conversación:
       const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
       if (baseUrl && anonKey) {
         try {
+          // Si el ID cambió al editar, eliminar el registro con el ID anterior en Supabase para evitar duplicación
+          if (isIdChanged) {
+            try {
+              await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(cleanOriginalId)}`, {
+                method: 'DELETE',
+                headers: getSupabaseHeaders(anonKey)
+              });
+            } catch (delErr) {
+              console.warn('Aviso al eliminar ID previo en Supabase:', delErr);
+            }
+          }
+
           // Columnas exactas de la tabla bobinas_inventario en Supabase (camelCase):
           const supabasePayload = {
             id: String(coil.id).trim(),
@@ -587,7 +625,11 @@ Directrices de conversación:
             return { success: false, error: errBody };
           }
 
-          showToast(`🟢 Repuesto ${coil.id} guardado con éxito en Supabase`);
+          if (isIdChanged) {
+            showToast(`🟢 Repuesto actualizado: ID cambiado de ${cleanOriginalId} a ${coil.id}`);
+          } else {
+            showToast(`🟢 Repuesto ${coil.id} guardado con éxito en Supabase`);
+          }
           
           // Re-sincronizar el catálogo con la base de datos
           setTimeout(() => {

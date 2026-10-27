@@ -767,23 +767,44 @@
 
       const updateOwnerSettings = (newSettings) => { setOwnerSettings(prev => ({ ...prev, ...newSettings })); showToast('Configuración guardada'); };
 
-      const upsertCoil = async (raw) => {
+      const upsertCoil = async (raw, originalId = null) => {
         const item = normalizeCoilRecord(raw);
         if (!item || !item.id) return { success: false, error: 'Artículo inválido' };
 
-        if (item.image && typeof localStorage !== 'undefined') {
+        const cleanOriginalId = originalId ? String(originalId).trim() : null;
+        const isIdChanged = Boolean(cleanOriginalId && cleanOriginalId.toLowerCase() !== item.id.toLowerCase());
+
+        if (typeof localStorage !== 'undefined') {
           try {
             const storedImages = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
-            storedImages[item.id] = item.image;
+            if (isIdChanged && storedImages[cleanOriginalId]) {
+              storedImages[item.id] = item.image || storedImages[cleanOriginalId];
+              delete storedImages[cleanOriginalId];
+            } else if (item.image) {
+              storedImages[item.id] = item.image;
+            }
             localStorage.setItem('JF_PRODUCT_CUSTOM_IMAGES', JSON.stringify(storedImages));
           } catch (e) {}
         }
 
         setCoils(prev => {
-          const idx = prev.findIndex(b => b.id.toLowerCase() === item.id.toLowerCase());
           let next;
-          if (idx >= 0) { next = [...prev]; next[idx] = item; }
-          else { next = [item, ...prev]; }
+          if (isIdChanged) {
+            const origIdx = prev.findIndex(b => b.id.toLowerCase() === cleanOriginalId.toLowerCase());
+            if (origIdx >= 0) {
+              next = [...prev];
+              next[origIdx] = item;
+              next = next.filter((b, idx) => idx === origIdx || b.id.toLowerCase() !== item.id.toLowerCase());
+            } else {
+              const idx = prev.findIndex(b => b.id.toLowerCase() === item.id.toLowerCase());
+              if (idx >= 0) { next = [...prev]; next[idx] = item; }
+              else { next = [item, ...prev]; }
+            }
+          } else {
+            const idx = prev.findIndex(b => b.id.toLowerCase() === item.id.toLowerCase());
+            if (idx >= 0) { next = [...prev]; next[idx] = item; }
+            else { next = [item, ...prev]; }
+          }
           broadcastSync(next);
           pushToApi(next, dbEngine, dbCredentials);
           return next;
@@ -793,6 +814,17 @@
           const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
           if (baseUrl && anonKey) {
             try {
+              if (isIdChanged) {
+                try {
+                  await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(cleanOriginalId)}`, {
+                    method: 'DELETE',
+                    headers: getSupabaseHeaders(anonKey)
+                  });
+                } catch (delErr) {
+                  console.warn('Aviso al eliminar ID previo:', delErr);
+                }
+              }
+
               const supabasePayload = {
                 id: String(item.id).trim(),
                 name: String(item.name || '').trim(),
@@ -835,7 +867,11 @@
                 showToast(`⚠️ Error al guardar en Supabase: ${errText.slice(0, 80)}`, 'error');
                 return { success: false, error: errText };
               } else {
-                showToast(`🟢 Repuesto ${item.id} guardado en Supabase`);
+                if (isIdChanged) {
+                  showToast(`🟢 Repuesto actualizado: ID cambiado de ${cleanOriginalId} a ${item.id}`);
+                } else {
+                  showToast(`🟢 Repuesto ${item.id} guardado en Supabase`);
+                }
                 setTimeout(() => { if (typeof checkAndSyncDatabase === 'function') checkAndSyncDatabase(dbEngine, null, false); }, 400);
                 return { success: true };
               }
@@ -2766,7 +2802,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${tabValues.table || 'bob
 
       const handleSave = (e) => {
         e.preventDefault();
-        upsertCoil(form);
+        upsertCoil(form, initialProduct?.id || null);
         onClose();
       };
 

@@ -226,7 +226,8 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      const res = await upsertCoil(form);
+      const originalId = initialProduct?.id || null;
+      const res = await upsertCoil(form, originalId);
       if (res && res.success === false) {
         // Failed - keep modal open so user does not lose input
         return;
