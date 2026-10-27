@@ -38,7 +38,9 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
         item.engine.toLowerCase().includes(q) ||
         item.oem.toLowerCase().includes(q) ||
         item.brand.toLowerCase().includes(q) ||
-        item.id.toLowerCase().includes(q);
+        item.id.toLowerCase().includes(q) ||
+        (item.type && item.type.toLowerCase().includes(q)) ||
+        (item.connector && item.connector.toLowerCase().includes(q));
 
       // Brand filter
       const matchesBrand = (selectedBrand === 'ALL') || (item.brand.toLowerCase() === selectedBrand.toLowerCase());
