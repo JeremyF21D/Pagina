@@ -11,14 +11,18 @@ export function DatabaseView({
   onOpenBulkModal,
   onOpenSchemaModal
 }) {
-  const { coils, dbEngine, changeDbEngine, deleteCoil, clearInventory, restoreSeedData } = useInventory();
+  const { coils, dbEngine, changeDbEngine, deleteCoil, clearInventory } = useInventory();
   const { requireAdminAuth } = useAuth();
+
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const engines = [
     { id: 'supabase', label: 'Supabase (PostgreSQL)', icon: 'fa-solid fa-bolt', desc: 'Base de datos principal en la nube. Conexión activa para todos los visitantes.', activeBorder: 'border-emerald-500' }
   ];
 
   const handleExport = (format) => {
+    setIsExportOpen(false);
     if (format === 'csv') {
       const csv = exportToCSV(coils);
       downloadFile(csv, `bobinas_inventario_export_${Date.now()}.csv`, 'text/csv;charset=utf-8;');
@@ -31,24 +35,8 @@ export function DatabaseView({
     }
   };
 
-  const [confirmClear, setConfirmClear] = useState(false);
-
   const handleDelete = (id) => {
     deleteCoil(id);
-  };
-
-  const handleClearClick = () => {
-    if (!confirmClear) {
-      setConfirmClear(true);
-      setTimeout(() => setConfirmClear(false), 4000);
-      return;
-    }
-    clearInventory();
-    setConfirmClear(false);
-  };
-
-  const handleRestore = () => {
-    restoreSeedData();
   };
 
   return (
@@ -80,31 +68,48 @@ export function DatabaseView({
             <i className="fa-solid fa-file-import text-sky-400"></i> Carga Masiva (CSV / JSON)
           </button>
 
-          <div className="relative group">
-            <button className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer">
+          {/* Botón de Exportar Robusto (Controlado por Clic, sin cierres accidentales) */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsExportOpen(!isExportOpen)}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+            >
               <i className="fa-solid fa-file-export text-emerald-400"></i> Exportar
-              <i className="fa-solid fa-chevron-down text-[10px]"></i>
+              <i className={`fa-solid fa-chevron-down text-[10px] transition-transform ${isExportOpen ? 'rotate-180' : ''}`}></i>
             </button>
-            <div className="absolute right-0 top-full mt-1 w-36 bg-slate-900 border border-slate-800 rounded-xl shadow-xl py-1 z-30 hidden group-hover:block">
-              <button 
-                onClick={() => handleExport('csv')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2"
-              >
-                <i className="fa-solid fa-file-csv text-emerald-400"></i> Formato CSV
-              </button>
-              <button 
-                onClick={() => handleExport('json')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2"
-              >
-                <i className="fa-solid fa-file-code text-amber-400"></i> Formato JSON
-              </button>
-              <button 
-                onClick={() => handleExport('sql')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2"
-              >
-                <i className="fa-solid fa-database text-sky-400"></i> Dump SQL DDL
-              </button>
-            </div>
+
+            {isExportOpen && (
+              <>
+                {/* Backdrop invisible para cerrar al hacer clic afuera */}
+                <div 
+                  className="fixed inset-0 z-20" 
+                  onClick={() => setIsExportOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-1.5 w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30 space-y-0.5 animate-fade-in">
+                  <button 
+                    onClick={() => handleExport('csv')}
+                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                  >
+                    <i className="fa-solid fa-file-csv text-emerald-400 text-sm"></i> 
+                    <span>Formato CSV (Excel)</span>
+                  </button>
+                  <button 
+                    onClick={() => handleExport('json')}
+                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                  >
+                    <i className="fa-solid fa-file-code text-amber-400 text-sm"></i> 
+                    <span>Formato JSON</span>
+                  </button>
+                  <button 
+                    onClick={() => handleExport('sql')}
+                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                  >
+                    <i className="fa-solid fa-database text-sky-400 text-sm"></i> 
+                    <span>Dump SQL DDL</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           <button 
@@ -114,29 +119,58 @@ export function DatabaseView({
             <i className="fa-solid fa-code text-purple-400"></i> Ver Esquemas DDL
           </button>
 
+          {/* Botón de Vaciar Base de Datos con Modal Seguro */}
           <button 
-            onClick={handleClearClick}
-            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
-              confirmClear 
-                ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/40 ring-2 ring-rose-400' 
-                : 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50'
-            }`}
-            title="Borrar todos los productos de la Base de Datos (0 artículos)"
+            onClick={() => setIsClearModalOpen(true)}
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50"
+            title="Borrar todos los productos de la Base de Datos"
           >
-            <i className={`fa-solid ${confirmClear ? 'fa-triangle-exclamation' : 'fa-trash-can'}`}></i>
-            <span>{confirmClear ? '¿Confirmar vaciado total? Clic aquí' : 'Vaciar Base de Datos'}</span>
-          </button>
-
-          <button 
-            onClick={handleRestore}
-            className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-300 border border-slate-800 rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer"
-            title="Restaurar a los productos originales de fábrica"
-          >
-            <i className="fa-solid fa-rotate-left"></i>
-            <span className="hidden sm:inline">Restaurar Semilla</span>
+            <i className="fa-solid fa-trash-can"></i>
+            <span>Vaciar Base de Datos</span>
           </button>
         </div>
       </div>
+
+      {/* Modal Seguro de Confirmación para Vaciar Base de Datos */}
+      {isClearModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-xl mx-auto">
+              <i className="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            
+            <div className="text-center space-y-1.5">
+              <h3 className="text-lg font-bold text-white">¿Vaciar Base de Datos por Completo?</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Esta acción eliminará todos los <strong className="text-rose-400 font-bold">{coils.length} artículos</strong> actualmente guardados en el inventario.
+              </p>
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-[11px] text-amber-300 flex items-center gap-2 text-left mt-2">
+                <i className="fa-solid fa-circle-info text-amber-400 text-sm shrink-0"></i>
+                <span>Te recomendamos descargar un respaldo desde el botón <strong>"Exportar"</strong> antes de vaciarla.</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <button
+                onClick={() => setIsClearModalOpen(false)}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  clearInventory();
+                  setIsClearModalOpen(false);
+                }}
+                className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-600/30 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <i className="fa-solid fa-trash-can"></i>
+                <span>Sí, Vaciar Base</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Engine Switcher Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
