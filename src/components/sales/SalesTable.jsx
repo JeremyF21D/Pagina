@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { buildOwnerAlertUrl } from '../../utils/whatsapp';
 import { formatUSD } from '../../utils/formatters';
+import { ProductHoverPreview } from './ProductHoverPreview';
 
 export function SalesTable() {
-  const { salesHistory, confirmSale, revertSale, ownerSettings } = useInventory();
+  const { salesHistory, confirmSale, revertSale, ownerSettings, coils } = useInventory();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
 
@@ -108,8 +109,7 @@ export function SalesTable() {
                     <div className="text-[10px] text-slate-400">{ord.customerPhone}</div>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="text-white font-semibold truncate max-w-xs">{ord.coilName}</div>
-                    <div className="text-[10px] font-mono text-slate-400">OEM: {ord.oem}</div>
+                    <ProductHoverPreview order={ord} coils={coils} />
                   </td>
                   <td className="py-3 px-4 text-center font-bold text-white">
                     {ord.qty}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { formatUSD } from '../../utils/formatters';
+import { ProductHoverPreview } from '../sales/ProductHoverPreview';
 
 export function SalesDatabaseTable() {
   const { salesHistory, refreshSalesHistory, coils, dbEngine } = useInventory();
@@ -157,8 +158,7 @@ export function SalesDatabaseTable() {
                     <div className="text-[10px] text-slate-400 font-mono">{ord.customerPhone}</div>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="text-white font-semibold truncate max-w-xs">{ord.coilName}</div>
-                    <div className="text-[10px] font-mono text-slate-400">OEM: {ord.oem || 'N/A'}</div>
+                    <ProductHoverPreview order={ord} coils={coils} />
                   </td>
                   <td className="py-3 px-4 text-center font-bold text-white">
                     {ord.qty}

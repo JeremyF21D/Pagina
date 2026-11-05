@@ -2093,7 +2093,27 @@
                     <td className="py-3 px-4 font-mono font-bold text-brand-400">#{ord.orderId}</td>
                     <td className="py-3 px-4 text-slate-400">{ord.timestamp}</td>
                     <td className="py-3 px-4 text-white">{ord.customerName}</td>
-                    <td className="py-3 px-4">{ord.qty}x {ord.coilName}</td>
+                    <td className="py-3 px-4">
+                      {(() => {
+                        const matched = coils.find(c => (ord.coilId && c.id === ord.coilId) || (ord.oem && c.oem && c.oem.includes(ord.oem)) || (ord.coilName && c.name === ord.coilName));
+                        const img = matched ? matched.image : null;
+                        return (
+                          <div className="flex items-center gap-2 group relative cursor-pointer" title="Ver información del repuesto">
+                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-700 overflow-hidden flex items-center justify-center flex-shrink-0">
+                              {img ? (
+                                <img src={img} alt="" className="w-full h-full object-contain p-0.5 mix-blend-multiply" />
+                              ) : (
+                                <i className="fa-solid fa-bolt text-amber-400 text-xs"></i>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-white font-semibold truncate max-w-xs">{ord.qty}x {ord.coilName}</div>
+                              <div className="text-[10px] font-mono text-slate-400">OEM: {ord.oem || (matched ? matched.oem : 'N/A')}</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="py-3 px-4 text-emerald-400 font-bold">{formatUSD(ord.totalPrice)}</td>
                     <td className="py-3 px-4 font-mono text-[11px]">
                       {ord.status === 'PENDING_APPROVAL' ? (
