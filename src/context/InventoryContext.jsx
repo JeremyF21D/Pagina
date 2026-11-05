@@ -838,10 +838,11 @@ Directrices de conversación:
         return currentCoils;
       }
 
-      // Si no se especifica status, usar la configuración del dueño:
-      const effectiveStatus = status || (ownerSettings.requireApproval ? 'PENDING_APPROVAL' : 'CONFIRMED');
-      const isConfirmed = effectiveStatus === 'CONFIRMED';
-      const stockAfter = isConfirmed ? Math.max(0, stockBefore - requestedQty) : stockBefore;
+      // Toda venta nueva ingresa SIEMPRE en estado PENDIENTE de verificación manual por WhatsApp/Almacén
+      // para evitar descuadre por productos defectuosos o devoluciones antes de la confirmación definitiva.
+      const effectiveStatus = 'PENDING_APPROVAL';
+      const isConfirmed = false;
+      const stockAfter = stockBefore;
 
       const newOrder = {
         orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,

@@ -1030,7 +1030,7 @@
           if (!coil) return currentCoils;
           const reqQty = Math.max(1, parseInt(qty, 10) || 1);
           if (coil.stock < reqQty) { showToast(`Stock insuficiente (${coil.stock} uds)`); return currentCoils; }
-          const isConfirmed = status === 'CONFIRMED';
+          const isConfirmed = false;
           const stockAfter = isConfirmed ? Math.max(0, coil.stock - reqQty) : coil.stock;
 
           const newOrder = {
@@ -1048,7 +1048,7 @@
             stockBefore: coil.stock,
             stockAfter,
             paymentRef: paymentRef || 'Confirmación directa',
-            status: isConfirmed ? 'CONFIRMED' : 'PENDING_APPROVAL'
+            status: 'PENDING_APPROVAL'
           };
           orderResult = newOrder;
           setSalesHistory(prev => [newOrder, ...prev]);

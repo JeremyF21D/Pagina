@@ -81,7 +81,7 @@ export function ManualSaleModal({ isOpen, onClose }) {
       customerPhone: customerPhone.trim() || '0412-Directo',
       paymentRef: finalPaymentRef,
       userId: deviceId || 'CLI-MANUAL',
-      status: 'CONFIRMED'
+      status: 'PENDING_APPROVAL'
     });
 
     onClose();
@@ -99,13 +99,13 @@ export function ManualSaleModal({ isOpen, onClose }) {
 
         {/* Encabezado */}
         <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-lg">
-            <i className="fa-solid fa-cash-register"></i>
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-lg">
+            <i className="fa-solid fa-clock"></i>
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Registrar Venta & Verificar Pago</h3>
+            <h3 className="text-base font-bold text-white">Registrar Pedido (Ingresa como Pendiente)</h3>
             <p className="text-xs text-slate-400">
-              Descuenta stock en Supabase y audita el pago recibido.
+              El pedido ingresará en estado <strong>PENDIENTE</strong> para que puedas verificar el pago por WhatsApp antes de descontar stock.
             </p>
           </div>
         </div>
@@ -447,10 +447,10 @@ export function ManualSaleModal({ isOpen, onClose }) {
             <button 
               type="submit"
               disabled={!isFormValid()}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-700/30 transition cursor-pointer active:scale-95"
+              className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-600/30 transition cursor-pointer active:scale-95"
             >
-              <i className="fa-solid fa-check-double"></i>
-              <span>Confirmar Venta y Descontar Stock</span>
+              <i className="fa-solid fa-clock"></i>
+              <span>Registrar como Pendiente (Verificar por WA)</span>
             </button>
           </div>
         </form>
