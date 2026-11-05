@@ -444,19 +444,6 @@ Directrices de conversación:
     }
   }, [dbEngine, dbCredentials, showToast]);
 
-  // Chequeo inicial automático al cargar la aplicación
-  const initialCheckRef = useRef(false);
-  useEffect(() => {
-    if (!initialCheckRef.current) {
-      initialCheckRef.current = true;
-      checkAndSyncDatabase(dbEngine, null, false).then(() => {
-        if (typeof refreshSalesHistory === 'function') {
-          refreshSalesHistory(false);
-        }
-      });
-    }
-  }, [checkAndSyncDatabase, refreshSalesHistory, dbEngine]);
-
   // Sincronización en tiempo real entre pestañas (BroadcastChannel)
   useEffect(() => {
     if (typeof BroadcastChannel !== 'undefined') {
@@ -1293,6 +1280,19 @@ Directrices de conversación:
       showToast(`✅ Sincronizados ${coils.length} productos con ${dbEngine.toUpperCase()}.`);
     }
   }, [checkAndSyncDatabase, coils, dbCredentials, dbEngine, showToast]);
+
+  // Chequeo inicial automático al cargar la aplicación (después de inicializar todos los callbacks)
+  const initialCheckRef = useRef(false);
+  useEffect(() => {
+    if (!initialCheckRef.current) {
+      initialCheckRef.current = true;
+      checkAndSyncDatabase(dbEngine, null, false).then(() => {
+        if (typeof refreshSalesHistory === 'function') {
+          refreshSalesHistory(false);
+        }
+      });
+    }
+  }, [checkAndSyncDatabase, refreshSalesHistory, dbEngine]);
 
   return (
     <InventoryContext.Provider value={{
