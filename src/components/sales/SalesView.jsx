@@ -72,15 +72,15 @@ export function SalesView({ onOpenManualSaleModal }) {
             <i className="fa-solid fa-bolt text-amber-400"></i> Simular Pedido WA
           </button>
 
-          {/* Botón: Actualizar registro de ventas realizadas */}
+          {/* Botón: Sincronizar registro de ventas con Supabase */}
           <button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="px-3.5 py-2 bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-sm active:scale-95"
-            title="Actualizar y verificar las ventas que se hayan realizado en tiempo real"
+            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-500/40 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
+            title="Sincronizar y verificar todos los movimientos con la tabla 'ventas' de Supabase"
           >
-            <i className={`fa-solid fa-arrows-rotate ${isRefreshing ? 'fa-spin' : ''} text-sky-400`}></i>
-            <span>Actualizar Registro</span>
+            <i className={`fa-solid fa-cloud-arrow-up ${isRefreshing ? 'fa-spin' : ''} text-emerald-200`}></i>
+            <span>Sincronizar Supabase</span>
           </button>
 
           {/* Botón: Importar y exportar CSV conectado al catálogo para Supabase */}

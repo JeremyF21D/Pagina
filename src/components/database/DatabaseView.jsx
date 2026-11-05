@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { InventoryTable } from './InventoryTable';
+import { SalesDatabaseTable } from './SalesDatabaseTable';
 import { ApiConnectionPanel } from './ApiConnectionPanel';
-import { exportToCSV, exportToSQL, downloadFile } from '../../utils/csvParser';
+import { exportToCSV, exportToSQL, exportSalesToCSV, exportSalesToSQL, downloadFile } from '../../utils/csvParser';
 
 export function DatabaseView({
   onOpenCreateModal,
@@ -11,9 +12,10 @@ export function DatabaseView({
   onOpenBulkModal,
   onOpenSchemaModal
 }) {
-  const { coils, dbEngine, changeDbEngine, deleteCoil, clearInventory } = useInventory();
+  const { coils, salesHistory, dbEngine, changeDbEngine, deleteCoil, clearInventory } = useInventory();
   const { requireAdminAuth } = useAuth();
 
+  const [activeSubTab, setActiveSubTab] = useState('inventory'); // 'inventory' | 'sales'
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
@@ -23,15 +25,29 @@ export function DatabaseView({
 
   const handleExport = (format) => {
     setIsExportOpen(false);
-    if (format === 'csv') {
-      const csv = exportToCSV(coils);
-      downloadFile(csv, `bobinas_inventario_export_${Date.now()}.csv`, 'text/csv;charset=utf-8;');
-    } else if (format === 'json') {
-      const json = JSON.stringify(coils, null, 2);
-      downloadFile(json, `bobinas_inventario_export_${Date.now()}.json`, 'application/json;charset=utf-8;');
-    } else if (format === 'sql') {
-      const sql = exportToSQL(coils);
-      downloadFile(sql, `bobinas_inventario_export_${Date.now()}.sql`, 'application/sql;charset=utf-8;');
+    const timestamp = Date.now();
+    if (activeSubTab === 'inventory') {
+      if (format === 'csv') {
+        const csv = exportToCSV(coils);
+        downloadFile(csv, `bobinas_inventario_export_${timestamp}.csv`, 'text/csv;charset=utf-8;');
+      } else if (format === 'json') {
+        const json = JSON.stringify(coils, null, 2);
+        downloadFile(json, `bobinas_inventario_export_${timestamp}.json`, 'application/json;charset=utf-8;');
+      } else if (format === 'sql') {
+        const sql = exportToSQL(coils);
+        downloadFile(sql, `bobinas_inventario_export_${timestamp}.sql`, 'application/sql;charset=utf-8;');
+      }
+    } else {
+      if (format === 'csv') {
+        const csv = exportSalesToCSV(salesHistory, coils);
+        downloadFile(csv, `ventas_movimientos_export_${timestamp}.csv`, 'text/csv;charset=utf-8;');
+      } else if (format === 'json') {
+        const json = JSON.stringify(salesHistory, null, 2);
+        downloadFile(json, `ventas_movimientos_export_${timestamp}.json`, 'application/json;charset=utf-8;');
+      } else if (format === 'sql') {
+        const sql = exportSalesToSQL(salesHistory, coils);
+        downloadFile(sql, `ventas_movimientos_export_${timestamp}.sql`, 'application/sql;charset=utf-8;');
+      }
     }
   };
 
@@ -212,11 +228,51 @@ export function DatabaseView({
       {/* In-Page API & Database Connection Panel */}
       <ApiConnectionPanel />
 
-      {/* Main Inventory Table */}
-      <InventoryTable 
-        onEditCoil={onOpenEditModal}
-        onDeleteCoil={handleDelete}
-      />
+      {/* Selector de Tablas de la Base de Datos */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div className="flex items-center gap-2 p-1.5 bg-slate-950/80 border border-slate-800 rounded-2xl">
+          <button
+            onClick={() => setActiveSubTab('inventory')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+              activeSubTab === 'inventory'
+                ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <i className="fa-solid fa-boxes-stacked"></i>
+            <span>Catálogo de Repuestos ({coils.length})</span>
+            <span className="text-[10px] font-mono opacity-70 hidden sm:inline">bobinas_inventario</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('sales')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+              activeSubTab === 'sales'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <i className="fa-solid fa-cash-register"></i>
+            <span>Movimientos & Ventas ({salesHistory.length})</span>
+            <span className="text-[10px] font-mono opacity-70 hidden sm:inline">ventas</span>
+          </button>
+        </div>
+
+        <div className="text-xs text-slate-400 flex items-center gap-2 font-mono">
+          <i className="fa-solid fa-database text-sky-400"></i>
+          <span>Tabla activa: <strong className="text-white">{activeSubTab === 'inventory' ? 'bobinas_inventario' : 'ventas'}</strong></span>
+        </div>
+      </div>
+
+      {/* Renderizado Condicional de la Tabla Activa */}
+      {activeSubTab === 'inventory' ? (
+        <InventoryTable 
+          onEditCoil={onOpenEditModal}
+          onDeleteCoil={handleDelete}
+        />
+      ) : (
+        <SalesDatabaseTable />
+      )}
     </div>
   );
 }

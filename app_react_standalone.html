@@ -966,6 +966,63 @@
         showToast(`Carga masiva: ${norm.length} productos procesados.`);
       };
 
+      const saveSaleToSupabase = async (order, matchedCoil = null) => {
+        if (!order || !order.orderId) return;
+        if (dbEngine !== 'supabase') return;
+        const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+        if (!baseUrl || !anonKey) return;
+        const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
+        const cleanOrderId = String(order.orderId || order.order_id).replace(/^#/, '').trim();
+        const coil = matchedCoil || coils.find(c => c.id === order.coilId || (order.oem && c.oem && c.oem.includes(order.oem)));
+        const payload = {
+          order_id: cleanOrderId,
+          fecha: order.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          fecha_hora: new Date().toISOString(),
+          cliente_nombre: String(order.customerName || 'Cliente').trim(),
+          cliente_telefono: String(order.customerPhone || '').trim(),
+          producto_id: coil ? coil.id : String(order.coilId || '').trim(),
+          producto_nombre: coil ? coil.name : String(order.coilName || '').trim(),
+          codigo_oem: coil ? coil.oem : String(order.oem || '').trim(),
+          marca_producto: coil ? coil.brand : '',
+          modelo_vehiculo: coil ? coil.carModel : '',
+          motor_vehiculo: coil ? coil.engine : '',
+          tipo_bobina: coil ? coil.type : '',
+          cantidad: parseInt(order.qty || 1, 10),
+          precio_unitario: Number(order.unitPrice || (coil ? coil.price : 0)),
+          precio_unitario_usd: Number(order.unitPrice || (coil ? coil.price : 0)),
+          total_usd: Number(order.totalPrice || 0),
+          stock_anterior: Number(order.stockBefore ?? 0),
+          stock_antes_venta: Number(order.stockBefore ?? 0),
+          stock_posterior: Number(order.stockAfter ?? 0),
+          stock_despues_venta: Number(order.stockAfter ?? 0),
+          stock_actual_catalogo: coil ? coil.stock : Number(order.stockAfter || 0),
+          referencia_pago: String(order.paymentRef || '').trim(),
+          estado: String(order.status || 'CONFIRMED').toUpperCase(),
+          status: String(order.status || 'CONFIRMED').toUpperCase(),
+          estado_orden: String(order.status || 'CONFIRMED').toUpperCase(),
+          usuario_id: String(order.userId || 'CLI-STANDALONE').trim()
+        };
+        try {
+          const checkRes = await fetch(`${baseUrl}/rest/v1/${table}?order_id=eq.${encodeURIComponent(cleanOrderId)}&select=order_id`, {
+            headers: getSupabaseHeaders(anonKey)
+          });
+          const existing = checkRes.ok ? await checkRes.json() : [];
+          if (Array.isArray(existing) && existing.length > 0) {
+            await fetch(`${baseUrl}/rest/v1/${table}?order_id=eq.${encodeURIComponent(cleanOrderId)}`, {
+              method: 'PATCH',
+              headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+              body: JSON.stringify(payload)
+            });
+          } else {
+            await fetch(`${baseUrl}/rest/v1/${table}`, {
+              method: 'POST',
+              headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+              body: JSON.stringify(payload)
+            });
+          }
+        } catch(e) { console.warn('Supabase sale save err:', e); }
+      };
+
       const processSaleTransaction = ({ coilId, qty, customerName, customerPhone, paymentRef, userId, status = 'PENDING_APPROVAL' }) => {
         let orderResult = null;
         setCoils(currentCoils => {
@@ -995,6 +1052,7 @@
           };
           orderResult = newOrder;
           setSalesHistory(prev => [newOrder, ...prev]);
+          saveSaleToSupabase(newOrder, coil);
           setPendingOwnerAlert(newOrder);
 
           if (ownerSettings.soundAlert) {

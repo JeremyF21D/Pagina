@@ -449,9 +449,13 @@ Directrices de conversación:
   useEffect(() => {
     if (!initialCheckRef.current) {
       initialCheckRef.current = true;
-      checkAndSyncDatabase(dbEngine, null, false);
+      checkAndSyncDatabase(dbEngine, null, false).then(() => {
+        if (typeof refreshSalesHistory === 'function') {
+          refreshSalesHistory(false);
+        }
+      });
     }
-  }, [checkAndSyncDatabase, dbEngine]);
+  }, [checkAndSyncDatabase, refreshSalesHistory, dbEngine]);
 
   // Sincronización en tiempo real entre pestañas (BroadcastChannel)
   useEffect(() => {
@@ -755,11 +759,84 @@ Directrices de conversación:
   }, [showToast]);
 
   /**
+   * Guarda o actualiza una orden de venta directamente en la tabla 'ventas' de Supabase en tiempo real.
+   */
+  const saveSaleToSupabase = useCallback(async (order, matchedCoil = null) => {
+    if (!order || !order.orderId) return { success: false };
+    if (dbEngine !== 'supabase') return { success: true };
+
+    const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+    if (!baseUrl || !anonKey) return { success: false };
+
+    const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
+    const cleanOrderId = String(order.orderId || order.order_id).replace(/^#/, '').trim();
+    const coil = matchedCoil || coils.find(c => c.id === order.coilId || (order.oem && c.oem && c.oem.includes(order.oem)));
+
+    const payload = {
+      order_id: cleanOrderId,
+      fecha: order.timestamp || order.fecha || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      fecha_hora: new Date().toISOString(),
+      cliente_nombre: String(order.customerName || order.cliente_nombre || 'Cliente WhatsApp').trim(),
+      cliente_telefono: String(order.customerPhone || order.cliente_telefono || '').trim(),
+      producto_id: coil ? coil.id : String(order.coilId || order.producto_id || '').trim(),
+      producto_nombre: coil ? coil.name : String(order.coilName || order.producto_nombre || 'Repuesto Automotriz').trim(),
+      codigo_oem: coil ? coil.oem : String(order.oem || order.codigo_oem || '').trim(),
+      marca_producto: coil ? coil.brand : '',
+      modelo_vehiculo: coil ? coil.carModel : '',
+      motor_vehiculo: coil ? coil.engine : '',
+      tipo_bobina: coil ? coil.type : '',
+      cantidad: parseInt(order.qty || order.cantidad || 1, 10),
+      precio_unitario: Number(order.unitPrice || order.precio_unitario || (coil ? coil.price : 0)),
+      precio_unitario_usd: Number(order.unitPrice || order.precio_unitario || (coil ? coil.price : 0)),
+      total_usd: Number(order.totalPrice || order.total_usd || 0),
+      stock_anterior: Number(order.stockBefore ?? order.stock_anterior ?? 0),
+      stock_antes_venta: Number(order.stockBefore ?? order.stock_anterior ?? 0),
+      stock_posterior: Number(order.stockAfter ?? order.stock_posterior ?? 0),
+      stock_despues_venta: Number(order.stockAfter ?? order.stock_posterior ?? 0),
+      stock_actual_catalogo: coil ? coil.stock : Number(order.stockAfter || 0),
+      referencia_pago: String(order.paymentRef || order.referencia_pago || '').trim(),
+      estado: String(order.status || order.estado || 'CONFIRMED').toUpperCase(),
+      status: String(order.status || order.estado || 'CONFIRMED').toUpperCase(),
+      estado_orden: String(order.status || order.estado || 'CONFIRMED').toUpperCase(),
+      usuario_id: String(order.userId || order.usuario_id || 'CLI-WEB').trim()
+    };
+
+    try {
+      // 1. Verificar si la orden ya existe en Supabase
+      const checkRes = await fetch(`${baseUrl}/rest/v1/${table}?order_id=eq.${encodeURIComponent(cleanOrderId)}&select=order_id`, {
+        headers: getSupabaseHeaders(anonKey)
+      });
+      const existing = checkRes.ok ? await checkRes.json() : [];
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        // Actualizar registro existente
+        const patchRes = await fetch(`${baseUrl}/rest/v1/${table}?order_id=eq.${encodeURIComponent(cleanOrderId)}`, {
+          method: 'PATCH',
+          headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify(payload)
+        });
+        return { success: patchRes.ok };
+      } else {
+        // Insertar nuevo registro
+        const postRes = await fetch(`${baseUrl}/rest/v1/${table}`, {
+          method: 'POST',
+          headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify(payload)
+        });
+        return { success: postRes.ok };
+      }
+    } catch (err) {
+      console.warn('Error al guardar venta en Supabase:', err);
+      return { success: false, error: err.message };
+    }
+  }, [dbEngine, dbCredentials, coils]);
+
+  /**
    * Cierre transaccional de ventas y pedidos
    * Los pedidos creados por clientes entran por defecto en estado 'PENDING_APPROVAL' (Pendiente)
    * sin descontar stock hasta que el dueño/administrador los confirme.
    */
-  const processSaleTransaction = useCallback(({ coilId, qty, customerName, customerPhone, paymentRef, userId, status = 'PENDING_APPROVAL' }) => {
+  const processSaleTransaction = useCallback(({ coilId, qty, customerName, customerPhone, paymentRef, userId, status = null }) => {
     let orderResult = null;
 
     setCoils(currentCoils => {
@@ -774,7 +851,9 @@ Directrices de conversación:
         return currentCoils;
       }
 
-      const isConfirmed = status === 'CONFIRMED';
+      // Si no se especifica status, usar la configuración del dueño:
+      const effectiveStatus = status || (ownerSettings.requireApproval ? 'PENDING_APPROVAL' : 'CONFIRMED');
+      const isConfirmed = effectiveStatus === 'CONFIRMED';
       const stockAfter = isConfirmed ? Math.max(0, stockBefore - requestedQty) : stockBefore;
 
       const newOrder = {
@@ -792,12 +871,15 @@ Directrices de conversación:
         stockBefore,
         stockAfter,
         paymentRef: paymentRef || 'A coordinar por WhatsApp',
-        status: isConfirmed ? 'CONFIRMED' : 'PENDING_APPROVAL'
+        status: effectiveStatus
       };
 
       orderResult = newOrder;
       setSalesHistory(prev => [newOrder, ...prev]);
       setPendingOwnerAlert(newOrder);
+
+      // Guardar de inmediato en la tabla 'ventas' de Supabase
+      saveSaleToSupabase(newOrder, coil);
 
       if (ownerSettings.soundAlert) {
         playCashRegisterSound();
@@ -805,6 +887,7 @@ Directrices de conversación:
 
       // Si no está confirmada (está pendiente), no descontamos stock del inventario
       if (!isConfirmed) {
+        showToast(`🟡 Pedido #${newOrder.orderId} registrado en Supabase (Pendiente de confirmación)`);
         return currentCoils;
       }
 
@@ -823,7 +906,7 @@ Directrices de conversación:
       broadcastSync(updated);
       pushToApi(updated);
 
-      // Si Supabase está conectado, actualizar la columna stock
+      // Si Supabase está conectado, actualizar la columna stock en bobinas_inventario
       if (dbEngine === 'supabase') {
         const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
         if (baseUrl && anonKey) {
@@ -835,11 +918,12 @@ Directrices de conversación:
         }
       }
 
+      showToast(`🟢 Venta #${newOrder.orderId} registrada: Stock descontado y guardada en Supabase`);
       return updated;
     });
 
     return orderResult;
-  }, [ownerSettings.soundAlert, playCashRegisterSound, showToast, dbEngine, dbCredentials]);
+  }, [ownerSettings.requireApproval, ownerSettings.soundAlert, playCashRegisterSound, showToast, saveSaleToSupabase, dbEngine, dbCredentials]);
 
   /**
    * Confirmar pedido pendiente:
@@ -856,9 +940,11 @@ Directrices de conversación:
 
     let calculatedNewStock = null;
     const targetCoilId = ord.coilId;
+    let targetCoil = null;
 
     setCoils(currentCoils => {
       const coil = currentCoils.find(b => b.id.toLowerCase() === String(targetCoilId || '').toLowerCase());
+      targetCoil = coil;
       const currentStock = coil ? coil.stock : ord.stockBefore;
       const newStock = Math.max(0, currentStock - ord.qty);
       calculatedNewStock = newStock;
@@ -883,22 +969,22 @@ Directrices de conversación:
       return updated;
     });
 
+    const updatedOrder = {
+      ...ord,
+      status: 'CONFIRMED',
+      stockAfter: calculatedNewStock !== null ? calculatedNewStock : Math.max(0, ord.stockBefore - ord.qty)
+    };
+
     setSalesHistory(prev => {
-      const next = prev.map(s => {
-        if (s.orderId === orderId) {
-          return {
-            ...s,
-            status: 'CONFIRMED',
-            stockAfter: calculatedNewStock !== null ? calculatedNewStock : Math.max(0, s.stockBefore - s.qty)
-          };
-        }
-        return s;
-      });
+      const next = prev.map(s => s.orderId === orderId ? updatedOrder : s);
       try {
         localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
       } catch (e) {}
       return next;
     });
+
+    // Guardar / Actualizar en Supabase orden y stock
+    saveSaleToSupabase(updatedOrder, targetCoil);
 
     if (ownerSettings.soundAlert) {
       playCashRegisterSound();
@@ -923,8 +1009,8 @@ Directrices de conversación:
       }
     }
 
-    showToast(`✅ Pedido #${orderId} confirmado. Se descontaron ${ord.qty} uds de stock.`);
-  }, [salesHistory, ownerSettings.soundAlert, playCashRegisterSound, dbEngine, dbCredentials, showToast]);
+    showToast(`✅ Pedido #${orderId} confirmado: Stock actualizado y registrado en Supabase.`);
+  }, [salesHistory, ownerSettings.soundAlert, playCashRegisterSound, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
 
   /**
    * Revertir o Cancelar orden:
@@ -992,17 +1078,21 @@ Directrices de conversación:
       showToast(`❌ Orden #${orderId} cancelada (no modificó el stock)`);
     }
 
+    const updatedOrder = { ...ord, status: 'REVERTED' };
     setSalesHistory(prev => {
-      const next = prev.map(s => s.orderId === orderId ? { ...s, status: 'REVERTED' } : s);
+      const next = prev.map(s => s.orderId === orderId ? updatedOrder : s);
       try {
         localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
       } catch (e) {}
       return next;
     });
-  }, [salesHistory, dbEngine, dbCredentials, showToast]);
 
-  const refreshSalesHistory = useCallback(async () => {
-    // 1. If active engine is supabase, attempt fetch from Supabase table 'ventas' (or 'ventas_ordenes')
+    // Actualizar estado en Supabase
+    saveSaleToSupabase(updatedOrder);
+  }, [salesHistory, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
+
+  const refreshSalesHistory = useCallback(async (showNotification = false) => {
+    // 1. Sincronizar en doble vía con la tabla 'ventas' de Supabase
     if (dbEngine === 'supabase') {
       const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
       if (baseUrl && anonKey) {
@@ -1014,35 +1104,69 @@ Directrices de conversación:
           });
           if (resp.ok) {
             const data = await resp.json();
-            if (Array.isArray(data) && data.length > 0) {
-              const mapped = data.map(item => {
-                const rawProdId = item.producto_id || item.coil_id || '';
-                const rawOem = item.codigo_oem || item.oem || '';
-                const matchedCoil = coils.find(c => (rawProdId && c.id.toLowerCase() === rawProdId.toLowerCase()) || (rawOem && c.oem && c.oem.includes(rawOem)));
+            const supabaseRows = Array.isArray(data) ? data : [];
+            const supabaseIds = new Set(supabaseRows.map(r => String(r.order_id || r.id).replace(/^#/, '')));
 
-                return {
-                  orderId: String(item.order_id || item.id).replace(/^#/, ''),
-                  timestamp: item.fecha || item.fecha_hora || item.created_at || 'Hoy',
-                  customerName: item.cliente_nombre || item.customer_name || 'Cliente',
-                  customerPhone: item.cliente_telefono || item.customer_phone || '',
-                  coilId: matchedCoil ? matchedCoil.id : (rawProdId || 'BOB-GEN'),
-                  coilName: matchedCoil ? matchedCoil.name : (item.producto_nombre || item.coil_name || 'Bobina de Encendido'),
-                  oem: matchedCoil ? matchedCoil.oem : rawOem,
-                  qty: parseInt(item.cantidad || item.qty || 1, 10),
-                  unitPrice: Number(item.precio_unitario || item.unit_price || (matchedCoil ? matchedCoil.price : 0)),
-                  totalPrice: Number(item.total_usd || item.total_price || 0),
-                  stockBefore: Number(item.stock_anterior || item.stock_before || 0),
-                  stockAfter: Number(item.stock_posterior || item.stock_after || 0),
-                  paymentRef: item.referencia_pago || item.payment_ref || '',
-                  status: (item.estado || item.status || 'CONFIRMED').toUpperCase(),
-                  userId: item.usuario_id || item.user_id || 'CLI-SUPABASE'
-                };
-              });
-              setSalesHistory(mapped);
-              try { localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(mapped)); } catch(e){}
-              showToast(`✓ Registro de ventas actualizado desde Supabase (${mapped.length} órdenes)`);
-              return mapped;
+            const mappedSupabase = supabaseRows.map(item => {
+              const rawProdId = item.producto_id || item.coil_id || '';
+              const rawOem = item.codigo_oem || item.oem || '';
+              const matchedCoil = coils.find(c => (rawProdId && c.id.toLowerCase() === rawProdId.toLowerCase()) || (rawOem && c.oem && c.oem.includes(rawOem)));
+
+              return {
+                orderId: String(item.order_id || item.id).replace(/^#/, ''),
+                timestamp: item.fecha || item.fecha_hora || item.created_at || 'Hoy',
+                customerName: item.cliente_nombre || item.customer_name || 'Cliente',
+                customerPhone: item.cliente_telefono || item.customer_phone || '',
+                coilId: matchedCoil ? matchedCoil.id : (rawProdId || 'BOB-GEN'),
+                coilName: matchedCoil ? matchedCoil.name : (item.producto_nombre || item.coil_name || 'Repuesto Automotriz'),
+                oem: matchedCoil ? matchedCoil.oem : rawOem,
+                qty: parseInt(item.cantidad || item.qty || 1, 10),
+                unitPrice: Number(item.precio_unitario || item.unit_price || (matchedCoil ? matchedCoil.price : 0)),
+                totalPrice: Number(item.total_usd || item.total_price || 0),
+                stockBefore: Number(item.stock_anterior ?? item.stock_before ?? 0),
+                stockAfter: Number(item.stock_posterior ?? item.stock_after ?? 0),
+                paymentRef: item.referencia_pago || item.payment_ref || '',
+                status: (item.estado || item.status || 'CONFIRMED').toUpperCase(),
+                userId: item.usuario_id || item.user_id || 'CLI-SUPABASE'
+              };
+            });
+
+            // Revisar si en localStorage hay movimientos locales que aún no están en Supabase
+            let localOrders = [];
+            try {
+              const saved = localStorage.getItem(STORAGE_KEY_SALES_LOG);
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) localOrders = parsed;
+              }
+            } catch (e) {}
+
+            const missingInSupabase = localOrders.filter(l => l && l.orderId && !supabaseIds.has(String(l.orderId).replace(/^#/, '')));
+
+            if (missingInSupabase.length > 0) {
+              console.log(`Subiendo ${missingInSupabase.length} movimientos de venta locales no registrados a Supabase...`);
+              for (const orderToUpload of missingInSupabase) {
+                await saveSaleToSupabase(orderToUpload);
+              }
             }
+
+            // Combinar ambos: registros de Supabase + locales
+            const combinedMap = new Map();
+            mappedSupabase.forEach(s => combinedMap.set(String(s.orderId), s));
+            missingInSupabase.forEach(l => {
+              if (!combinedMap.has(String(l.orderId))) {
+                combinedMap.set(String(l.orderId), l);
+              }
+            });
+
+            const finalOrders = Array.from(combinedMap.values());
+            setSalesHistory(finalOrders);
+            try { localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(finalOrders)); } catch(e){}
+
+            if (showNotification) {
+              showToast(`✓ Base de datos de ventas sincronizada (${finalOrders.length} movimientos en Supabase)`);
+            }
+            return finalOrders;
           }
         } catch (e) {
           console.warn('Error al consultar ventas en Supabase:', e);
@@ -1050,22 +1174,21 @@ Directrices de conversación:
       }
     }
 
-    // 2. Read from LocalStorage & broadcast
+    // 2. Fallback a LocalStorage & broadcast
     try {
       const saved = localStorage.getItem(STORAGE_KEY_SALES_LOG);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           setSalesHistory(parsed);
-          showToast(`✓ Registro de ventas sincronizado (${parsed.length} órdenes activas)`);
+          if (showNotification) showToast(`✓ Registro de ventas sincronizado (${parsed.length} órdenes activas)`);
           return parsed;
         }
       }
     } catch (e) {}
 
-    showToast(`✓ Registro de ventas al día (${salesHistory.length} órdenes)`);
     return salesHistory;
-  }, [dbCredentials, dbEngine, salesHistory, showToast]);
+  }, [dbCredentials, dbEngine, coils, saveSaleToSupabase, showToast]);
 
   const importSalesBatch = useCallback((newRecords, replaceAll = false) => {
     setSalesHistory(prev => {
@@ -1082,159 +1205,32 @@ Directrices de conversación:
       } catch (e) {}
       return next;
     });
+
+    // Guardar también cada registro nuevo en Supabase
+    if (dbEngine === 'supabase') {
+      newRecords.forEach(rec => saveSaleToSupabase(rec));
+    }
+
     showToast(`✓ ${newRecords.length} ventas importadas y conectadas con el catálogo`);
-  }, [showToast]);
+  }, [dbEngine, saveSaleToSupabase, showToast]);
 
   const pushSalesToSupabase = useCallback(async () => {
     const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
     if (!baseUrl || !anonKey) {
-      throw new Error('Configura primero la URL y Anon Key de Supabase en la pestaña "Base de Datos" o "Config IA".');
+      throw new Error('Configura primero la URL y Anon Key de Supabase.');
     }
 
     const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
-    const endpoint = `${baseUrl}/rest/v1/${table}`;
+    let successCount = 0;
 
-    // 1. Intentar descubrir las columnas que realmente existen en la tabla de Supabase
-    let knownColumns = null;
-    try {
-      const specResp = await fetch(`${baseUrl}/rest/v1/`, {
-        headers: getSupabaseHeaders(anonKey)
-      });
-      if (specResp.ok) {
-        const spec = await specResp.json();
-        const tableDef = spec?.definitions?.[table] || spec?.definitions?.['ventas'] || spec?.definitions?.['ventas_ordenes'];
-        if (tableDef?.properties) {
-          knownColumns = new Set(Object.keys(tableDef.properties));
-        }
-      }
-    } catch (e) {}
-
-    // Si OpenAPI no devolvió columnas, consultar 1 fila de muestra
-    if (!knownColumns) {
-      try {
-        const sampleResp = await fetch(`${endpoint}?select=*&limit=1`, {
-          headers: getSupabaseHeaders(anonKey)
-        });
-        if (sampleResp.ok) {
-          const sampleRows = await sampleResp.json();
-          if (Array.isArray(sampleRows) && sampleRows.length > 0) {
-            knownColumns = new Set(Object.keys(sampleRows[0]));
-          }
-        }
-      } catch (e) {}
+    for (const ord of salesHistory) {
+      const res = await saveSaleToSupabase(ord);
+      if (res && res.success) successCount++;
     }
 
-    // 2. Construir fila adaptativa enlazada con los productos del catálogo
-    const buildRow = (s) => {
-      const coil = coils.find(c => c.id === s.coilId || (s.oem && c.oem && c.oem.includes(s.oem)));
-      const row = {};
-
-      const setField = (spanishKey, englishKey, val) => {
-        if (knownColumns) {
-          if (knownColumns.has(spanishKey)) {
-            row[spanishKey] = val;
-          } else if (knownColumns.has(englishKey)) {
-            row[englishKey] = val;
-          }
-        } else {
-          // Si no conocemos aún las columnas, priorizamos la clave estándar
-          row[spanishKey] = val;
-        }
-      };
-
-      row.order_id = s.orderId;
-      setField('fecha', 'timestamp', s.timestamp || 'Hoy');
-      setField('cliente_nombre', 'customer_name', s.customerName || 'Cliente');
-      setField('cliente_telefono', 'customer_phone', s.customerPhone || '');
-      setField('producto_id', 'coil_id', coil ? coil.id : (s.coilId || ''));
-      setField('producto_nombre', 'coil_name', coil ? coil.name : (s.coilName || ''));
-      setField('codigo_oem', 'oem', coil ? coil.oem : (s.oem || ''));
-      setField('marca_producto', 'brand', coil ? coil.brand : '');
-      setField('modelo_vehiculo', 'car_model', coil ? coil.carModel : '');
-      setField('motor_vehiculo', 'engine', coil ? coil.engine : '');
-      setField('tipo_bobina', 'type', coil ? coil.type : '');
-      setField('cantidad', 'qty', s.qty || 1);
-      setField('precio_unitario', 'unit_price', Number(s.unitPrice || 0));
-      setField('total_usd', 'total_price', Number(s.totalPrice || 0));
-      setField('stock_anterior', 'stock_before', s.stockBefore || 0);
-      setField('stock_posterior', 'stock_after', s.stockAfter || 0);
-      setField('stock_actual_catalogo', 'catalog_stock', coil ? coil.stock : (s.stockAfter || 0));
-      setField('referencia_pago', 'payment_ref', s.paymentRef || '');
-      setField('estado', 'status', s.status || 'CONFIRMED');
-      setField('usuario_id', 'user_id', s.userId || 'CLI-WA');
-
-      return row;
-    };
-
-    let payload = salesHistory.map(buildRow);
-
-    // 3. Bucle de reintento inteligente: si Supabase arroja PGRST204 para alguna columna,
-    // se remapea automáticamente (por ej. 'estado' -> 'status') o se excluye esa columna.
-    let attempts = 0;
-    while (attempts < 8) {
-      const resp = await fetch(endpoint, {
-        method: 'POST',
-        headers: getSupabaseHeaders(creds.anonKey, { 'Prefer': 'resolution=merge-duplicates' }),
-        body: JSON.stringify(payload)
-      });
-
-      if (resp.ok) {
-        showToast(`✓ ${salesHistory.length} ventas sincronizadas exitosamente en Supabase (tabla '${table}')`);
-        return true;
-      }
-
-      const errText = await resp.text();
-      let errJson = null;
-      try { errJson = JSON.parse(errText); } catch (e) {}
-
-      // Detectar error PGRST204 de columna inexistente
-      const missingMatch = (errJson?.message || errText).match(/Could not find the '([^']+)' column/i);
-      if (missingMatch && missingMatch[1]) {
-        const missingCol = missingMatch[1];
-        payload = payload.map(row => {
-          const updated = { ...row };
-          // Mapeo de respaldo inteligente
-          if (missingCol === 'estado') {
-            updated.status = updated.estado || 'CONFIRMED';
-          } else if (missingCol === 'status') {
-            updated.estado = updated.status || 'CONFIRMED';
-          } else if (missingCol === 'cliente_nombre') {
-            updated.customer_name = updated.cliente_nombre;
-          } else if (missingCol === 'producto_id') {
-            updated.coil_id = updated.producto_id;
-          } else if (missingCol === 'producto_nombre') {
-            updated.coil_name = updated.producto_nombre;
-          } else if (missingCol === 'total_usd') {
-            updated.total_price = updated.total_usd;
-          } else if (missingCol === 'precio_unitario') {
-            updated.unit_price = updated.precio_unitario;
-          } else if (missingCol === 'cantidad') {
-            updated.qty = updated.cantidad;
-          } else if (missingCol === 'referencia_pago') {
-            updated.payment_ref = updated.referencia_pago;
-          }
-          delete updated[missingCol];
-          return updated;
-        });
-
-        attempts++;
-        continue; // Reintentar con el payload adaptado
-      }
-
-      // Si es un error de tabla inexistente (PGRST200) o permiso RLS (42501)
-      if (errJson?.code === 'PGRST200' || errText.includes('Could not find the table')) {
-        throw new Error(`La tabla '${table}' no existe en Supabase. Ve a la pestaña "Sincronizar Supabase" y ejecuta el Script SQL de creación.`);
-      }
-
-      if (resp.status === 401 || resp.status === 403) {
-        throw new Error(`Permiso denegado en Supabase (RLS activado). Ejecuta en el SQL Editor: ALTER TABLE public.${table} DISABLE ROW LEVEL SECURITY;`);
-      }
-
-      throw new Error(`Error en Supabase (${resp.status}): ${errJson?.message || errText}`);
-    }
-
-    throw new Error('No se pudo completar la sincronización tras adaptar las columnas.');
-  }, [coils, dbCredentials.supabase, salesHistory, showToast]);
+    showToast(`✓ ${salesHistory.length} movimientos de venta sincronizados exitosamente en Supabase (tabla '${table}')`);
+    return true;
+  }, [dbCredentials, salesHistory, saveSaleToSupabase, showToast]);
 
   const dismissOwnerAlert = useCallback(() => {
     setPendingOwnerAlert(null);

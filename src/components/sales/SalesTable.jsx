@@ -95,7 +95,10 @@ export function SalesTable() {
               filteredOrders.map(ord => (
                 <tr key={ord.orderId} className="hover:bg-slate-800/50 transition">
                   <td className="py-3 px-4 font-mono font-bold text-brand-400">
-                    #{ord.orderId}
+                    <span className="inline-flex items-center gap-1.5">
+                      <i className="fa-solid fa-cloud text-[10px] text-sky-400" title="Sincronizado con Supabase (tabla 'ventas')"></i>
+                      #{ord.orderId}
+                    </span>
                   </td>
                   <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
                     {ord.timestamp}
