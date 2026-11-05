@@ -3,11 +3,13 @@ import { useInventory } from '../../context/InventoryContext';
 import { buildOwnerAlertUrl } from '../../utils/whatsapp';
 import { formatUSD } from '../../utils/formatters';
 import { ProductHoverPreview } from './ProductHoverPreview';
+import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
 
 export function SalesTable() {
   const { salesHistory, confirmSale, revertSale, ownerSettings, coils } = useInventory();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [orderToConfirm, setOrderToConfirm] = useState(null);
 
   const filteredOrders = salesHistory.filter(ord => {
     if (filter === 'CONFIRMED' && ord.status !== 'CONFIRMED') return false;
@@ -162,9 +164,9 @@ export function SalesTable() {
                       {ord.status === 'PENDING_APPROVAL' && (
                         <>
                           <button 
-                            onClick={() => confirmSale(ord.orderId)}
+                            onClick={() => setOrderToConfirm(ord)}
                             className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-sm inline-flex items-center gap-1 cursor-pointer active:scale-95"
-                            title="Confirmar pedido y descontar stock en base de datos"
+                            title="Confirmar pedido, verificar método de pago y descontar stock"
                           >
                             <i className="fa-solid fa-check"></i>
                             <span>Confirmar</span>
@@ -206,6 +208,15 @@ export function SalesTable() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Verificación y Registro de Método de Pago */}
+      <ConfirmSalePaymentModal
+        isOpen={Boolean(orderToConfirm)}
+        order={orderToConfirm}
+        coils={coils}
+        onClose={() => setOrderToConfirm(null)}
+        onConfirm={(orderId, paymentData) => confirmSale(orderId, paymentData)}
+      />
     </div>
   );
 }

@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { formatUSD } from '../../utils/formatters';
 import { ProductHoverPreview } from '../sales/ProductHoverPreview';
+import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
 
 export function SalesDatabaseTable() {
-  const { salesHistory, refreshSalesHistory, coils, dbEngine } = useInventory();
+  const { salesHistory, refreshSalesHistory, coils, dbEngine, confirmSale } = useInventory();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [orderToConfirm, setOrderToConfirm] = useState(null);
 
   const confirmedCount = salesHistory.filter(s => s.status === 'CONFIRMED').length;
   const pendingCount = salesHistory.filter(s => s.status === 'PENDING_APPROVAL').length;
@@ -132,12 +134,13 @@ export function SalesDatabaseTable() {
               <th className="py-3 px-4">Movimiento Stock (Antes ➔ Después)</th>
               <th className="py-3 px-4">Pago / Ref</th>
               <th className="py-3 px-4">Estado en Supabase</th>
+              <th className="py-3 px-4 text-right">Acción</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan="9" className="py-8 text-center text-slate-500">
+                <td colSpan="10" className="py-8 text-center text-slate-500">
                   No hay movimientos registrados en la tabla 'ventas'.
                 </td>
               </tr>
@@ -208,12 +211,33 @@ export function SalesDatabaseTable() {
                       </span>
                     )}
                   </td>
+                  <td className="py-3 px-4 text-right whitespace-nowrap">
+                    {ord.status === 'PENDING_APPROVAL' && (
+                      <button
+                        onClick={() => setOrderToConfirm(ord)}
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-sm inline-flex items-center gap-1 cursor-pointer active:scale-95"
+                        title="Verificar pago y confirmar en Supabase"
+                      >
+                        <i className="fa-solid fa-check"></i>
+                        <span>Confirmar</span>
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Verificación y Registro de Método de Pago */}
+      <ConfirmSalePaymentModal
+        isOpen={Boolean(orderToConfirm)}
+        order={orderToConfirm}
+        coils={coils}
+        onClose={() => setOrderToConfirm(null)}
+        onConfirm={(orderId, paymentData) => confirmSale(orderId, paymentData)}
+      />
     </div>
   );
 }

@@ -916,7 +916,7 @@ Directrices de conversación:
    * Confirmar pedido pendiente:
    * Cambia el estado a CONFIRMED y descuenta el stock tanto localmente como en Supabase.
    */
-  const confirmSale = useCallback(async (orderId) => {
+  const confirmSale = useCallback(async (orderId, paymentData = null) => {
     const ord = salesHistory.find(s => s.orderId === orderId);
     if (!ord) return;
 
@@ -959,7 +959,10 @@ Directrices de conversación:
     const updatedOrder = {
       ...ord,
       status: 'CONFIRMED',
-      stockAfter: calculatedNewStock !== null ? calculatedNewStock : Math.max(0, ord.stockBefore - ord.qty)
+      stockAfter: calculatedNewStock !== null ? calculatedNewStock : Math.max(0, ord.stockBefore - ord.qty),
+      paymentRef: paymentData?.paymentRef ? String(paymentData.paymentRef).trim() : (ord.paymentRef || 'PAGO CONFIRMADO'),
+      paymentMethod: paymentData?.paymentMethod || ord.paymentMethod || 'OTRO',
+      paymentDetails: paymentData?.paymentDetails || ord.paymentDetails || null
     };
 
     setSalesHistory(prev => {
@@ -971,7 +974,7 @@ Directrices de conversación:
     });
 
     // Guardar / Actualizar en Supabase orden y stock
-    saveSaleToSupabase(updatedOrder, targetCoil);
+    await saveSaleToSupabase(updatedOrder, targetCoil);
 
     if (ownerSettings.soundAlert) {
       playCashRegisterSound();
