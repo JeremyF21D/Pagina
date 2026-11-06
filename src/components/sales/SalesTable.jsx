@@ -142,7 +142,7 @@ export function SalesTable() {
                       </div>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-[11px] text-slate-300 max-w-[220px]">
+                  <td className="py-3 px-4 text-[11px] text-slate-300 max-w-[240px]">
                     {(() => {
                       const raw = String(ord.paymentRef || 'Sin referencia');
                       const hasAjuste = raw.includes(' | [AJUSTE: ');
@@ -151,10 +151,61 @@ export function SalesTable() {
                         ? raw.split(' | [AJUSTE: ')[1]?.replace(/\]$/, '').trim() 
                         : (ord.notes || null);
 
+                      // Detección del tipo de pago e icono para chip visual
+                      const getPaymentMeta = (txt) => {
+                        const lower = txt.toLowerCase();
+                        if (txt.startsWith('[PAGO MÓVIL]') || txt.startsWith('[PAGO MOVIL]') || lower.includes('pago móvil') || lower.includes('pago movil')) {
+                          return {
+                            name: 'Pago Móvil',
+                            icon: 'fa-solid fa-mobile-screen',
+                            color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+                            cleanText: txt.replace(/^\[PAGO M[ÓO]VIL\]\s*/i, '')
+                          };
+                        }
+                        if (txt.startsWith('[BINANCE') || lower.includes('binance') || lower.includes('usdt')) {
+                          return {
+                            name: 'Binance Pay',
+                            icon: 'fa-brands fa-bitcoin',
+                            color: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+                            cleanText: txt.replace(/^\[BINANCE PAY\]\s*/i, '').replace(/^\[BINANCE\]\s*/i, '')
+                          };
+                        }
+                        if (txt.startsWith('[ZELLE]') || lower.includes('zelle')) {
+                          return {
+                            name: 'Zelle',
+                            icon: 'fa-solid fa-building-columns',
+                            color: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+                            cleanText: txt.replace(/^\[ZELLE\]\s*/i, '')
+                          };
+                        }
+                        if (txt.startsWith('[EFECTIVO]') || lower.includes('efectivo') || lower.includes('cash')) {
+                          return {
+                            name: 'Efectivo',
+                            icon: 'fa-solid fa-money-bill-wave',
+                            color: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+                            cleanText: txt.replace(/^\[EFECTIVO\]\s*/i, '')
+                          };
+                        }
+                        return {
+                          name: 'Pago',
+                          icon: 'fa-solid fa-receipt',
+                          color: 'bg-slate-800 text-slate-300 border-slate-700',
+                          cleanText: txt
+                        };
+                      };
+
+                      const meta = getPaymentMeta(mainText);
+
                       return (
                         <div className="space-y-1">
-                          <div className="truncate font-medium text-slate-200" title={mainText}>
-                            {mainText}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${meta.color}`}>
+                              <i className={`${meta.icon} text-[10px]`}></i>
+                              <span>{meta.name}</span>
+                            </span>
+                          </div>
+                          <div className="truncate font-mono text-[10px] text-slate-300" title={mainText}>
+                            {meta.cleanText || mainText}
                           </div>
                           {ajusteText && (
                             <button 

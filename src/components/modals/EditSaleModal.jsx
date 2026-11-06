@@ -1,6 +1,102 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
 
+// Helper de parsing para extraer datos estructurados de referencia_pago
+export function parsePaymentReference(rawText, defaultPrice = 0, defaultCustomer = '', defaultPhone = '') {
+  const formattedTotal = formatUSD(defaultPrice || 0);
+  const numTotal = Number(defaultPrice || 0).toFixed(2);
+
+  const result = {
+    method: 'PAGO_MOVIL',
+    pagoMovilRef: '',
+    pagoMovilMonto: formattedTotal,
+    pagoMovilBanco: 'Banesco',
+    binanceRef: '',
+    binanceMonto: numTotal,
+    binanceUser: '',
+    zelleTitular: defaultCustomer && defaultCustomer !== 'Cliente' ? defaultCustomer : '',
+    zelleContacto: defaultPhone || '',
+    zelleRef: '',
+    zelleMonto: numTotal,
+    efectivoMonto: numTotal,
+    efectivoDetalle: 'Pago exacto en divisas'
+  };
+
+  if (!rawText || typeof rawText !== 'string') return result;
+
+  const text = rawText.trim();
+
+  // 1. [PAGO MÓVIL]
+  if (text.startsWith('[PAGO MÓVIL]') || text.startsWith('[PAGO MOVIL]')) {
+    result.method = 'PAGO_MOVIL';
+    const refMatch = text.match(/Ref:\s*([^|]+)/i);
+    const montoMatch = text.match(/Monto:\s*([^|]+)/i);
+    const bancoMatch = text.match(/Banco:\s*([^|]+)/i);
+    if (refMatch) result.pagoMovilRef = refMatch[1].trim();
+    if (montoMatch) result.pagoMovilMonto = montoMatch[1].trim();
+    if (bancoMatch) result.pagoMovilBanco = bancoMatch[1].trim();
+    return result;
+  }
+
+  // 2. [BINANCE PAY] o [BINANCE]
+  if (text.startsWith('[BINANCE') || text.includes('BINANCE PAY')) {
+    result.method = 'BINANCE';
+    const refMatch = text.match(/Ref(?:\/ID)?:\s*([^|]+)/i);
+    const montoMatch = text.match(/Monto:\s*([^|]+)/i);
+    const userMatch = text.match(/Usuario:\s*([^|]+)/i);
+    if (refMatch) result.binanceRef = refMatch[1].trim();
+    if (montoMatch) result.binanceMonto = montoMatch[1].replace(/USDT/i, '').trim();
+    if (userMatch) result.binanceUser = userMatch[1].trim();
+    return result;
+  }
+
+  // 3. [ZELLE]
+  if (text.startsWith('[ZELLE]')) {
+    result.method = 'ZELLE';
+    const titularMatch = text.match(/Titular:\s*([^|]+)/i);
+    const cuentaMatch = text.match(/Cuenta:\s*([^|]+)/i);
+    const refMatch = text.match(/Ref:\s*([^|]+)/i);
+    const montoMatch = text.match(/Monto:\s*([^|]+)/i);
+    if (titularMatch) result.zelleTitular = titularMatch[1].trim();
+    if (cuentaMatch) result.zelleContacto = cuentaMatch[1].trim();
+    if (refMatch) result.zelleRef = refMatch[1].trim();
+    if (montoMatch) result.zelleMonto = montoMatch[1].replace(/^\$/, '').trim();
+    return result;
+  }
+
+  // 4. [EFECTIVO]
+  if (text.startsWith('[EFECTIVO]')) {
+    result.method = 'EFECTIVO';
+    const montoMatch = text.match(/Monto:\s*([^|]+)/i);
+    if (montoMatch) {
+      result.efectivoMonto = montoMatch[1].replace(/^\$/, '').replace(/USD/i, '').trim();
+    }
+    const parts = text.split('|');
+    if (parts.length > 1) {
+      result.efectivoDetalle = parts.slice(1).join('|').trim();
+    }
+    return result;
+  }
+
+  // Fallbacks para referencias de texto libre existentes
+  const lower = text.toLowerCase();
+  if (lower.includes('zelle')) {
+    result.method = 'ZELLE';
+    result.zelleRef = text.replace(/zelle/i, '').trim();
+  } else if (lower.includes('binance') || lower.includes('usdt')) {
+    result.method = 'BINANCE';
+    result.binanceRef = text.replace(/binance/i, '').trim();
+  } else if (lower.includes('efectivo') || lower.includes('cash') || lower.includes('dolar') || lower.includes('divisa')) {
+    result.method = 'EFECTIVO';
+    result.efectivoDetalle = text;
+  } else {
+    result.method = 'PAGO_MOVIL';
+    result.pagoMovilRef = text.replace(/pago\s*m[oó]vil/i, '').replace(/ref:?/i, '').replace(/#/i, '').trim() || text;
+  }
+
+  return result;
+}
+
 export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   // ==============================================================
   // 1. TODOS LOS HOOKS ARRIBA (REGLAS ESTRICTAS DE REACT)
@@ -10,7 +106,6 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   const [unitPrice, setUnitPrice] = useState(0);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [paymentRef, setPaymentRef] = useState('');
   const [status, setStatus] = useState('CONFIRMED');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +114,24 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('ALL');
+
+  // Estados de Método y Campos de Pago (4 Métodos)
+  const [paymentMethod, setPaymentMethod] = useState('PAGO_MOVIL'); // 'PAGO_MOVIL' | 'BINANCE' | 'ZELLE' | 'EFECTIVO'
+  const [pagoMovilRef, setPagoMovilRef] = useState('');
+  const [pagoMovilMonto, setPagoMovilMonto] = useState('');
+  const [pagoMovilBanco, setPagoMovilBanco] = useState('Banesco');
+
+  const [binanceRef, setBinanceRef] = useState('');
+  const [binanceMonto, setBinanceMonto] = useState('');
+  const [binanceUser, setBinanceUser] = useState('');
+
+  const [zelleTitular, setZelleTitular] = useState('');
+  const [zelleContacto, setZelleContacto] = useState('');
+  const [zelleRef, setZelleRef] = useState('');
+  const [zelleMonto, setZelleMonto] = useState('');
+
+  const [efectivoMonto, setEfectivoMonto] = useState('');
+  const [efectivoDetalle, setEfectivoDetalle] = useState('');
 
   // Actualizar estados locales cuando cambia la orden
   useEffect(() => {
@@ -36,12 +149,36 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
       setUnitPrice(Number(order.unitPrice || order.totalPrice || 0));
       setCustomerName(order.customerName || '');
       setCustomerPhone(order.customerPhone || '');
-      setPaymentRef(rawPayment);
       setStatus(order.status || 'CONFIRMED');
       setNotes(rawNotes);
       setIsPickerOpen(false);
       setSearchQuery('');
       setSelectedBrandFilter('ALL');
+
+      // Parsear datos de pago existentes
+      const parsedPay = parsePaymentReference(
+        rawPayment,
+        order.totalPrice || order.unitPrice || 0,
+        order.customerName,
+        order.customerPhone
+      );
+
+      setPaymentMethod(parsedPay.method);
+      setPagoMovilRef(parsedPay.pagoMovilRef);
+      setPagoMovilMonto(parsedPay.pagoMovilMonto);
+      setPagoMovilBanco(parsedPay.pagoMovilBanco);
+
+      setBinanceRef(parsedPay.binanceRef);
+      setBinanceMonto(parsedPay.binanceMonto);
+      setBinanceUser(parsedPay.binanceUser);
+
+      setZelleTitular(parsedPay.zelleTitular);
+      setZelleContacto(parsedPay.zelleContacto);
+      setZelleRef(parsedPay.zelleRef);
+      setZelleMonto(parsedPay.zelleMonto);
+
+      setEfectivoMonto(parsedPay.efectivoMonto);
+      setEfectivoDetalle(parsedPay.efectivoDetalle);
     }
   }, [order, coils]);
 
@@ -111,11 +248,33 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     }
   };
 
+  // Construir la cadena de pago formateada según el método activo
+  const getBuiltPaymentReference = () => {
+    const totalCalc = formatUSD(calculatedTotal);
+    const totalNum = Number(calculatedTotal || 0).toFixed(2);
+
+    switch (paymentMethod) {
+      case 'PAGO_MOVIL':
+        return `[PAGO MÓVIL] Ref: ${pagoMovilRef.trim() || 'S/R'} | Monto: ${pagoMovilMonto.trim() || totalCalc} | Banco: ${pagoMovilBanco}`;
+      case 'BINANCE':
+        return `[BINANCE PAY] Ref/ID: ${binanceRef.trim() || 'S/R'} | Monto: ${binanceMonto.trim() || totalNum} USDT${binanceUser.trim() ? ` | Usuario: ${binanceUser.trim()}` : ''}`;
+      case 'ZELLE':
+        return `[ZELLE] Titular: ${zelleTitular.trim() || 'N/A'} | Cuenta: ${zelleContacto.trim() || 'N/A'} | Ref: ${zelleRef.trim() || 'S/R'} | Monto: $${zelleMonto.trim() || totalNum}`;
+      case 'EFECTIVO':
+        return `[EFECTIVO] Monto: $${efectivoMonto.trim() || totalNum} USD | ${efectivoDetalle.trim() || 'Entregado en tienda'}`;
+      default:
+        return 'PAGO VERIFICADO';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    const builtRef = getBuiltPaymentReference();
+    const finalPaymentRef = notes.trim() ? `${builtRef} | [AJUSTE: ${notes.trim()}]` : builtRef;
+
     try {
       await onSave(order.orderId, {
         coilId: selectedCoilId || order.coilId,
@@ -126,9 +285,17 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
         totalPrice: calculatedTotal,
         customerName,
         customerPhone,
-        paymentRef: notes.trim() ? `${paymentRef.trim()} | [AJUSTE: ${notes.trim()}]` : paymentRef.trim(),
+        paymentRef: finalPaymentRef,
         status,
-        notes: notes.trim()
+        notes: notes.trim(),
+        paymentMethod,
+        paymentDetails: {
+          method: paymentMethod,
+          ...(paymentMethod === 'PAGO_MOVIL' ? { ref: pagoMovilRef, monto: pagoMovilMonto, banco: pagoMovilBanco } : {}),
+          ...(paymentMethod === 'BINANCE' ? { ref: binanceRef, montoUsdt: binanceMonto, user: binanceUser } : {}),
+          ...(paymentMethod === 'ZELLE' ? { titular: zelleTitular, contacto: zelleContacto, ref: zelleRef, monto: zelleMonto } : {}),
+          ...(paymentMethod === 'EFECTIVO' ? { montoUsd: efectivoMonto, detalle: efectivoDetalle } : {})
+        }
       });
       onClose();
     } catch (err) {
@@ -162,12 +329,12 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
-                Selecciona la pieza con su foto, ajusta el precio cobrado y gestiona el stock automáticamente.
+                Selecciona la pieza con su foto, ajusta el precio cobrado y el método de pago dinámicamente.
               </p>
             </div>
           </div>
           <button 
-            type="button"
+            type="button" 
             onClick={onClose}
             className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
           >
@@ -273,7 +440,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
               </div>
             )}
 
-            {/* VISTA 2: PANEL BUSCADOR VISUAL DE REPUESTOS (CUANDO SE HACE CLIC EN CAMBIAR) */}
+            {/* VISTA 2: PANEL BUSCADOR VISUAL DE REPUESTOS */}
             {isPickerOpen && (
               <div className="bg-slate-950 border border-sky-500/40 rounded-xl p-3.5 space-y-3 shadow-xl animate-fadeIn">
                 <div className="flex items-center justify-between gap-2">
@@ -392,8 +559,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                               type="button"
                               className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${
                                 isSelected 
-                                  ? 'bg-sky-600 text-white' 
-                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                                ? 'bg-sky-600 text-white' 
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                               }`}
                             >
                               {isSelected ? 'Seleccionado' : 'Elegir'}
@@ -523,7 +690,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: Cliente llevó sensor equivocado, se le cambió por otro modelo y se le cobró $15"
+              placeholder="Ej: Cliente llevó repuesto equivocado, se le cambió por otro modelo y se le cobró $15"
               className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-xs"
             />
           </div>
@@ -531,7 +698,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
           {/* ============================================================== */}
           {/* SECCIÓN 4: DATOS DEL CLIENTE Y ESTADO */}
           {/* ============================================================== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-800/80">
             <div>
               <label className="block text-slate-300 font-semibold text-[11px] mb-1">
                 Nombre del Cliente
@@ -558,21 +725,6 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                 placeholder="+58 412-0000000"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-slate-300 font-semibold text-[11px] mb-1">
-                Referencia de Pago / Método
-              </label>
-              <input
-                type="text"
-                value={paymentRef}
-                onChange={(e) => setPaymentRef(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-sky-500"
-                placeholder="Ej: Pago Móvil Banesco Ref #12345"
-              />
-            </div>
 
             <div>
               <label className="block text-slate-300 font-semibold text-[11px] mb-1">
@@ -581,12 +733,320 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white font-semibold focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white font-semibold focus:outline-none focus:border-sky-500 cursor-pointer"
               >
                 <option value="CONFIRMED">CONFIRMADA (Descuenta stock)</option>
                 <option value="PENDING_APPROVAL">PENDIENTE (Sin descontar stock)</option>
                 <option value="REVERTED">REVERTIDA (Reintegra stock)</option>
               </select>
+            </div>
+          </div>
+
+          {/* ============================================================== */}
+          {/* SECCIÓN 5: TIPO DE PAGO DINÁMICO CON 4 ICONOS INTERACTIVOS */}
+          {/* ============================================================== */}
+          <div className="space-y-3 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <label className="text-slate-300 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                <i className="fa-solid fa-wallet text-sky-400"></i>
+                <span>Tipo de Pago & Comprobante</span>
+              </label>
+              <span className="text-[10px] text-slate-400">
+                Haz clic en el icono para alternar el método y sus campos
+              </span>
+            </div>
+
+            {/* 4 Iconos de Métodos de Pago */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('PAGO_MOVIL')}
+                className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                  paymentMethod === 'PAGO_MOVIL'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500 shadow-lg shadow-emerald-500/20'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <i className="fa-solid fa-mobile-screen text-base"></i>
+                <span>Pago Móvil</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('BINANCE')}
+                className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                  paymentMethod === 'BINANCE'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500 shadow-lg shadow-amber-500/20'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <i className="fa-brands fa-bitcoin text-base"></i>
+                <span>Binance Pay</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('ZELLE')}
+                className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                  paymentMethod === 'ZELLE'
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500 shadow-lg shadow-purple-500/20'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <i className="fa-solid fa-building-columns text-base"></i>
+                <span>Zelle</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('EFECTIVO')}
+                className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                  paymentMethod === 'EFECTIVO'
+                    ? 'bg-sky-500/20 text-sky-300 border-sky-500 shadow-lg shadow-sky-500/20'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <i className="fa-solid fa-money-bill-wave text-base"></i>
+                <span>Efectivo ($)</span>
+              </button>
+            </div>
+
+            {/* Campos Específicos según el método */}
+            <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
+              {/* PAGO MÓVIL */}
+              {paymentMethod === 'PAGO_MOVIL' && (
+                <div className="space-y-3 animate-fadeIn">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                        Número de Referencia <span className="text-emerald-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={pagoMovilRef}
+                        onChange={e => setPagoMovilRef(e.target.value)}
+                        placeholder="Ej: 492019 (últimos 4 o 6 dígitos)"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-slate-300">
+                          Monto Cobrado
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setPagoMovilMonto(formatUSD(calculatedTotal))}
+                          className="text-[10px] text-emerald-400 hover:underline cursor-pointer"
+                        >
+                          Usar {formatUSD(calculatedTotal)}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={pagoMovilMonto}
+                        onChange={e => setPagoMovilMonto(e.target.value)}
+                        placeholder="Ej: Bs 3,250 o $15.00"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                      Banco Emisor / Receptor
+                    </label>
+                    <select
+                      value={pagoMovilBanco}
+                      onChange={e => setPagoMovilBanco(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    >
+                      <option value="Banesco">Banesco</option>
+                      <option value="Mercantil">Banco Mercantil</option>
+                      <option value="Banco de Venezuela">Banco de Venezuela (BDV)</option>
+                      <option value="Bancaribe">Bancaribe</option>
+                      <option value="BBVA Provincial">BBVA Provincial</option>
+                      <option value="BNC">Banco Nacional de Crédito (BNC)</option>
+                      <option value="BAM">Banco Activo</option>
+                      <option value="Otro Banco">Otro Banco Nacional</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* BINANCE PAY */}
+              {paymentMethod === 'BINANCE' && (
+                <div className="space-y-3 animate-fadeIn">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                        ID / Referencia Binance Pay <span className="text-amber-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={binanceRef}
+                        onChange={e => setBinanceRef(e.target.value)}
+                        placeholder="Ej: 284920194 (Order ID / Pay ID)"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-slate-300">
+                          Monto USDT <span className="text-amber-400">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setBinanceMonto(Number(calculatedTotal || 0).toFixed(2))}
+                          className="text-[10px] text-amber-400 hover:underline cursor-pointer"
+                        >
+                          Usar {Number(calculatedTotal || 0).toFixed(2)} USDT
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={binanceMonto}
+                        onChange={e => setBinanceMonto(e.target.value)}
+                        placeholder="Ej: 15.00"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                      Usuario o Pay ID Binance (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={binanceUser}
+                      onChange={e => setBinanceUser(e.target.value)}
+                      placeholder="Ej: cliente@correo.com o Binance ID 982348"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* ZELLE */}
+              {paymentMethod === 'ZELLE' && (
+                <div className="space-y-3 animate-fadeIn">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                        Nombre del Titular de la Cuenta <span className="text-purple-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={zelleTitular}
+                        onChange={e => setZelleTitular(e.target.value)}
+                        placeholder="Ej: Juan Carlos Pérez"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                        Teléfono o Correo Zelle <span className="text-purple-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={zelleContacto}
+                        onChange={e => setZelleContacto(e.target.value)}
+                        placeholder="Ej: +1 305-555-0199 o correo@gmail.com"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                        N° Confirmación / Ref Zelle <span className="text-purple-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={zelleRef}
+                        onChange={e => setZelleRef(e.target.value)}
+                        placeholder="Ej: 98124018"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-slate-300">
+                          Monto Transferido ($) <span className="text-purple-400">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setZelleMonto(Number(calculatedTotal || 0).toFixed(2))}
+                          className="text-[10px] text-purple-400 hover:underline cursor-pointer"
+                        >
+                          Usar ${Number(calculatedTotal || 0).toFixed(2)}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={zelleMonto}
+                        onChange={e => setZelleMonto(e.target.value)}
+                        placeholder="Ej: 15.00"
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* EFECTIVO */}
+              {paymentMethod === 'EFECTIVO' && (
+                <div className="space-y-3 animate-fadeIn">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-bold text-slate-300">
+                        Monto Recibido en Dólares ($) <span className="text-sky-400">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setEfectivoMonto(Number(calculatedTotal || 0).toFixed(2))}
+                        className="text-[10px] text-sky-400 hover:underline cursor-pointer"
+                      >
+                        Usar ${Number(calculatedTotal || 0).toFixed(2)}
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={efectivoMonto}
+                      onChange={e => setEfectivoMonto(e.target.value)}
+                      placeholder="Ej: 15.00 o 20.00"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                      Detalle / Billetes / Cambio
+                    </label>
+                    <input
+                      type="text"
+                      value={efectivoDetalle}
+                      onChange={e => setEfectivoDetalle(e.target.value)}
+                      placeholder="Ej: Billete de $20, se entregaron $5 de vuelto"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Vista previa en tiempo real de cómo se guardará en Supabase */}
+            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+              <span className="text-[10px] text-slate-400 block font-semibold mb-1">
+                <i className="fa-solid fa-database text-sky-400 mr-1"></i>
+                Registro en Supabase (columna <code className="text-sky-300">referencia_pago</code>):
+              </span>
+              <div className="font-mono text-[11px] text-emerald-300 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 break-all">
+                {getBuiltPaymentReference()}
+                {notes.trim() && <span className="text-amber-300"> | [AJUSTE: {notes.trim()}]</span>}
+              </div>
             </div>
           </div>
 
