@@ -23,14 +23,22 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   // Actualizar estados locales cuando cambia la orden
   useEffect(() => {
     if (order) {
+      let rawPayment = order.paymentRef || '';
+      let rawNotes = order.notes || '';
+      if (rawPayment.includes(' | [AJUSTE: ')) {
+        const parts = rawPayment.split(' | [AJUSTE: ');
+        rawPayment = parts[0].trim();
+        rawNotes = rawNotes || parts[1]?.replace(/\]$/, '').trim() || '';
+      }
+
       setSelectedCoilId(order.coilId || (Array.isArray(coils) && coils[0]?.id) || '');
       setQty(Number(order.qty) || 1);
       setUnitPrice(Number(order.unitPrice || order.totalPrice || 0));
       setCustomerName(order.customerName || '');
       setCustomerPhone(order.customerPhone || '');
-      setPaymentRef(order.paymentRef || '');
+      setPaymentRef(rawPayment);
       setStatus(order.status || 'CONFIRMED');
-      setNotes(order.notes || '');
+      setNotes(rawNotes);
       setIsPickerOpen(false);
       setSearchQuery('');
       setSelectedBrandFilter('ALL');
@@ -118,9 +126,9 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
         totalPrice: calculatedTotal,
         customerName,
         customerPhone,
-        paymentRef: notes ? `${paymentRef} | [AJUSTE: ${notes}]` : paymentRef,
+        paymentRef: notes.trim() ? `${paymentRef.trim()} | [AJUSTE: ${notes.trim()}]` : paymentRef.trim(),
         status,
-        notes
+        notes: notes.trim()
       });
       onClose();
     } catch (err) {

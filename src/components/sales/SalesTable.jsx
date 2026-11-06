@@ -141,8 +141,32 @@ export function SalesTable() {
                       </div>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-[11px] text-slate-300">
-                    {ord.paymentRef}
+                  <td className="py-3 px-4 text-[11px] text-slate-300 max-w-[220px]">
+                    {(() => {
+                      const raw = String(ord.paymentRef || 'Sin referencia');
+                      const hasAjuste = raw.includes(' | [AJUSTE: ');
+                      const mainText = hasAjuste ? raw.split(' | [AJUSTE: ')[0].trim() : raw.trim();
+                      const ajusteText = hasAjuste 
+                        ? raw.split(' | [AJUSTE: ')[1]?.replace(/\]$/, '').trim() 
+                        : (ord.notes || null);
+
+                      return (
+                        <div className="space-y-1">
+                          <div className="truncate font-medium text-slate-200" title={mainText}>
+                            {mainText}
+                          </div>
+                          {ajusteText && (
+                            <div 
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] max-w-full font-sans cursor-help"
+                              title={`Motivo del ajuste: ${ajusteText}`}
+                            >
+                              <i className="fa-solid fa-arrows-rotate text-[9px] shrink-0 text-amber-400"></i>
+                              <span className="truncate">{ajusteText}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap">
                     {ord.status === 'CONFIRMED' && (
