@@ -4,12 +4,14 @@ import { buildOwnerAlertUrl } from '../../utils/whatsapp';
 import { formatUSD } from '../../utils/formatters';
 import { ProductHoverPreview } from './ProductHoverPreview';
 import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
+import { EditSaleModal } from '../modals/EditSaleModal';
 
 export function SalesTable() {
-  const { salesHistory, confirmSale, revertSale, deleteSale, ownerSettings, coils } = useInventory();
+  const { salesHistory, confirmSale, revertSale, deleteSale, updateSaleTransaction, ownerSettings, coils } = useInventory();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [orderToConfirm, setOrderToConfirm] = useState(null);
+  const [orderToEdit, setOrderToEdit] = useState(null);
 
   const filteredOrders = salesHistory.filter(ord => {
     if (filter === 'CONFIRMED' && ord.status !== 'CONFIRMED') return false;
@@ -193,6 +195,15 @@ export function SalesTable() {
                         </button>
                       )}
 
+                      {/* Botón Editar / Cambio de Repuesto */}
+                      <button 
+                        onClick={() => setOrderToEdit(ord)}
+                        className="p-1.5 bg-sky-500/10 hover:bg-sky-600 text-sky-400 hover:text-white border border-sky-500/20 rounded-lg text-xs transition cursor-pointer active:scale-95"
+                        title="Editar venta o gestionar cambio de repuesto"
+                      >
+                        <i className="fa-solid fa-pen-to-square"></i>
+                      </button>
+
                       <button 
                         onClick={() => handleNotifyOwner(ord)}
                         className="p-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 rounded-lg text-xs transition cursor-pointer"
@@ -228,6 +239,15 @@ export function SalesTable() {
         coils={coils}
         onClose={() => setOrderToConfirm(null)}
         onConfirm={(orderId, paymentData) => confirmSale(orderId, paymentData)}
+      />
+
+      {/* Modal de Edición de Venta & Cambio de Repuesto */}
+      <EditSaleModal
+        isOpen={Boolean(orderToEdit)}
+        order={orderToEdit}
+        coils={coils}
+        onClose={() => setOrderToEdit(null)}
+        onSave={updateSaleTransaction}
       />
     </div>
   );

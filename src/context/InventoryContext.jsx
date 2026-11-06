@@ -1142,6 +1142,174 @@ Directrices de conversación:
     showToast('🗑️ Todas las ventas han sido eliminadas.');
   }, [dbEngine, dbCredentials, showToast]);
 
+  /**
+   * Actualizar una venta existente (Edición / Cambio de Repuesto / Ajuste de Precio)
+   * Gestiona automáticamente el stock en memoria y en Supabase si se cambió de repuesto o cantidad.
+   */
+  const updateSaleTransaction = useCallback(async (orderId, updateData) => {
+    const cleanId = String(orderId || '').replace(/^#/, '').trim();
+    if (!cleanId) return { success: false, error: 'ID de orden inválido' };
+
+    const existingOrder = salesHistory.find(s => String(s.orderId).replace(/^#/, '') === cleanId);
+    if (!existingOrder) return { success: false, error: 'Orden no encontrada' };
+
+    const wasConfirmed = existingOrder.status === 'CONFIRMED';
+    const oldCoilId = String(existingOrder.coilId || '').trim();
+    const oldQty = Number(existingOrder.qty) || 1;
+
+    const newCoilId = String(updateData.coilId || oldCoilId).trim();
+    const newQty = Number(updateData.qty) || 1;
+    const newUnitPrice = Number(updateData.unitPrice ?? existingOrder.unitPrice);
+    const newTotalPrice = Number(updateData.totalPrice ?? (newUnitPrice * newQty));
+    const newStatus = (updateData.status || existingOrder.status || 'CONFIRMED').toUpperCase();
+    const isNowConfirmed = newStatus === 'CONFIRMED';
+
+    const newMatchedCoil = coils.find(c => c.id.toLowerCase() === newCoilId.toLowerCase()) || null;
+    const oldMatchedCoil = coils.find(c => c.id.toLowerCase() === oldCoilId.toLowerCase()) || null;
+
+    // Calcular ajustes de inventario si la orden estaba confirmada o pasa a estar confirmada
+    const inventoryAdjustments = []; // Array de { coilId, newStock }
+
+    if (wasConfirmed || isNowConfirmed) {
+      if (oldCoilId.toLowerCase() === newCoilId.toLowerCase()) {
+        if (wasConfirmed && !isNowConfirmed) {
+          // Ya no está confirmada: devolver stock
+          const curStock = oldMatchedCoil ? oldMatchedCoil.stock : 0;
+          inventoryAdjustments.push({ coilId: oldCoilId, newStock: curStock + oldQty });
+        } else if (!wasConfirmed && isNowConfirmed) {
+          // Ahora está confirmada: descontar stock
+          const curStock = oldMatchedCoil ? oldMatchedCoil.stock : 0;
+          inventoryAdjustments.push({ coilId: oldCoilId, newStock: Math.max(0, curStock - newQty) });
+        } else if (wasConfirmed && isNowConfirmed && oldQty !== newQty) {
+          // Cambió la cantidad
+          const curStock = oldMatchedCoil ? oldMatchedCoil.stock : 0;
+          const diff = oldQty - newQty;
+          inventoryAdjustments.push({ coilId: oldCoilId, newStock: Math.max(0, curStock + diff) });
+        }
+      } else {
+        // Hubo cambio de repuesto
+        if (wasConfirmed) {
+          // Devolver repuesto anterior al inventario
+          const curOldStock = oldMatchedCoil ? oldMatchedCoil.stock : 0;
+          inventoryAdjustments.push({ coilId: oldCoilId, newStock: curOldStock + oldQty });
+        }
+        if (isNowConfirmed) {
+          // Descontar nuevo repuesto del inventario
+          const curNewStock = newMatchedCoil ? newMatchedCoil.stock : 0;
+          inventoryAdjustments.push({ coilId: newCoilId, newStock: Math.max(0, curNewStock - newQty) });
+        }
+      }
+    }
+
+    // Aplicar ajustes en estado de coils (memoria y LocalStorage)
+    if (inventoryAdjustments.length > 0) {
+      setCoils(currentCoils => {
+        const updated = currentCoils.map(item => {
+          const adj = inventoryAdjustments.find(a => a.coilId.toLowerCase() === item.id.toLowerCase());
+          if (adj) {
+            return {
+              ...item,
+              stock: adj.newStock,
+              inStock: adj.newStock > 0
+            };
+          }
+          return item;
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+
+      // Actualizar stock en Supabase
+      if (dbEngine === 'supabase') {
+        const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+        if (baseUrl && anonKey) {
+          for (const adj of inventoryAdjustments) {
+            try {
+              await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(adj.coilId)}`, {
+                method: 'PATCH',
+                headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+                body: JSON.stringify({ stock: adj.newStock })
+              });
+            } catch (err) {
+              console.warn(`Error al actualizar stock de ${adj.coilId} en Supabase:`, err);
+            }
+          }
+        }
+      }
+    }
+
+    // Construir la orden actualizada
+    const updatedOrder = {
+      ...existingOrder,
+      customerName: updateData.customerName !== undefined ? String(updateData.customerName).trim() : existingOrder.customerName,
+      customerPhone: updateData.customerPhone !== undefined ? String(updateData.customerPhone).trim() : existingOrder.customerPhone,
+      coilId: newCoilId,
+      coilName: newMatchedCoil ? newMatchedCoil.name : (updateData.coilName || existingOrder.coilName),
+      oem: newMatchedCoil ? newMatchedCoil.oem : (updateData.oem || existingOrder.oem),
+      qty: newQty,
+      unitPrice: newUnitPrice,
+      totalPrice: newTotalPrice,
+      paymentRef: updateData.paymentRef !== undefined ? String(updateData.paymentRef).trim() : existingOrder.paymentRef,
+      status: newStatus,
+      notes: updateData.notes !== undefined ? String(updateData.notes).trim() : (existingOrder.notes || '')
+    };
+
+    // Actualizar historial de ventas en estado y LocalStorage
+    setSalesHistory(prev => {
+      const next = prev.map(s => String(s.orderId).replace(/^#/, '') === cleanId ? updatedOrder : s);
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    // Guardar / Actualizar en Supabase en la tabla 'ventas'
+    if (dbEngine === 'supabase') {
+      const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        const salesTable = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
+        const payload = {
+          order_id: cleanId,
+          cliente_nombre: updatedOrder.customerName,
+          cliente_telefono: updatedOrder.customerPhone,
+          producto_id: updatedOrder.coilId,
+          producto_nombre: updatedOrder.coilName,
+          codigo_oem: updatedOrder.oem,
+          cantidad: updatedOrder.qty,
+          precio_unitario: updatedOrder.unitPrice,
+          precio_unitario_usd: updatedOrder.unitPrice,
+          total_usd: updatedOrder.totalPrice,
+          referencia_pago: updatedOrder.paymentRef,
+          estado: updatedOrder.status,
+          status: updatedOrder.status,
+          estado_orden: updatedOrder.status
+        };
+
+        if (newMatchedCoil) {
+          payload.marca_producto = newMatchedCoil.brand || '';
+          payload.modelo_vehiculo = newMatchedCoil.carModel || '';
+          payload.motor_vehiculo = newMatchedCoil.engine || '';
+          payload.tipo_bobina = newMatchedCoil.type || '';
+        }
+
+        try {
+          await fetch(`${baseUrl}/rest/v1/${salesTable}?order_id=eq.${encodeURIComponent(cleanId)}`, {
+            method: 'PATCH',
+            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify(payload)
+          });
+        } catch (err) {
+          console.warn('Error al actualizar venta en Supabase:', err);
+        }
+      }
+    }
+
+    showToast(`✓ Venta #${cleanId} actualizada y sincronizada en Supabase`);
+    return { success: true, updatedOrder };
+  }, [salesHistory, coils, dbEngine, dbCredentials, showToast]);
+
   const refreshSalesHistory = useCallback(async (showNotification = false) => {
     // 1. Sincronizar en doble vía con la tabla 'ventas' de Supabase
     if (dbEngine === 'supabase') {
@@ -1360,6 +1528,7 @@ Directrices de conversación:
       revertSale,
       deleteSale,
       clearAllSales,
+      updateSaleTransaction,
       pendingOwnerAlert,
       dismissOwnerAlert
     }}>
