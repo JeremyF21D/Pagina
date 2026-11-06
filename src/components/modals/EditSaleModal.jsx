@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
 
 export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
+  // ==============================================================
+  // 1. TODOS LOS HOOKS ARRIBA (REGLAS ESTRICTAS DE REACT)
+  // ==============================================================
   const [selectedCoilId, setSelectedCoilId] = useState('');
   const [qty, setQty] = useState(1);
   const [unitPrice, setUnitPrice] = useState(0);
@@ -17,9 +20,10 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('ALL');
 
+  // Actualizar estados locales cuando cambia la orden
   useEffect(() => {
     if (order) {
-      setSelectedCoilId(order.coilId || coils[0]?.id || '');
+      setSelectedCoilId(order.coilId || (Array.isArray(coils) && coils[0]?.id) || '');
       setQty(Number(order.qty) || 1);
       setUnitPrice(Number(order.unitPrice || order.totalPrice || 0));
       setCustomerName(order.customerName || '');
@@ -29,41 +33,26 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
       setNotes(order.notes || '');
       setIsPickerOpen(false);
       setSearchQuery('');
+      setSelectedBrandFilter('ALL');
     }
   }, [order, coils]);
 
-  if (!isOpen || !order) return null;
-
-  // Obtener imagen del repuesto (bien sea coil.image o del almacén local de fotos)
-  const getCoilImage = (coil) => {
-    if (!coil) return null;
-    if (coil.image) return coil.image;
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
-        if (coil.id && stored[coil.id]) return stored[coil.id];
-      } catch (e) {}
-    }
-    return null;
-  };
-
-  const currentSelectedCoil = coils.find(c => c.id.toLowerCase() === String(selectedCoilId).toLowerCase()) || null;
-  const originalCoil = coils.find(c => c.id.toLowerCase() === String(order.coilId || '').toLowerCase()) || null;
-
-  const isCoilChanged = selectedCoilId && order.coilId && selectedCoilId.toLowerCase() !== String(order.coilId).toLowerCase();
-  const calculatedTotal = (Number(unitPrice) || 0) * (Number(qty) || 1);
-
-  // Lista de marcas únicas para filtro rápido
+  // Lista de marcas únicas para filtro rápido (siempre antes de cualquier return)
   const brandsList = useMemo(() => {
+    if (!Array.isArray(coils)) return [];
     const brands = new Set();
-    coils.forEach(c => { if (c.brand) brands.add(c.brand.trim()); });
+    coils.forEach(c => { 
+      if (c && c.brand) brands.add(String(c.brand).trim()); 
+    });
     return Array.from(brands).sort();
   }, [coils]);
 
-  // Filtrado en vivo de repuestos
+  // Filtrado en vivo de repuestos (siempre antes de cualquier return)
   const filteredCoils = useMemo(() => {
+    if (!Array.isArray(coils)) return [];
     return coils.filter(c => {
-      if (selectedBrandFilter !== 'ALL' && c.brand?.toLowerCase() !== selectedBrandFilter.toLowerCase()) {
+      if (!c) return false;
+      if (selectedBrandFilter !== 'ALL' && c.brand && c.brand.toLowerCase() !== selectedBrandFilter.toLowerCase()) {
         return false;
       }
       if (!searchQuery.trim()) return true;
@@ -80,12 +69,37 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     });
   }, [coils, searchQuery, selectedBrandFilter]);
 
+  // ==============================================================
+  // 2. RETORNO CONDICIONAL DESPUÉS DE DECLARAR TODOS LOS HOOKS
+  // ==============================================================
+  if (!isOpen || !order) return null;
+
+  // Obtener imagen del repuesto (bien sea coil.image o del almacén local de fotos)
+  const getCoilImage = (coil) => {
+    if (!coil) return null;
+    if (coil.image) return coil.image;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+        if (coil.id && stored[coil.id]) return stored[coil.id];
+      } catch (e) {}
+    }
+    return null;
+  };
+
+  const currentSelectedCoil = Array.isArray(coils) ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(selectedCoilId).toLowerCase()) || null : null;
+  const originalCoil = Array.isArray(coils) ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(order.coilId || '').toLowerCase()) || null : null;
+
+  const isCoilChanged = Boolean(selectedCoilId && order.coilId && String(selectedCoilId).toLowerCase() !== String(order.coilId).toLowerCase());
+  const calculatedTotal = (Number(unitPrice) || 0) * (Number(qty) || 1);
+
   const handleSelectCoil = (coil) => {
+    if (!coil) return;
     setSelectedCoilId(coil.id);
     setIsPickerOpen(false);
     // Si el precio unitario es 0 o coincide con el repuesto anterior, sugerir el precio de lista del nuevo repuesto
     if (!unitPrice || unitPrice === 0 || unitPrice === originalCoil?.price) {
-      setUnitPrice(coil.price);
+      setUnitPrice(coil.price || 0);
     }
   };
 
@@ -96,7 +110,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     setIsSubmitting(true);
     try {
       await onSave(order.orderId, {
-        coilId: selectedCoilId,
+        coilId: selectedCoilId || order.coilId,
         coilName: currentSelectedCoil ? currentSelectedCoil.name : order.coilName,
         oem: currentSelectedCoil ? currentSelectedCoil.oem : order.oem,
         qty: Number(qty) || 1,
@@ -179,7 +193,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
             </div>
 
             {/* VISTA 1: TARJETA DEL PRODUCTO SELECCIONADO ACTUAL */}
-            {!isPickerOpen && currentSelectedCoil && (
+            {!isPickerOpen && (
               <div className="bg-slate-950/80 border border-slate-800 hover:border-slate-700 rounded-xl p-3.5 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   {/* Foto del repuesto */}
@@ -187,36 +201,40 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                     {currentImg ? (
                       <img 
                         src={currentImg} 
-                        alt={currentSelectedCoil.name} 
+                        alt={currentSelectedCoil?.name || order.coilName} 
                         className="max-h-full max-w-full object-contain mix-blend-multiply" 
                       />
                     ) : (
-                      <i className={`${currentCat.icon} text-2xl text-slate-700`}></i>
+                      <i className={`${currentCat?.icon || 'fa-solid fa-box'} text-2xl text-slate-700`}></i>
                     )}
                   </div>
 
                   {/* Datos del repuesto */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <h4 className="font-bold text-white text-xs sm:text-sm truncate">
-                      {currentSelectedCoil.name}
+                      {currentSelectedCoil ? currentSelectedCoil.name : (order.coilName || 'Repuesto Automotriz')}
                     </h4>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-sky-300 border border-slate-700">
-                        {currentSelectedCoil.brand || 'Original'}
+                        {currentSelectedCoil?.brand || 'Repuesto'}
                       </span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-slate-300 bg-slate-900 border border-slate-800">
-                        OEM: {currentSelectedCoil.oem || 'N/A'}
+                        OEM: {currentSelectedCoil?.oem || order.oem || 'N/A'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
-                        currentSelectedCoil.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                      }`}>
-                        Stock: {currentSelectedCoil.stock} uds
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20">
-                        Lista: ${currentSelectedCoil.price}
-                      </span>
+                      {currentSelectedCoil && (
+                        <>
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                            currentSelectedCoil.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          }`}>
+                            Stock: {currentSelectedCoil.stock} uds
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20">
+                            Lista: ${currentSelectedCoil.price}
+                          </span>
+                        </>
+                      )}
                     </div>
-                    {currentSelectedCoil.carModel && (
+                    {currentSelectedCoil?.carModel && (
                       <p className="text-[10px] text-slate-400 truncate">
                         Compatibilidad: {currentSelectedCoil.carModel}
                       </p>
@@ -233,14 +251,16 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                     <i className="fa-solid fa-arrows-rotate text-sky-400"></i>
                     <span>Cambiar</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setUnitPrice(currentSelectedCoil.price)}
-                    className="text-[10px] text-sky-400 hover:text-sky-300 underline font-medium cursor-pointer"
-                    title="Asignar el precio de lista del catálogo"
-                  >
-                    Usar precio catálogo (${currentSelectedCoil.price})
-                  </button>
+                  {currentSelectedCoil && (
+                    <button
+                      type="button"
+                      onClick={() => setUnitPrice(currentSelectedCoil.price)}
+                      className="text-[10px] text-sky-400 hover:text-sky-300 underline font-medium cursor-pointer"
+                      title="Asignar el precio de lista del catálogo"
+                    >
+                      Usar precio catálogo (${currentSelectedCoil.price})
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -312,7 +332,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                     filteredCoils.map(coil => {
                       const img = getCoilImage(coil);
                       const cat = getCategoryConfig(detectProductCategory(coil));
-                      const isSelected = coil.id.toLowerCase() === selectedCoilId.toLowerCase();
+                      const isSelected = String(coil.id).toLowerCase() === String(selectedCoilId).toLowerCase();
 
                       return (
                         <div
@@ -334,7 +354,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                                   className="max-h-full max-w-full object-contain mix-blend-multiply" 
                                 />
                               ) : (
-                                <i className={`${cat.icon} text-lg text-slate-700`}></i>
+                                <i className={`${cat?.icon || 'fa-solid fa-box'} text-lg text-slate-700`}></i>
                               )}
                             </div>
 
@@ -397,7 +417,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                     {originalImg ? (
                       <img src={originalImg} alt="" className="max-h-full max-w-full object-contain mix-blend-multiply" />
                     ) : (
-                      <i className={`${originalCat.icon} text-slate-700 text-sm`}></i>
+                      <i className={`${originalCat?.icon || 'fa-solid fa-box'} text-slate-700 text-sm`}></i>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -416,7 +436,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                     {currentImg ? (
                       <img src={currentImg} alt="" className="max-h-full max-w-full object-contain mix-blend-multiply" />
                     ) : (
-                      <i className={`${currentCat.icon} text-slate-700 text-sm`}></i>
+                      <i className={`${currentCat?.icon || 'fa-solid fa-box'} text-slate-700 text-sm`}></i>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -424,7 +444,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                       📦 Se Descuenta del Stock (-{qty})
                     </span>
                     <p className="text-white font-semibold truncate text-[11px]">
-                      {currentSelectedCoil?.name}
+                      {currentSelectedCoil ? currentSelectedCoil.name : 'Nuevo Repuesto'}
                     </p>
                   </div>
                 </div>

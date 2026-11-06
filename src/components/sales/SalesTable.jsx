@@ -242,13 +242,15 @@ export function SalesTable() {
       />
 
       {/* Modal de Edición de Venta & Cambio de Repuesto */}
-      <EditSaleModal
-        isOpen={Boolean(orderToEdit)}
-        order={orderToEdit}
-        coils={coils}
-        onClose={() => setOrderToEdit(null)}
-        onSave={updateSaleTransaction}
-      />
+      {orderToEdit && (
+        <EditSaleModal
+          isOpen={Boolean(orderToEdit)}
+          order={orderToEdit}
+          coils={coils}
+          onClose={() => setOrderToEdit(null)}
+          onSave={updateSaleTransaction}
+        />
+      )}
     </div>
   );
 }
