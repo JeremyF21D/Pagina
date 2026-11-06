@@ -1082,6 +1082,66 @@ Directrices de conversación:
     saveSaleToSupabase(updatedOrder);
   }, [salesHistory, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
 
+  /**
+   * Eliminar definitivamente una venta de la lista y de Supabase
+   */
+  const deleteSale = useCallback(async (orderId) => {
+    const cleanId = String(orderId || '').replace(/^#/, '').trim();
+    if (!cleanId) return;
+
+    setSalesHistory(prev => {
+      const next = prev.filter(s => String(s.orderId).replace(/^#/, '') !== cleanId);
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    if (dbEngine === 'supabase') {
+      const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
+        try {
+          await fetch(`${baseUrl}/rest/v1/${table}?order_id=eq.${encodeURIComponent(cleanId)}`, {
+            method: 'DELETE',
+            headers: getSupabaseHeaders(anonKey)
+          });
+        } catch (err) {
+          console.warn('Error al eliminar venta en Supabase:', err);
+        }
+      }
+    }
+
+    showToast(`🗑️ Venta #${cleanId} eliminada.`);
+  }, [dbEngine, dbCredentials, showToast]);
+
+  /**
+   * Vaciar todo el registro de ventas tanto local como en Supabase
+   */
+  const clearAllSales = useCallback(async () => {
+    setSalesHistory([]);
+    try {
+      localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify([]));
+    } catch (e) {}
+
+    if (dbEngine === 'supabase') {
+      const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
+        try {
+          await fetch(`${baseUrl}/rest/v1/${table}?order_id=neq.EMPTY_GUARD`, {
+            method: 'DELETE',
+            headers: getSupabaseHeaders(anonKey)
+          });
+        } catch (err) {
+          console.warn('Error al vaciar ventas en Supabase:', err);
+        }
+      }
+    }
+
+    showToast('🗑️ Todas las ventas han sido eliminadas.');
+  }, [dbEngine, dbCredentials, showToast]);
+
   const refreshSalesHistory = useCallback(async (showNotification = false) => {
     // 1. Sincronizar en doble vía con la tabla 'ventas' de Supabase
     if (dbEngine === 'supabase') {
@@ -1122,42 +1182,16 @@ Directrices de conversación:
               };
             });
 
-            // Revisar si en localStorage hay movimientos locales que aún no están en Supabase
-            let localOrders = [];
-            try {
-              const saved = localStorage.getItem(STORAGE_KEY_SALES_LOG);
-              if (saved) {
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed)) localOrders = parsed;
-              }
+            // Supabase es la fuente de verdad definitiva: respetamos exactamente lo que hay en la base de datos
+            setSalesHistory(mappedSupabase);
+            try { 
+              localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(mappedSupabase)); 
             } catch (e) {}
 
-            const missingInSupabase = localOrders.filter(l => l && l.orderId && !supabaseIds.has(String(l.orderId).replace(/^#/, '')));
-
-            if (missingInSupabase.length > 0) {
-              console.log(`Subiendo ${missingInSupabase.length} movimientos de venta locales no registrados a Supabase...`);
-              for (const orderToUpload of missingInSupabase) {
-                await saveSaleToSupabase(orderToUpload);
-              }
-            }
-
-            // Combinar ambos: registros de Supabase + locales
-            const combinedMap = new Map();
-            mappedSupabase.forEach(s => combinedMap.set(String(s.orderId), s));
-            missingInSupabase.forEach(l => {
-              if (!combinedMap.has(String(l.orderId))) {
-                combinedMap.set(String(l.orderId), l);
-              }
-            });
-
-            const finalOrders = Array.from(combinedMap.values());
-            setSalesHistory(finalOrders);
-            try { localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(finalOrders)); } catch(e){}
-
             if (showNotification) {
-              showToast(`✓ Base de datos de ventas sincronizada (${finalOrders.length} movimientos en Supabase)`);
+              showToast(`✓ Base de datos de ventas sincronizada (${mappedSupabase.length} movimientos en Supabase)`);
             }
-            return finalOrders;
+            return mappedSupabase;
           }
         } catch (e) {
           console.warn('Error al consultar ventas en Supabase:', e);
@@ -1324,6 +1358,8 @@ Directrices de conversación:
       processSaleTransaction,
       confirmSale,
       revertSale,
+      deleteSale,
+      clearAllSales,
       pendingOwnerAlert,
       dismissOwnerAlert
     }}>

@@ -5,7 +5,7 @@ import { SalesDatabaseModal } from '../modals/SalesDatabaseModal';
 import { formatUSD } from '../../utils/formatters';
 
 export function SalesView({ onOpenManualSaleModal }) {
-  const { salesHistory, coils, processSaleTransaction, refreshSalesHistory } = useInventory();
+  const { salesHistory, coils, processSaleTransaction, refreshSalesHistory, clearAllSales } = useInventory();
   const [salesDbModalOpen, setSalesDbModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -92,6 +92,22 @@ export function SalesView({ onOpenManualSaleModal }) {
             <i className="fa-solid fa-file-csv text-emerald-200 text-sm"></i>
             <span>Base de Datos CSV (Supabase)</span>
           </button>
+
+          {/* Botón: Vaciar todo el historial de ventas */}
+          {salesHistory.length > 0 && (
+            <button 
+              onClick={() => {
+                if (window.confirm(`¿Estás seguro de que deseas eliminar TODOS los ${salesHistory.length} registros de ventas? Se borrarán de Supabase y de la pantalla.`)) {
+                  clearAllSales();
+                }
+              }}
+              className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/70 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer active:scale-95"
+              title="Eliminar todas las órdenes y vaciar la tabla de ventas"
+            >
+              <i className="fa-solid fa-trash-can text-rose-400"></i>
+              <span>Vaciar Historial</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -6,7 +6,7 @@ import { ProductHoverPreview } from './ProductHoverPreview';
 import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
 
 export function SalesTable() {
-  const { salesHistory, confirmSale, revertSale, ownerSettings, coils } = useInventory();
+  const { salesHistory, confirmSale, revertSale, deleteSale, ownerSettings, coils } = useInventory();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [orderToConfirm, setOrderToConfirm] = useState(null);
@@ -199,6 +199,18 @@ export function SalesTable() {
                         title="Abrir comprobante en WhatsApp"
                       >
                         <i className="fa-brands fa-whatsapp"></i>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          if (window.confirm(`¿Eliminar definitivamente la venta #${ord.orderId}? Se borrará de la base de datos y de la web.`)) {
+                            deleteSale(ord.orderId);
+                          }
+                        }}
+                        className="p-1.5 bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 rounded-lg text-xs transition cursor-pointer active:scale-95"
+                        title="Eliminar venta permanentemente"
+                      >
+                        <i className="fa-solid fa-trash-can"></i>
                       </button>
                     </div>
                   </td>
