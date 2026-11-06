@@ -1240,6 +1240,29 @@ Directrices de conversación:
       }
     }
 
+    // Calcular stock anterior y posterior para la auditoría de la venta
+    let calculatedStockBefore = existingOrder.stockBefore ?? 0;
+    let calculatedStockAfter = existingOrder.stockAfter ?? 0;
+
+    if (oldCoilId.toLowerCase() !== newCoilId.toLowerCase()) {
+      // Hubo cambio de repuesto: reflejar el stock del nuevo artículo entregado
+      const curNewStock = newMatchedCoil ? newMatchedCoil.stock : 0;
+      if (isNowConfirmed) {
+        calculatedStockBefore = curNewStock;
+        calculatedStockAfter = Math.max(0, curNewStock - newQty);
+      } else {
+        calculatedStockBefore = curNewStock;
+        calculatedStockAfter = curNewStock;
+      }
+    } else {
+      // Mismo repuesto: si cambió la cantidad
+      if (isNowConfirmed) {
+        const baseStock = existingOrder.stockBefore || ((oldMatchedCoil ? oldMatchedCoil.stock : 0) + oldQty);
+        calculatedStockBefore = baseStock;
+        calculatedStockAfter = Math.max(0, baseStock - newQty);
+      }
+    }
+
     // Construir la orden actualizada
     const updatedOrder = {
       ...existingOrder,
@@ -1251,6 +1274,8 @@ Directrices de conversación:
       qty: newQty,
       unitPrice: newUnitPrice,
       totalPrice: newTotalPrice,
+      stockBefore: calculatedStockBefore,
+      stockAfter: calculatedStockAfter,
       paymentRef: updateData.paymentRef !== undefined ? String(updateData.paymentRef).trim() : existingOrder.paymentRef,
       status: newStatus,
       notes: updateData.notes !== undefined ? String(updateData.notes).trim() : (existingOrder.notes || '')
@@ -1281,6 +1306,11 @@ Directrices de conversación:
           precio_unitario: updatedOrder.unitPrice,
           precio_unitario_usd: updatedOrder.unitPrice,
           total_usd: updatedOrder.totalPrice,
+          stock_anterior: calculatedStockBefore,
+          stock_antes_venta: calculatedStockBefore,
+          stock_posterior: calculatedStockAfter,
+          stock_despues_venta: calculatedStockAfter,
+          stock_actual_catalogo: calculatedStockAfter,
           referencia_pago: updatedOrder.paymentRef,
           estado: updatedOrder.status,
           status: updatedOrder.status,
