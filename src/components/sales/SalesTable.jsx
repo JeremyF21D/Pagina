@@ -12,6 +12,7 @@ export function SalesTable() {
   const [search, setSearch] = useState('');
   const [orderToConfirm, setOrderToConfirm] = useState(null);
   const [orderToEdit, setOrderToEdit] = useState(null);
+  const [selectedNoteModal, setSelectedNoteModal] = useState(null);
 
   const filteredOrders = salesHistory.filter(ord => {
     if (filter === 'CONFIRMED' && ord.status !== 'CONFIRMED') return false;
@@ -156,13 +157,25 @@ export function SalesTable() {
                             {mainText}
                           </div>
                           {ajusteText && (
-                            <div 
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] max-w-full font-sans cursor-help"
-                              title={`Motivo del ajuste: ${ajusteText}`}
+                            <button 
+                              type="button"
+                              onClick={() => setSelectedNoteModal({
+                                orderId: ord.orderId,
+                                customerName: ord.customerName,
+                                customerPhone: ord.customerPhone,
+                                paymentRef: mainText,
+                                note: ajusteText,
+                                total: ord.totalPrice,
+                                coilName: ord.coilName,
+                                timestamp: ord.timestamp
+                              })}
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/20 hover:border-amber-500/40 text-[10px] max-w-full font-sans cursor-pointer active:scale-95 transition text-left group"
+                              title="Haz clic para leer la nota completa"
                             >
-                              <i className="fa-solid fa-arrows-rotate text-[9px] shrink-0 text-amber-400"></i>
+                              <i className="fa-solid fa-arrows-rotate text-[9px] shrink-0 text-amber-400 group-hover:rotate-180 transition duration-300"></i>
                               <span className="truncate">{ajusteText}</span>
-                            </div>
+                              <i className="fa-solid fa-up-right-from-square text-[8px] text-amber-400/60 group-hover:text-amber-300 shrink-0 ml-0.5"></i>
+                            </button>
                           )}
                         </div>
                       );
@@ -274,6 +287,84 @@ export function SalesTable() {
           onClose={() => setOrderToEdit(null)}
           onSave={updateSaleTransaction}
         />
+      )}
+
+      {/* Modal / Popup de Lectura de Nota Completa */}
+      {selectedNoteModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+          onClick={() => setSelectedNoteModal(null)}
+        >
+          <div 
+            className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4 animate-scaleUp"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Cabecera */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                <i className="fa-solid fa-note-sticky text-base"></i>
+                <span>Nota de Venta / Motivo del Cambio</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 border border-slate-700 font-mono font-bold">
+                  #{selectedNoteModal.orderId}
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSelectedNoteModal(null)}
+                className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            {/* Texto Completo de la Nota */}
+            <div className="p-4 bg-slate-950 rounded-xl border border-amber-500/30 text-slate-200 text-xs space-y-2">
+              <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
+                <i className="fa-solid fa-quote-left text-amber-400/60"></i>
+                <span>Observación Registrada por el Administrador:</span>
+              </span>
+              <p className="text-sm sm:text-base text-amber-100 font-medium whitespace-pre-wrap leading-relaxed italic">
+                "{selectedNoteModal.note}"
+              </p>
+            </div>
+
+            {/* Ficha Resumen de la Orden */}
+            <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+              <div>
+                <span className="text-slate-500 block text-[10px]">Cliente:</span>
+                <span className="text-white font-semibold truncate block">{selectedNoteModal.customerName}</span>
+                {selectedNoteModal.customerPhone && (
+                  <span className="text-slate-400 text-[10px] font-mono block">{selectedNoteModal.customerPhone}</span>
+                )}
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px]">Total de la Orden:</span>
+                <span className="text-emerald-400 font-mono font-bold text-sm block">
+                  {formatUSD(selectedNoteModal.total)}
+                </span>
+              </div>
+              <div className="col-span-2 pt-2 border-t border-slate-800/60">
+                <span className="text-slate-500 block text-[10px]">Repuesto Entregado:</span>
+                <span className="text-slate-200 font-medium truncate block">{selectedNoteModal.coilName}</span>
+              </div>
+              <div className="col-span-2 pt-1">
+                <span className="text-slate-500 block text-[10px]">Método / Pago:</span>
+                <span className="text-slate-300 font-medium truncate block">{selectedNoteModal.paymentRef}</span>
+              </div>
+            </div>
+
+            {/* Botón Cerrar */}
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedNoteModal(null)}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition cursor-pointer active:scale-95"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
