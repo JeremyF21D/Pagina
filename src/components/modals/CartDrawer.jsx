@@ -21,9 +21,9 @@ export function CartDrawer() {
   const { ownerSettings } = useInventory();
 
   // Selector de Método de Pago (Pago Móvil, Binance, Zelle, Efectivo)
-  const [paymentMethod, setPaymentMethod] = useState('PAGO_MOVIL'); // 'PAGO_MOVIL' | 'BINANCE' | 'ZELLE' | 'EFECTIVO'
+  const [paymentMethod, setPaymentMethod] = useState('PAGO_MOVIL');
 
-  // Campos específicos por método de pago
+  // Campos opcionales por método de pago
   const [pmBank, setPmBank] = useState('');
   const [pmRef, setPmRef] = useState('');
 
@@ -38,16 +38,15 @@ export function CartDrawer() {
   if (!isCartOpen) return null;
 
   const handleCheckout = () => {
-    // Construir la referencia formateada según el método de pago elegido
     let builtRef = '';
     if (paymentMethod === 'PAGO_MOVIL') {
-      builtRef = `[PAGO MÓVIL] ${pmBank ? `Banco: ${pmBank.trim()}` : 'Pago Móvil'} | Ref: #${pmRef.trim() || 'Por Enviar'}`;
+      builtRef = `[PAGO MÓVIL] ${pmBank ? `Banco: ${pmBank.trim()}` : 'Pago Móvil'} ${pmRef ? `| Ref: #${pmRef.trim()}` : '| Coordinar datos bancarios'}`;
     } else if (paymentMethod === 'BINANCE') {
-      builtRef = `[BINANCE PAY] ${binanceUser ? `User: ${binanceUser.trim()}` : ''} | Ref/ID: #${binanceRef.trim() || 'Por Enviar'}`;
+      builtRef = `[BINANCE PAY] ${binanceUser ? `User: ${binanceUser.trim()}` : 'Binance Pay'} ${binanceRef ? `| Ref: #${binanceRef.trim()}` : '| Solicita Pay ID / QR'}`;
     } else if (paymentMethod === 'ZELLE') {
-      builtRef = `[ZELLE] Titular: ${zelleHolder.trim() || 'N/A'} | Ref: #${zelleRef.trim() || 'Por Enviar'}`;
+      builtRef = `[ZELLE] ${zelleHolder ? `Titular: ${zelleHolder.trim()}` : 'Zelle'} ${zelleRef ? `| Ref: #${zelleRef.trim()}` : '| Solicita correo Zelle'}`;
     } else if (paymentMethod === 'EFECTIVO') {
-      builtRef = `[EFECTIVO] ${cashBill.trim() ? `Paga con: ${cashBill.trim()}` : 'Pago exacto en divisas'}`;
+      builtRef = `[EFECTIVO] ${cashBill.trim() ? `Paga con: ${cashBill.trim()}` : 'Pago en divisas en persona'}`;
     }
 
     updateBuyerDraft({
@@ -230,31 +229,32 @@ export function CartDrawer() {
                   </button>
                 </div>
 
-                {/* Caja de Datos del Método de Pago Seleccionado */}
+                {/* Caja Informativa sin números de cuenta (Seguro y Privado) */}
                 <div className="mt-2.5 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 animate-fade-in text-xs">
                   {paymentMethod === 'PAGO_MOVIL' && (
                     <>
                       <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] space-y-0.5">
                         <div className="text-emerald-300 font-bold flex items-center gap-1.5">
                           <i className="fa-solid fa-circle-info"></i>
-                          <span>Datos para transferir Pago Móvil:</span>
+                          <span>Pago Móvil (Bolívares):</span>
                         </div>
-                        <p className="text-slate-300">Banco: <strong className="text-white">Banesco (0134)</strong> • Tel: <strong className="text-white font-mono">0412-6497478</strong></p>
-                        <p className="text-slate-300">RIF / CI: <strong className="text-white font-mono">J-50000000-0</strong> • JF Auto Parts</p>
+                        <p className="text-slate-300 leading-relaxed">
+                          Al enviar tu pedido por WhatsApp, te facilitaremos los datos bancarios activos para realizar tu Pago Móvil.
+                        </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="text"
                           value={pmBank}
                           onChange={(e) => setPmBank(e.target.value)}
-                          placeholder="Tu Banco Emisor (ej: Mercantil, Venezuela)"
+                          placeholder="Tu Banco Emisor (Opcional)"
                           className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
                         />
                         <input
                           type="text"
                           value={pmRef}
                           onChange={(e) => setPmRef(e.target.value)}
-                          placeholder="Nº Referencia (ej: #448912)"
+                          placeholder="Nº Referencia (si ya pagaste)"
                           className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
                         />
                       </div>
@@ -266,24 +266,25 @@ export function CartDrawer() {
                       <div className="p-2 rounded-lg bg-amber-950/40 border border-amber-500/30 text-[11px] space-y-0.5">
                         <div className="text-amber-300 font-bold flex items-center gap-1.5">
                           <i className="fa-brands fa-bitcoin"></i>
-                          <span>Datos para Binance Pay (USDT):</span>
+                          <span>Binance Pay (USDT):</span>
                         </div>
-                        <p className="text-slate-300">Binance Pay ID: <strong className="text-white font-mono">84920192</strong></p>
-                        <p className="text-slate-300">Correo Binance: <strong className="text-white font-mono">jfautoparts.ve@gmail.com</strong></p>
+                        <p className="text-slate-300 leading-relaxed">
+                          Al enviar tu pedido por WhatsApp, te suministraremos el Pay ID / QR activo para transferir en USDT sin comisiones.
+                        </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="text"
                           value={binanceUser}
                           onChange={(e) => setBinanceUser(e.target.value)}
-                          placeholder="Tu Usuario Binance / Nickname"
+                          placeholder="Tu Usuario Binance (Opcional)"
                           className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
                         />
                         <input
                           type="text"
                           value={binanceRef}
                           onChange={(e) => setBinanceRef(e.target.value)}
-                          placeholder="ID de Orden / Ref TX"
+                          placeholder="ID de Orden / Ref TX (Opcional)"
                           className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
                         />
                       </div>
@@ -295,24 +296,25 @@ export function CartDrawer() {
                       <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-500/30 text-[11px] space-y-0.5">
                         <div className="text-purple-300 font-bold flex items-center gap-1.5">
                           <i className="fa-solid fa-building-columns"></i>
-                          <span>Datos para Zelle (USD):</span>
+                          <span>Zelle (USD):</span>
                         </div>
-                        <p className="text-slate-300">Correo Zelle: <strong className="text-white font-mono">pagos@jfautoparts.com</strong></p>
-                        <p className="text-slate-300">Titular de la cuenta: <strong className="text-white">JF Auto Parts LLC</strong></p>
+                        <p className="text-slate-300 leading-relaxed">
+                          Al enviar tu pedido por WhatsApp, te indicaremos el correo Zelle autorizado para realizar tu transferencia.
+                        </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="text"
                           value={zelleHolder}
                           onChange={(e) => setZelleHolder(e.target.value)}
-                          placeholder="Nombre del Titular Zelle *"
+                          placeholder="Titular de la cuenta Zelle (Opcional)"
                           className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
                         />
                         <input
                           type="text"
                           value={zelleRef}
                           onChange={(e) => setZelleRef(e.target.value)}
-                          placeholder="Ref / Código de Confirmación"
+                          placeholder="Código / Ref Zelle (Opcional)"
                           className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
                         />
                       </div>
@@ -326,15 +328,15 @@ export function CartDrawer() {
                           <i className="fa-solid fa-money-bill-wave"></i>
                           <span>Pago en Divisas Efectivo:</span>
                         </div>
-                        <p className="text-slate-300">
-                          Cancelas en dólares en efectivo al momento del retiro en tienda o entrega.
+                        <p className="text-slate-300 leading-relaxed">
+                          Cancelas en efectivo al momento de retirar en tienda o al recibir la pieza.
                         </p>
                       </div>
                       <input
                         type="text"
                         value={cashBill}
                         onChange={(e) => setCashBill(e.target.value)}
-                        placeholder="¿Pagas exacto o con qué billete cancelas para vuelto? (Ej: Billete de $20)"
+                        placeholder="¿Pagas con monto exacto o con qué billete cancelas? (Opcional)"
                         className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
                       />
                     </>

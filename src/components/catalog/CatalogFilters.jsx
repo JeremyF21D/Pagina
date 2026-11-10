@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useInventory } from '../../context/InventoryContext';
 import { PRODUCT_CATEGORIES } from '../../utils/formatters';
 
 export function CatalogFilters({
@@ -10,28 +11,54 @@ export function CatalogFilters({
   onBrandChange,
   stockFilter,
   onStockFilterChange,
-  brands = [],
-  onQuickSearch
+  brands = []
 }) {
+  const { coils } = useInventory();
   const [vehicleFinderOpen, setVehicleFinderOpen] = useState(false);
   const [selectedFinderBrand, setSelectedFinderBrand] = useState('');
   const [selectedFinderModel, setSelectedFinderModel] = useState('');
 
-  // Modelos comunes por marca para el buscador asistido
-  const brandModelsMap = {
-    'Nissan': ['Tiida 1.8', 'Sentra B16', 'Sentra B15', 'Sentra B13', 'Rogue 2.5', 'Almera 1.8', 'X-Trail', 'Murano 3.5'],
-    'Toyota': ['Yaris 1.3 / 1.5', 'Corolla 1.8', 'Hilux 2.7', 'Fortuner 4.0', '4Runner 4.0', 'Camry 2.4'],
-    'Chevrolet': ['Aveo 1.6', 'Optra 1.8', 'Corsa 1.6', 'Cruze 1.8', 'Silverado 5.3', 'Spark 1.0', 'Grand Vitara'],
-    'Ford': ['Explorer 4.0 / 4.6', 'Fiesta 1.6', 'Focus 2.0', 'F-150 4.6 / 5.4', 'EcoSport 2.0', 'Fusion 3.0'],
-    'Chery': ['Orinoco 1.8', 'Arauca 1.3', 'Tiggo 2.0', 'Grand Tiger 2.4'],
-    'Mitsubishi': ['Lancer 1.6 / 2.0', 'Montero 3.0', 'Signo 1.3']
-  };
+  // 1. Marcas 100% dinámicas extraídas del inventario activo
+  const dynamicBrands = useMemo(() => {
+    const set = new Set();
+    coils.forEach(c => {
+      if (c.brand && c.brand.trim()) {
+        set.add(c.brand.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [coils]);
+
+  // 2. Modelos 100% dinámicos basados en los repuestos registrados para la marca seleccionada
+  const availableModels = useMemo(() => {
+    if (!selectedFinderBrand) return [];
+    const modelSet = new Set();
+
+    coils.forEach(c => {
+      if (c.brand && c.brand.toLowerCase() === selectedFinderBrand.toLowerCase() && c.carModel) {
+        // En carModel vienen cadenas como: "Tiida, Sentra B16, Versa", "Sentra B15", "Explorer 4.0", etc.
+        const modelTokens = c.carModel.split(/[,/]+/).map(s => s.trim()).filter(Boolean);
+        modelTokens.forEach(token => {
+          // Extraer el nombre base del modelo (ej: "Tiida 1.8" -> "Tiida", "Sentra B16" -> "Sentra")
+          const baseName = token.split(/\s+/)[0];
+          if (baseName && baseName.length >= 3 && !/^\d/.test(baseName)) {
+            // Capitalizar primera letra
+            const formatted = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+            modelSet.add(formatted);
+          }
+        });
+      }
+    });
+
+    return Array.from(modelSet).sort();
+  }, [coils, selectedFinderBrand]);
 
   const handleApplyVehicleSearch = () => {
+    if (selectedFinderBrand) {
+      onBrandChange(selectedFinderBrand);
+    }
     if (selectedFinderModel) {
       onSearchChange(selectedFinderModel);
-    } else if (selectedFinderBrand) {
-      onBrandChange(selectedFinderBrand);
     }
     setVehicleFinderOpen(false);
   };
@@ -79,41 +106,6 @@ export function CatalogFilters({
         })}
       </div>
 
-      {/* Selector Rápido de Marcas Destacadas (Horizontal Brand Chips) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mr-1 shrink-0 flex items-center gap-1">
-          <i className="fa-solid fa-car text-brand-400"></i> Marca:
-        </span>
-        <button
-          type="button"
-          onClick={() => onBrandChange('ALL')}
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border transition cursor-pointer ${
-            selectedBrand === 'ALL'
-              ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-sm'
-              : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
-          }`}
-        >
-          Todas
-        </button>
-        {brands.map(brandName => {
-          const isSelected = selectedBrand.toLowerCase() === brandName.toLowerCase();
-          return (
-            <button
-              key={brandName}
-              type="button"
-              onClick={() => onBrandChange(brandName)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border transition cursor-pointer ${
-                isSelected
-                  ? 'bg-brand-500 text-white border-brand-400 shadow-md'
-                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
-              }`}
-            >
-              {brandName}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Main Filter Inputs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
         {/* Search input */}
@@ -143,8 +135,8 @@ export function CatalogFilters({
             onChange={(e) => onBrandChange(e.target.value)}
             className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
-            <option value="ALL">Todas las marcas ({brands.length})</option>
-            {brands.map(b => (
+            <option value="ALL">Todas las marcas ({dynamicBrands.length})</option>
+            {dynamicBrands.map(b => (
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
@@ -165,15 +157,15 @@ export function CatalogFilters({
         </div>
       </div>
 
-      {/* Buscador Asistido de Vehículo ("¿Qué carro tienes?") */}
+      {/* Buscador Asistido de Vehículo ("¿Qué carro tienes?") Dinámico */}
       <div className="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3">
         <div className="flex items-center justify-between cursor-pointer" onClick={() => setVehicleFinderOpen(!vehicleFinderOpen)}>
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded-md bg-amber-500/20 text-amber-400 text-xs">
-              <i className="fa-solid fa-wand-magic-sparkles"></i>
+            <span className="p-1 rounded-md bg-brand-500/20 text-brand-400 text-xs">
+              <i className="fa-solid fa-car-side"></i>
             </span>
             <span className="text-xs font-bold text-white">
-              Buscador Guiado por Vehículo: <span className="text-amber-300 font-normal">¿Qué auto tienes?</span>
+              Buscador por Vehículo: <span className="text-slate-400 font-normal">Filtra por marca y modelo de tu carro</span>
             </span>
           </div>
           <button
@@ -198,22 +190,24 @@ export function CatalogFilters({
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
               >
                 <option value="">Selecciona marca...</option>
-                {Object.keys(brandModelsMap).map(b => (
+                {dynamicBrands.map(b => (
                   <option key={b} value={b}>{b}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">2. Modelo / Versión</label>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">2. Modelo</label>
               <select
                 value={selectedFinderModel}
                 onChange={(e) => setSelectedFinderModel(e.target.value)}
                 disabled={!selectedFinderBrand}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-40"
               >
-                <option value="">Selecciona modelo...</option>
-                {selectedFinderBrand && brandModelsMap[selectedFinderBrand]?.map(m => (
+                <option value="">
+                  {selectedFinderBrand ? (availableModels.length > 0 ? 'Selecciona modelo...' : 'No hay modelos registrados') : 'Primero elige la marca'}
+                </option>
+                {availableModels.map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
@@ -227,7 +221,7 @@ export function CatalogFilters({
                 className="flex-1 py-1.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer shadow transition"
               >
                 <i className="fa-solid fa-filter"></i>
-                <span>Ver Piezas</span>
+                <span>Ver Repuestos</span>
               </button>
               <button
                 type="button"
@@ -242,21 +236,6 @@ export function CatalogFilters({
         )}
       </div>
 
-      {/* Quick Search Chips */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-700/60 text-xs">
-        <span className="text-slate-400 flex items-center gap-1">
-          <i className="fa-solid fa-bolt text-brand-400 text-[10px]"></i> Búsquedas frecuentes:
-        </span>
-        {['Nissan Tiida', 'Sentra B16', 'Toyota Yaris', 'Nissan Rogue', 'Sentra B13', 'Ford Explorer', 'Chery Orinoco', 'Conectores'].map(tag => (
-          <button 
-            key={tag}
-            onClick={() => onQuickSearch(tag)}
-            className="px-2.5 py-1 bg-slate-900/90 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700/60 transition text-[11px] cursor-pointer"
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

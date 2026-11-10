@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
-import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
+import { formatUSD } from '../../utils/formatters';
 import { normalizeWaPhone } from '../../utils/whatsapp';
 
-export function CoilCard({ coil, onAskAI, onEditProduct }) {
+export function CoilCard({ coil, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
   const { ownerSettings } = useInventory();
@@ -15,12 +15,10 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const oemList = (coil.oem || '').split(/[,/]+/).map(s => s.trim()).filter(Boolean);
   const primaryOem = oemList[0] || '';
   const extraOemCount = oemList.length > 1 ? oemList.length - 1 : 0;
-  const categoryId = coil.category || detectProductCategory(coil);
-  const catConfig = getCategoryConfig(categoryId);
 
   const isCriticalStock = coil.stock > 0 && coil.stock <= 2;
 
-  // Compra directa por WhatsApp (1-click) en USD oficial
+  // Compra directa por WhatsApp (1-click) en USD
   const handleDirectWhatsAppBuy = () => {
     const phone = normalizeWaPhone(ownerSettings?.ownerPhone || '04126497478');
     const text = encodeURIComponent(
@@ -47,15 +45,11 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   return (
     <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1.5 transition-all duration-300 group animate-fade-in relative">
       <div>
-        {/* Badge & Stock Status - Altura fija de 28px sin wrap para nivelar perfectamente todas las fotos */}
+        {/* Badge & Stock Status - Limpio sin iconos de categoría */}
         <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 h-6 sm:h-7">
           <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 whitespace-nowrap flex-shrink-0">
               {coil.badge || 'OEM Spec'}
-            </span>
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-slate-900 text-slate-300 border border-slate-700/80 flex items-center gap-1 whitespace-nowrap flex-shrink-0">
-              <i className={`${catConfig.icon} text-[9px] ${catConfig.color}`}></i>
-              <span className="truncate max-w-[80px]">{catConfig.singular.split(' ')[0]}</span>
             </span>
           </div>
 
@@ -67,7 +61,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
               </span>
             ) : isCriticalStock ? (
               <span className="inline-flex items-center gap-1 text-amber-300 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold animate-pulse">
-                <span>🔥 ¡Últimas {coil.stock}!</span>
+                <span>{coil.stock === 1 ? '🔥 ¡Último disponible!' : `🔥 ¡Últimas ${coil.stock} uds!`}</span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-emerald-400">
@@ -78,7 +72,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           </div>
         </div>
 
-        {/* Product Visual Header / Image Adaptada al Contenedor */}
+        {/* Product Visual Header / Image */}
         <div 
           className={`h-28 sm:h-48 rounded-lg sm:rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-2 sm:p-3 mb-2 sm:mb-4 cursor-pointer`}
           style={coil.image ? { backgroundColor: '#ffffff', isolation: 'isolate' } : {}}
@@ -102,8 +96,8 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
             </>
           ) : null}
           <div className={`h-full w-full flex-col items-center justify-center p-4 text-center ${coil.image ? 'hidden' : 'flex'}`}>
-            <i className={`${catConfig.icon} text-4xl ${coil.stock > 0 ? catConfig.color : 'text-slate-600'} mb-2 group-hover:scale-110 transition duration-300`}></i>
-            <span className="text-[10px] text-slate-500 font-medium">{catConfig.singular}</span>
+            <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-400' : 'text-slate-600'} mb-2 group-hover:scale-110 transition duration-300`}></i>
+            <span className="text-[10px] text-slate-500 font-medium">Repuesto Automotriz</span>
           </div>
           {primaryOem && (
             <span 
@@ -137,7 +131,6 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
         <div className="space-y-0.5 sm:space-y-1 mb-1.5 sm:mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-brand-400 uppercase tracking-wider">{coil.brand}</span>
-            <span className="text-[10px] text-slate-500 font-mono">• {catConfig.prefix}</span>
           </div>
           <h3 className="text-xs sm:text-base font-bold text-white group-hover:text-brand-400 transition leading-snug line-clamp-2 sm:line-clamp-none">
             {coil.name}
@@ -196,7 +189,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           )}
         </div>
 
-        {/* Acciones: Carrito, WhatsApp Directo y Consulta IA */}
+        {/* Acciones principales: Carrito y WhatsApp Directo */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button 
             onClick={() => addToCart(coil.id)} 
@@ -221,16 +214,6 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
             <span>Comprar Ya</span>
           </button>
         </div>
-
-        {/* Botón secundario Asistente IA */}
-        <button 
-          onClick={() => onAskAI && onAskAI(coil)}
-          className="w-full py-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/80 rounded-lg text-[10px] font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
-          title="Consultar compatibilidad al Asistente IA"
-        >
-          <i className="fa-solid fa-robot text-emerald-400 text-[10px]"></i>
-          <span>Consultar dudas al Asistente IA</span>
-        </button>
       </div>
 
       {/* Lightbox / Modal de Foto Ampliada Completa */}
