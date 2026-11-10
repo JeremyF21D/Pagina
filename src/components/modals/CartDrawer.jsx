@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
-import { useCurrency } from '../../context/CurrencyContext';
 import { formatUSD } from '../../utils/formatters';
 
 export function CartDrawer() {
@@ -20,25 +19,39 @@ export function CartDrawer() {
   } = useCart();
   const { deviceId } = useAuth();
   const { ownerSettings } = useInventory();
-  const { rates, formatVES } = useCurrency();
 
-  const [deliveryMethod, setDeliveryMethod] = useState('delivery'); // 'delivery' | 'envio' | 'tienda'
+  // Selector de Método de Pago (Pago Móvil, Binance, Zelle, Efectivo)
+  const [paymentMethod, setPaymentMethod] = useState('PAGO_MOVIL'); // 'PAGO_MOVIL' | 'BINANCE' | 'ZELLE' | 'EFECTIVO'
+
+  // Campos específicos por método de pago
+  const [pmBank, setPmBank] = useState('');
+  const [pmRef, setPmRef] = useState('');
+
+  const [binanceUser, setBinanceUser] = useState('');
+  const [binanceRef, setBinanceRef] = useState('');
+
+  const [zelleHolder, setZelleHolder] = useState('');
+  const [zelleRef, setZelleRef] = useState('');
+
+  const [cashBill, setCashBill] = useState('');
 
   if (!isCartOpen) return null;
 
-  const binanceTotal = cartSubtotal * (rates.binance || 0);
-  const bcvTotal = cartSubtotal * (rates.bcv || 0);
-
   const handleCheckout = () => {
-    // Adjuntar método de entrega a los datos del comprador
-    const deliveryNotes = {
-      'delivery': '🛵 Delivery en Valencia / Naguanagua',
-      'envio': '🚚 Envío Nacional (MRW/Tealca/Zoom)',
-      'tienda': '🏬 Retiro en tienda física'
-    }[deliveryMethod];
+    // Construir la referencia formateada según el método de pago elegido
+    let builtRef = '';
+    if (paymentMethod === 'PAGO_MOVIL') {
+      builtRef = `[PAGO MÓVIL] ${pmBank ? `Banco: ${pmBank.trim()}` : 'Pago Móvil'} | Ref: #${pmRef.trim() || 'Por Enviar'}`;
+    } else if (paymentMethod === 'BINANCE') {
+      builtRef = `[BINANCE PAY] ${binanceUser ? `User: ${binanceUser.trim()}` : ''} | Ref/ID: #${binanceRef.trim() || 'Por Enviar'}`;
+    } else if (paymentMethod === 'ZELLE') {
+      builtRef = `[ZELLE] Titular: ${zelleHolder.trim() || 'N/A'} | Ref: #${zelleRef.trim() || 'Por Enviar'}`;
+    } else if (paymentMethod === 'EFECTIVO') {
+      builtRef = `[EFECTIVO] ${cashBill.trim() ? `Paga con: ${cashBill.trim()}` : 'Pago exacto en divisas'}`;
+    }
 
     updateBuyerDraft({
-      payRef: buyerDraft.payRef ? `${buyerDraft.payRef} (${deliveryNotes})` : deliveryNotes
+      payRef: builtRef
     });
 
     checkoutViaWhatsApp();
@@ -114,13 +127,8 @@ export function CartDrawer() {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-white truncate">{item.name}</h4>
                     <p className="text-[10px] text-slate-400 font-mono">OEM: {item.oem}</p>
-                    <div className="flex items-baseline gap-2 mt-0.5">
-                      <span className="text-xs font-mono font-bold text-brand-400">
-                        {formatUSD(item.price)}
-                      </span>
-                      <span className="text-[10px] font-mono text-amber-300/80">
-                        ≈ {formatVES(item.price * (rates.binance || 0))}
-                      </span>
+                    <div className="text-xs font-mono font-bold text-brand-400 mt-0.5">
+                      {formatUSD(item.price)}
                     </div>
                   </div>
 
@@ -153,53 +161,184 @@ export function CartDrawer() {
             )}
           </div>
 
-          {/* Checkout & Buyer Details Section */}
+          {/* Checkout & Payment Details Section */}
           {cart.length > 0 && (
             <div className="p-4 bg-slate-950 border-t border-slate-800 space-y-3">
-              {/* Delivery Selector */}
+              
+              {/* Selector de Método de Pago con 4 Iconos */}
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                  Método de Entrega
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5 flex items-center justify-between">
+                  <span>Método de Pago</span>
+                  <span className="text-emerald-400 font-mono text-[9px]">Selecciona cómo deseas pagar</span>
                 </span>
-                <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                
+                <div className="grid grid-cols-4 gap-1.5 text-[11px]">
+                  {/* PAGO MÓVIL */}
                   <button
                     type="button"
-                    onClick={() => setDeliveryMethod('delivery')}
-                    className={`p-1.5 rounded-lg border text-center transition cursor-pointer ${
-                      deliveryMethod === 'delivery'
-                        ? 'bg-brand-500/20 text-brand-400 border-brand-500'
-                        : 'bg-slate-900 text-slate-400 border-slate-800'
+                    onClick={() => setPaymentMethod('PAGO_MOVIL')}
+                    className={`p-2 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                      paymentMethod === 'PAGO_MOVIL'
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/80 shadow-md shadow-emerald-500/10'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    <i className="fa-solid fa-motorcycle block text-xs mb-0.5"></i>
-                    <span className="font-semibold">Delivery</span>
+                    <i className="fa-solid fa-mobile-screen text-base mb-1"></i>
+                    <span className="font-bold text-[10px] leading-tight">Pago Móvil</span>
                   </button>
 
+                  {/* BINANCE PAY */}
                   <button
                     type="button"
-                    onClick={() => setDeliveryMethod('envio')}
-                    className={`p-1.5 rounded-lg border text-center transition cursor-pointer ${
-                      deliveryMethod === 'envio'
-                        ? 'bg-brand-500/20 text-brand-400 border-brand-500'
-                        : 'bg-slate-900 text-slate-400 border-slate-800'
+                    onClick={() => setPaymentMethod('BINANCE')}
+                    className={`p-2 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                      paymentMethod === 'BINANCE'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/80 shadow-md shadow-amber-500/10'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    <i className="fa-solid fa-truck-fast block text-xs mb-0.5"></i>
-                    <span className="font-semibold">Nacional</span>
+                    <i className="fa-brands fa-bitcoin text-base mb-1"></i>
+                    <span className="font-bold text-[10px] leading-tight">Binance</span>
                   </button>
 
+                  {/* ZELLE */}
                   <button
                     type="button"
-                    onClick={() => setDeliveryMethod('tienda')}
-                    className={`p-1.5 rounded-lg border text-center transition cursor-pointer ${
-                      deliveryMethod === 'tienda'
-                        ? 'bg-brand-500/20 text-brand-400 border-brand-500'
-                        : 'bg-slate-900 text-slate-400 border-slate-800'
+                    onClick={() => setPaymentMethod('ZELLE')}
+                    className={`p-2 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                      paymentMethod === 'ZELLE'
+                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/80 shadow-md shadow-purple-500/10'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    <i className="fa-solid fa-store block text-xs mb-0.5"></i>
-                    <span className="font-semibold">En Tienda</span>
+                    <i className="fa-solid fa-building-columns text-base mb-1"></i>
+                    <span className="font-bold text-[10px] leading-tight">Zelle</span>
                   </button>
+
+                  {/* EFECTIVO */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('EFECTIVO')}
+                    className={`p-2 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                      paymentMethod === 'EFECTIVO'
+                        ? 'bg-sky-500/20 text-sky-300 border-sky-500/80 shadow-md shadow-sky-500/10'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <i className="fa-solid fa-money-bill-wave text-base mb-1"></i>
+                    <span className="font-bold text-[10px] leading-tight">Efectivo</span>
+                  </button>
+                </div>
+
+                {/* Caja de Datos del Método de Pago Seleccionado */}
+                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 animate-fade-in text-xs">
+                  {paymentMethod === 'PAGO_MOVIL' && (
+                    <>
+                      <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] space-y-0.5">
+                        <div className="text-emerald-300 font-bold flex items-center gap-1.5">
+                          <i className="fa-solid fa-circle-info"></i>
+                          <span>Datos para transferir Pago Móvil:</span>
+                        </div>
+                        <p className="text-slate-300">Banco: <strong className="text-white">Banesco (0134)</strong> • Tel: <strong className="text-white font-mono">0412-6497478</strong></p>
+                        <p className="text-slate-300">RIF / CI: <strong className="text-white font-mono">J-50000000-0</strong> • JF Auto Parts</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={pmBank}
+                          onChange={(e) => setPmBank(e.target.value)}
+                          placeholder="Tu Banco Emisor (ej: Mercantil, Venezuela)"
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
+                        />
+                        <input
+                          type="text"
+                          value={pmRef}
+                          onChange={(e) => setPmRef(e.target.value)}
+                          placeholder="Nº Referencia (ej: #448912)"
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {paymentMethod === 'BINANCE' && (
+                    <>
+                      <div className="p-2 rounded-lg bg-amber-950/40 border border-amber-500/30 text-[11px] space-y-0.5">
+                        <div className="text-amber-300 font-bold flex items-center gap-1.5">
+                          <i className="fa-brands fa-bitcoin"></i>
+                          <span>Datos para Binance Pay (USDT):</span>
+                        </div>
+                        <p className="text-slate-300">Binance Pay ID: <strong className="text-white font-mono">84920192</strong></p>
+                        <p className="text-slate-300">Correo Binance: <strong className="text-white font-mono">jfautoparts.ve@gmail.com</strong></p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={binanceUser}
+                          onChange={(e) => setBinanceUser(e.target.value)}
+                          placeholder="Tu Usuario Binance / Nickname"
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
+                        />
+                        <input
+                          type="text"
+                          value={binanceRef}
+                          onChange={(e) => setBinanceRef(e.target.value)}
+                          placeholder="ID de Orden / Ref TX"
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {paymentMethod === 'ZELLE' && (
+                    <>
+                      <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-500/30 text-[11px] space-y-0.5">
+                        <div className="text-purple-300 font-bold flex items-center gap-1.5">
+                          <i className="fa-solid fa-building-columns"></i>
+                          <span>Datos para Zelle (USD):</span>
+                        </div>
+                        <p className="text-slate-300">Correo Zelle: <strong className="text-white font-mono">pagos@jfautoparts.com</strong></p>
+                        <p className="text-slate-300">Titular de la cuenta: <strong className="text-white">JF Auto Parts LLC</strong></p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={zelleHolder}
+                          onChange={(e) => setZelleHolder(e.target.value)}
+                          placeholder="Nombre del Titular Zelle *"
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
+                        />
+                        <input
+                          type="text"
+                          value={zelleRef}
+                          onChange={(e) => setZelleRef(e.target.value)}
+                          placeholder="Ref / Código de Confirmación"
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {paymentMethod === 'EFECTIVO' && (
+                    <>
+                      <div className="p-2 rounded-lg bg-sky-950/40 border border-sky-500/30 text-[11px] space-y-0.5">
+                        <div className="text-sky-300 font-bold flex items-center gap-1.5">
+                          <i className="fa-solid fa-money-bill-wave"></i>
+                          <span>Pago en Divisas Efectivo:</span>
+                        </div>
+                        <p className="text-slate-300">
+                          Cancelas en dólares en efectivo al momento del retiro en tienda o entrega.
+                        </p>
+                      </div>
+                      <input
+                        type="text"
+                        value={cashBill}
+                        onChange={(e) => setCashBill(e.target.value)}
+                        placeholder="¿Pagas exacto o con qué billete cancelas para vuelto? (Ej: Billete de $20)"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -226,40 +365,21 @@ export function CartDrawer() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2">
-                  <input 
-                    type="text" 
-                    value={buyerDraft.car}
-                    onChange={(e) => updateBuyerDraft({ car: e.target.value })}
-                    placeholder="Vehículo / Año / Motor" 
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
-                  />
-                  <input 
-                    type="text" 
-                    value={buyerDraft.payRef}
-                    onChange={(e) => updateBuyerDraft({ payRef: e.target.value })}
-                    placeholder="Ref Pago (Opcional)" 
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
-                  />
-                </div>
+                <input 
+                  type="text" 
+                  value={buyerDraft.car}
+                  onChange={(e) => updateBuyerDraft({ car: e.target.value })}
+                  placeholder="Vehículo / Año / Motor (Ej: Tiida 2011 1.8)" 
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
+                />
               </div>
 
-              {/* Subtotal & Conversión Multimoneda */}
-              <div className="pt-2 border-t border-slate-800 space-y-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400 font-medium">Total en Dólares:</span>
-                  <span className="text-base font-extrabold text-emerald-400 font-mono">
-                    {formatUSD(cartSubtotal)} USD
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-amber-300 font-mono">
-                  <span>A tasa Binance ({formatVES(rates.binance)}):</span>
-                  <span className="font-bold">{formatVES(binanceTotal)}</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>A tasa Oficial BCV ({formatVES(rates.bcv)}):</span>
-                  <span>{formatVES(bcvTotal)}</span>
-                </div>
+              {/* Total a Cancelar en Dólares (Limpio y Oficial) */}
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-medium">Total a Cancelar:</span>
+                <span className="text-base font-extrabold text-emerald-400 font-mono">
+                  {formatUSD(cartSubtotal)} USD
+                </span>
               </div>
 
               {/* Checkout WhatsApp Action Button */}

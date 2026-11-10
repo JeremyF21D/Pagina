@@ -2,7 +2,6 @@ import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
-import { useCurrency } from '../../context/CurrencyContext';
 import { buildPreOrderUrl, normalizeWaPhone } from '../../utils/whatsapp';
 import { formatUSD } from '../../utils/formatters';
 import logoImg from '../../assets/logo.png';
@@ -11,7 +10,6 @@ export function ChatMessage({ message, onTriggerSaleModal }) {
   const { addToCart } = useCart();
   const { ownerSettings } = useInventory();
   const { isAdmin } = useAuth();
-  const { rates, formatVES } = useCurrency();
   const isUser = message.sender === 'user';
 
   const handlePreOrder = (product) => {
@@ -25,12 +23,11 @@ export function ChatMessage({ message, onTriggerSaleModal }) {
 
   const handleDirectWA = (product) => {
     const phone = normalizeWaPhone(ownerSettings.ownerPhone || '04126497478');
-    const vesEstimate = (product.price || 0) * (rates.binance || 0);
     const msg = encodeURIComponent(
       `¡Hola JF Auto Parts! Vengo del Asesor Virtual y deseo confirmar compra de:\n\n` +
       `📦 *${product.name}*\n` +
       `⚙️ OEM: ${product.oem || product.id}\n` +
-      `💵 Precio: ${formatUSD(product.price)} (≈ ${formatVES(vesEstimate)})\n\n` +
+      `💵 Precio: ${formatUSD(product.price)} USD\n\n` +
       `¿Tienen punto de entrega o despacho activo hoy?`
     );
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
@@ -84,11 +81,8 @@ export function ChatMessage({ message, onTriggerSaleModal }) {
                   <h5 className="text-xs font-bold text-white truncate">{message.product.name}</h5>
                   <p className="text-[10px] text-slate-400 font-mono">OEM: {message.product.oem || message.product.id}</p>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs font-bold font-mono text-brand-400">
-                      {formatUSD(message.product.price)}
-                    </span>
-                    <span className="text-[10px] font-mono text-amber-300">
-                      ≈ {formatVES((message.product.price || 0) * (rates.binance || 0))}
+                    <span className="text-xs font-bold font-mono text-emerald-400">
+                      {formatUSD(message.product.price)} USD
                     </span>
                   </div>
                 </div>

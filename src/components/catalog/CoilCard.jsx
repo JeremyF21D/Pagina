@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
-import { useCurrency } from '../../context/CurrencyContext';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
 import { normalizeWaPhone } from '../../utils/whatsapp';
 
@@ -10,7 +9,6 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
   const { ownerSettings } = useInventory();
-  const { formatDualPrice, currency } = useCurrency();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
 
@@ -20,11 +18,9 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const categoryId = coil.category || detectProductCategory(coil);
   const catConfig = getCategoryConfig(categoryId);
 
-  // Precios Bimoneda en tiempo real
-  const dualPrice = formatDualPrice(coil.price);
   const isCriticalStock = coil.stock > 0 && coil.stock <= 2;
 
-  // Compra directa por WhatsApp (1-click)
+  // Compra directa por WhatsApp (1-click) en USD oficial
   const handleDirectWhatsAppBuy = () => {
     const phone = normalizeWaPhone(ownerSettings?.ownerPhone || '04126497478');
     const text = encodeURIComponent(
@@ -32,7 +28,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
       `📦 *${coil.name}*\n` +
       `🏷️ Marca/Modelo: ${coil.brand} - ${coil.carModel}\n` +
       `⚙️ Código OEM: ${coil.oem || coil.id}\n` +
-      `💵 Precio: ${formatUSD(coil.price)} (${dualPrice.secondary})\n\n` +
+      `💵 Precio: ${formatUSD(coil.price)} USD\n\n` +
       `¿Tienen disponibilidad para retiro o despacho inmediato?`
     );
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
@@ -177,9 +173,9 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
       <div className="pt-2 sm:pt-4 border-t border-slate-700/70 space-y-2">
         <div className="flex items-baseline justify-between">
           <div>
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-baseline gap-2">
               <span className="text-base sm:text-2xl font-extrabold text-white font-mono">
-                {dualPrice.primary}
+                {formatUSD(coil.price)}
               </span>
               {Number(coil.oldPrice) > Number(coil.price) && (
                 <span className="text-xs text-slate-400 line-through font-mono">
@@ -187,10 +183,6 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
                 </span>
               )}
             </div>
-            {/* Precio Bimoneda calculado en tiempo real */}
-            <p className="text-[10px] sm:text-xs text-amber-300/90 font-mono font-medium -mt-0.5">
-              {dualPrice.secondary}
-            </p>
           </div>
 
           {isAdmin && (

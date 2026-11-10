@@ -1,16 +1,9 @@
 import React from 'react';
 import { formatUSD } from '../../utils/formatters';
-import { formatVES } from '../../services/exchangeRatesService';
-import { useCurrency } from '../../context/CurrencyContext';
 import logoImg from '../../assets/logo.png';
 
 export function ReceiptModal({ isOpen, order, onClose }) {
-  const { rates } = useCurrency();
-
   if (!isOpen || !order) return null;
-
-  const binanceTotalVES = (order.totalPrice || 0) * (rates.binance || 0);
-  const bcvTotalVES = (order.totalPrice || 0) * (rates.bcv || 0);
 
   const handlePrint = () => {
     window.print();
@@ -30,10 +23,8 @@ export function ReceiptModal({ isOpen, order, onClose }) {
 ━━━━━━━━━━━━━━━━━━━━
 ⚙️ *Repuesto:* ${order.coilName}
 🔢 *Cantidad:* ${order.qty} unidad(es)
-💵 *Total USD:* ${formatUSD(order.totalPrice)}
-📱 *Equivalente Binance:* ${formatVES(binanceTotalVES)}
-🏛️ *Equivalente BCV:* ${formatVES(bcvTotalVES)}
-💳 *Método de Pago / Ref:* ${order.paymentRef || 'Pendiente'}
+💵 *Total USD:* ${formatUSD(order.totalPrice)} USD
+💳 *Método de Pago / Ref:* ${order.paymentRef || 'Acordado'}
 🛡️ *Garantía:* 12 meses por defecto de fábrica
 ━━━━━━━━━━━━━━━━━━━━
 ¡Gracias por confiar en JF Auto Parts! Para soporte comunícate al 0412-6497478.`;
@@ -140,25 +131,17 @@ export function ReceiptModal({ isOpen, order, onClose }) {
             </div>
           </div>
 
-          {/* Totales y Conversión */}
+          {/* Totales y Forma de Pago */}
           <div className="space-y-1.5 pt-2 border-t border-slate-800 print:border-gray-300 text-xs">
             <div className="flex justify-between items-center text-slate-300 print:text-gray-700">
-              <span>Total en Divisas:</span>
+              <span className="font-bold">Total a Pagar:</span>
               <span className="font-mono font-extrabold text-base text-emerald-400 print:text-black">
                 {formatUSD(order.totalPrice)} USD
               </span>
             </div>
-            <div className="flex justify-between items-center text-[11px] text-amber-300/90 print:text-gray-800">
-              <span>Monto a Tasa Binance P2P ({formatVES(rates.binance)}):</span>
-              <span className="font-mono font-bold">{formatVES(binanceTotalVES)}</span>
-            </div>
-            <div className="flex justify-between items-center text-[11px] text-slate-400 print:text-gray-800">
-              <span>Monto a Tasa Oficial BCV ({formatVES(rates.bcv)}):</span>
-              <span className="font-mono font-bold">{formatVES(bcvTotalVES)}</span>
-            </div>
-            <div className="flex justify-between items-center text-[11px] text-slate-400 print:text-gray-800 pt-1 border-t border-slate-800/60">
+            <div className="flex justify-between items-center text-[11px] text-slate-300 print:text-gray-800 pt-1 border-t border-slate-800/60">
               <span>Método y Referencia:</span>
-              <span className="font-mono text-slate-200 print:text-black">{order.paymentRef || 'Efectivo / Acordado'}</span>
+              <span className="font-mono font-semibold text-amber-300 print:text-black">{order.paymentRef || 'Acordado en tienda'}</span>
             </div>
           </div>
 
