@@ -3,12 +3,25 @@ import { useInventory } from '../../context/InventoryContext';
 import { formatUSD, detectProductCategory, getCategoryConfig, PRODUCT_CATEGORIES } from '../../utils/formatters';
 
 export function InventoryTable({ onEditCoil, onDeleteCoil }) {
-  const { coils } = useInventory();
+  const { coils, upsertCoil } = useInventory();
   const [search, setSearch] = useState('');
   const [brandFilter, setBrandFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [stockStatusFilter, setStockStatusFilter] = useState('ALL'); // 'ALL' | 'CRITICAL' | 'EMPTY' | 'AVAILABLE'
+  const [onlyNoPhoto, setOnlyNoPhoto] = useState(false);
 
   const brands = Array.from(new Set(coils.map(c => c.brand).filter(Boolean))).sort();
+
+  const handleStockAdjust = (coil, delta) => {
+    const current = Number(coil.stock || 0);
+    const nextStock = Math.max(0, current + delta);
+    if (nextStock !== current) {
+      upsertCoil({
+        ...coil,
+        stock: nextStock
+      });
+    }
+  };
 
   const filtered = coils.filter(b => {
     if (brandFilter !== 'ALL' && b.brand !== brandFilter) return false;
@@ -16,6 +29,12 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
       const cat = detectProductCategory(b);
       if (cat !== categoryFilter) return false;
     }
+    if (onlyNoPhoto && b.image) return false;
+
+    if (stockStatusFilter === 'CRITICAL' && (b.stock <= 0 || b.stock > 2)) return false;
+    if (stockStatusFilter === 'EMPTY' && b.stock > 0) return false;
+    if (stockStatusFilter === 'AVAILABLE' && b.stock <= 0) return false;
+
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
@@ -36,12 +55,27 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
         <div className="flex items-center gap-2">
           <i className="fa-solid fa-database text-sky-400"></i>
           <h3 className="text-sm font-bold text-white">Inventario de Repuestos en Base de Datos</h3>
-          <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">
+          <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700 font-mono">
             {filtered.length} referencias
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Botón Filtro "Sin Foto" */}
+          <button
+            type="button"
+            onClick={() => setOnlyNoPhoto(!onlyNoPhoto)}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${
+              onlyNoPhoto 
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
+                : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+            }`}
+            title="Mostrar solo repuestos que no tienen foto asignada"
+          >
+            <i className="fa-solid fa-image"></i>
+            <span>Sin Foto</span>
+          </button>
+
           <input 
             type="text" 
             value={search}
@@ -49,6 +83,17 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
             placeholder="Filtrar por código, auto, OEM..." 
             className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
           />
+
+          <select 
+            value={stockStatusFilter}
+            onChange={(e) => setStockStatusFilter(e.target.value)}
+            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+          >
+            <option value="ALL">Todo el Stock</option>
+            <option value="CRITICAL">⚠️ Stock Crítico (1-2 uds)</option>
+            <option value="EMPTY">🔴 Agotados (0 uds)</option>
+            <option value="AVAILABLE">🟢 En Stock</option>
+          </select>
 
           <select 
             value={categoryFilter}
@@ -84,9 +129,8 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
               <th className="py-3 px-4">Vehículos Compatibles</th>
               <th className="py-3 px-4">Motor</th>
               <th className="py-3 px-4">Código OEM</th>
-              <th className="py-3 px-4">Especificación / Conector</th>
               <th className="py-3 px-4">Precio</th>
-              <th className="py-3 px-4 text-center">Stock Actual</th>
+              <th className="py-3 px-4 text-center">Ajuste Rápido Stock</th>
               <th className="py-3 px-4">Garantía</th>
               <th className="py-3 px-4 text-right">Acciones</th>
             </tr>
@@ -94,15 +138,27 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
           <tbody className="divide-y divide-slate-800">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="10" className="py-8 text-center text-slate-500">
-                  No se encontraron repuestos en el inventario.
+                <td colSpan="9" className="py-8 text-center text-slate-500">
+                  No se encontraron repuestos en el inventario con los filtros aplicados.
                 </td>
               </tr>
             ) : (
               filtered.map(coil => {
                 const catCfg = getCategoryConfig(coil.category || detectProductCategory(coil));
+                const isCritical = coil.stock > 0 && coil.stock <= 2;
+                const isEmpty = coil.stock <= 0;
+
                 return (
-                  <tr key={coil.id} className="hover:bg-slate-800/50 transition">
+                  <tr 
+                    key={coil.id} 
+                    className={`transition hover:bg-slate-800/60 ${
+                      isEmpty 
+                        ? 'bg-rose-950/10' 
+                        : isCritical 
+                        ? 'bg-amber-950/10' 
+                        : ''
+                    }`}
+                  >
                     <td className="py-3 px-4 font-mono font-bold text-sky-400 whitespace-nowrap">
                       {coil.id}
                     </td>
@@ -136,21 +192,44 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
                     <td className="py-3 px-4 font-mono text-[11px] text-slate-300 whitespace-nowrap">
                       {coil.oem}
                     </td>
-                    <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
-                      {coil.connector || coil.type || '-'}
-                    </td>
                     <td className="py-3 px-4 font-mono font-bold text-brand-400 whitespace-nowrap">
                       {formatUSD(coil.price)}
                     </td>
+
+                    {/* Ajuste Rápido de Stock en Línea con Semáforo */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        coil.stock > 0 
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                          : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                      }`}>
-                        {coil.stock} uds
-                      </span>
+                      <div className="inline-flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => handleStockAdjust(coil, -1)}
+                          disabled={coil.stock <= 0}
+                          className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-200 text-xs flex items-center justify-center transition cursor-pointer"
+                          title="Restar 1 unidad"
+                        >
+                          -
+                        </button>
+
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold ${
+                          isEmpty 
+                            ? 'text-rose-400' 
+                            : isCritical 
+                            ? 'text-amber-300' 
+                            : 'text-emerald-400'
+                        }`}>
+                          {coil.stock} uds
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleStockAdjust(coil, 1)}
+                          className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs flex items-center justify-center transition cursor-pointer"
+                          title="Sumar 1 unidad"
+                        >
+                          +
+                        </button>
+                      </div>
                     </td>
+
                     <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
                       {coil.warranty}
                     </td>
@@ -158,14 +237,14 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
                       <button 
                         onClick={() => onEditCoil(coil)}
                         className="p-1.5 bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 rounded-lg text-xs transition cursor-pointer"
-                        title="Editar registro"
+                        title="Editar registro completo"
                       >
                         <i className="fa-solid fa-pen-to-square"></i>
                       </button>
                       <button 
                         onClick={() => onDeleteCoil(coil.id)}
                         className="p-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded-lg text-xs transition cursor-pointer"
-                        title="Eliminar registro"
+                        title="Eliminar de Supabase"
                       >
                         <i className="fa-solid fa-trash-can"></i>
                       </button>

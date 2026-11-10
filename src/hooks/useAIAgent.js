@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { useAuth } from '../context/AuthContext';
 import { getEngineLabel, formatUSD } from '../utils/formatters';
+import { getCachedExchangeRates, formatVES } from '../services/exchangeRatesService';
 
 // ─── Stop words — ignoring these helps focus on meaningful search terms ──────
 const STOP_WORDS = new Set([
@@ -290,6 +291,29 @@ export function useAIAgent() {
     const MIN_SCORE = 2;
     const targetProduct =
       (bestMatch && highestScore >= MIN_SCORE) ? bestMatch : lastInteractedProduct;
+
+    // ── Exchange rate intent ────────────────────────────────────────────────
+    const isRateQuery =
+      cleanText.includes('tasa') ||
+      cleanText.includes('dolar') ||
+      cleanText.includes('bolivar') ||
+      cleanText.includes('bolivares') ||
+      cleanText.includes('a como') ||
+      cleanText.includes('precio en bs');
+
+    if (isRateQuery && !explicitProduct && (!bestMatch || highestScore < 3)) {
+      const cached = getCachedExchangeRates() || { binance: 1067.45, bcv: 899.27, lastUpdated: 'En vivo' };
+      logConsoleQuery(`RATE QUERY: BINANCE=${cached.binance} BCV=${cached.bcv}`, 1, latency);
+      return {
+        product: targetProduct,
+        hasAction: false,
+        badge: 'Monitor de Tasas en Vivo',
+        html: `📊 <strong>Tasas de Cambio Activas Hoy:</strong><br><br>
+• 🟡 <strong>Binance P2P:</strong> ${formatVES(cached.binance)} / USDT<br>
+• 🏛️ <strong>Dólar Oficial BCV:</strong> ${formatVES(cached.bcv)} / USD<br><br>
+Aceptamos <strong>Pago Móvil, Binance Pay, Zelle y Efectivo</strong>. Si me indicas qué repuesto o carro tienes, ¡te calculo el precio exacto en Bolívares al instante!`
+      };
+    }
 
     // ── 1. Transactional purchase closing ────────────────────────────────────
     if (isPurchaseConfirmation && targetProduct) {

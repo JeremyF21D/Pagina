@@ -84,6 +84,16 @@ export function DatabaseView({
             <i className="fa-solid fa-file-import text-sky-400"></i> Carga Masiva (CSV / JSON)
           </button>
 
+          {/* Botón Respaldo Rápido 1-Clic */}
+          <button 
+            onClick={() => handleExport('json')}
+            className="px-3.5 py-2 bg-emerald-950/50 hover:bg-emerald-900/70 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-sm"
+            title="Descargar copia de seguridad en JSON de la base de datos de Supabase"
+          >
+            <i className="fa-solid fa-floppy-disk text-emerald-400"></i>
+            <span>Respaldo Rápido</span>
+          </button>
+
           {/* Botón de Exportar Robusto (Controlado por Clic, sin cierres accidentales) */}
           <div className="relative">
             <button 

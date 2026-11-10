@@ -5,19 +5,38 @@ import { formatUSD } from '../../utils/formatters';
 import { ProductHoverPreview } from './ProductHoverPreview';
 import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
 import { EditSaleModal } from '../modals/EditSaleModal';
+import { ReceiptModal } from '../modals/ReceiptModal';
 
 export function SalesTable() {
   const { salesHistory, confirmSale, revertSale, deleteSale, updateSaleTransaction, ownerSettings, coils } = useInventory();
   const [filter, setFilter] = useState('ALL');
+  const [dateFilter, setDateFilter] = useState('ALL'); // 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'
   const [search, setSearch] = useState('');
   const [orderToConfirm, setOrderToConfirm] = useState(null);
   const [orderToEdit, setOrderToEdit] = useState(null);
+  const [orderForReceipt, setOrderForReceipt] = useState(null);
   const [selectedNoteModal, setSelectedNoteModal] = useState(null);
 
   const filteredOrders = salesHistory.filter(ord => {
     if (filter === 'CONFIRMED' && ord.status !== 'CONFIRMED') return false;
     if (filter === 'REVERTED' && ord.status !== 'REVERTED') return false;
     if (filter === 'PENDING' && ord.status !== 'PENDING_APPROVAL') return false;
+
+    // Filtro por fecha para cuadre de caja
+    if (dateFilter !== 'ALL' && ord.timestamp) {
+      const ordDate = new Date(ord.timestamp);
+      const now = new Date();
+      if (!isNaN(ordDate.getTime())) {
+        if (dateFilter === 'TODAY') {
+          if (ordDate.toDateString() !== now.toDateString()) return false;
+        } else if (dateFilter === 'WEEK') {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (ordDate < oneWeekAgo) return false;
+        } else if (dateFilter === 'MONTH') {
+          if (ordDate.getMonth() !== now.getMonth() || ordDate.getFullYear() !== now.getFullYear()) return false;
+        }
+      }
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -52,6 +71,48 @@ export function SalesTable() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Selector de Período para Cuadre de Caja */}
+          <div className="flex items-center bg-slate-800 rounded-xl p-0.5 border border-slate-700 text-xs">
+            <span className="px-2 text-[10px] text-slate-400 font-bold hidden sm:inline">Período:</span>
+            <button
+              type="button"
+              onClick={() => setDateFilter('ALL')}
+              className={`px-2 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                dateFilter === 'ALL' ? 'bg-brand-500 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              Todo
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('TODAY')}
+              className={`px-2 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                dateFilter === 'TODAY' ? 'bg-emerald-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+              title="Filtrar solo las ventas de hoy para cuadre de caja diario"
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('WEEK')}
+              className={`px-2 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                dateFilter === 'WEEK' ? 'bg-sky-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              Semana
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('MONTH')}
+              className={`px-2 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                dateFilter === 'MONTH' ? 'bg-purple-600 text-white shadow' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              Mes
+            </button>
+          </div>
+
           <input 
             type="text" 
             value={search}
@@ -292,6 +353,17 @@ export function SalesTable() {
                         <i className="fa-solid fa-pen-to-square"></i>
                       </button>
 
+                      {/* Botón Comprobante / Recibo Digital de Garantía */}
+                      {ord.status === 'CONFIRMED' && (
+                        <button 
+                          onClick={() => setOrderForReceipt(ord)}
+                          className="p-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 rounded-lg text-xs transition cursor-pointer active:scale-95"
+                          title="Generar e imprimir recibo formal de venta"
+                        >
+                          <i className="fa-solid fa-receipt"></i>
+                        </button>
+                      )}
+
                       <button 
                         onClick={() => handleNotifyOwner(ord)}
                         className="p-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 rounded-lg text-xs transition cursor-pointer"
@@ -327,6 +399,13 @@ export function SalesTable() {
         coils={coils}
         onClose={() => setOrderToConfirm(null)}
         onConfirm={(orderId, paymentData) => confirmSale(orderId, paymentData)}
+      />
+
+      {/* Modal de Recibo Formal / Ticket Imprimible */}
+      <ReceiptModal
+        isOpen={Boolean(orderForReceipt)}
+        order={orderForReceipt}
+        onClose={() => setOrderForReceipt(null)}
       />
 
       {/* Modal de Edición de Venta & Cambio de Repuesto */}

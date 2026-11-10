@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useInventory } from '../../context/InventoryContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { normalizeWaPhone } from '../../utils/whatsapp';
 import logoImg from '../../assets/logo.png';
 
@@ -9,6 +10,7 @@ export function Header({ activeTab, setActiveTab }) {
   const { isAdmin, openAuthModal, logout, requireAdminAuth } = useAuth();
   const { cartCount, toggleCart } = useCart();
   const { salesHistory, ownerSettings } = useInventory();
+  const { currency, setCurrency, rates } = useCurrency();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleNavClick = (tabKey) => {
@@ -92,6 +94,40 @@ export function Header({ activeTab, setActiveTab }) {
 
         {/* Right side actions */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Selector de Moneda Rápido en Header */}
+          <div className="hidden lg:flex items-center bg-slate-950/80 rounded-xl p-1 border border-slate-700/80 text-[11px] font-mono">
+            <button
+              type="button"
+              onClick={() => setCurrency('USD')}
+              className={`px-2 py-0.5 rounded-lg font-bold transition cursor-pointer ${
+                currency === 'USD' ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+              title="Mostrar precios en USD"
+            >
+              $ USD
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrency('VES_BINANCE')}
+              className={`px-2 py-0.5 rounded-lg font-bold transition cursor-pointer ${
+                currency === 'VES_BINANCE' ? 'bg-amber-400 text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+              title={`Tasa Binance: Bs. ${rates.binance}`}
+            >
+              Bs Binance
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrency('VES_BCV')}
+              className={`px-2 py-0.5 rounded-lg font-bold transition cursor-pointer ${
+                currency === 'VES_BCV' ? 'bg-sky-400 text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+              title={`Tasa BCV: Bs. ${rates.bcv}`}
+            >
+              Bs BCV
+            </button>
+          </div>
+
           {/* Admin Auth Pill Button */}
           {isAdmin ? (
             <button
@@ -150,7 +186,35 @@ export function Header({ activeTab, setActiveTab }) {
 
       {/* Mobile Dropdown Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-900 border-t border-slate-700/80 px-3 py-3 space-y-1 shadow-xl animate-fade-in">
+        <div className="md:hidden bg-slate-900 border-t border-slate-700/80 px-3 py-3 space-y-2 shadow-xl animate-fade-in">
+          {/* Selector de Moneda en Móvil */}
+          <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+            <span className="text-slate-400 font-bold">Moneda:</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrency('USD')}
+                className={`px-2 py-1 rounded text-xs font-bold ${currency === 'USD' ? 'bg-brand-500 text-white' : 'text-slate-400'}`}
+              >
+                USD
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrency('VES_BINANCE')}
+                className={`px-2 py-1 rounded text-xs font-bold ${currency === 'VES_BINANCE' ? 'bg-amber-400 text-slate-950' : 'text-slate-400'}`}
+              >
+                Binance
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrency('VES_BCV')}
+                className={`px-2 py-1 rounded text-xs font-bold ${currency === 'VES_BCV' ? 'bg-sky-400 text-slate-950' : 'text-slate-400'}`}
+              >
+                BCV
+              </button>
+            </div>
+          </div>
+
           {visibleTabs.map(tab => (
             <button
               key={tab.key}

@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useInventory } from '../../context/InventoryContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
+import { normalizeWaPhone } from '../../utils/whatsapp';
 
 export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
+  const { ownerSettings } = useInventory();
+  const { formatDualPrice, currency } = useCurrency();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   const oemList = (coil.oem || '').split(/[,/]+/).map(s => s.trim()).filter(Boolean);
   const primaryOem = oemList[0] || '';
@@ -14,8 +20,36 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const categoryId = coil.category || detectProductCategory(coil);
   const catConfig = getCategoryConfig(categoryId);
 
+  // Precios Bimoneda en tiempo real
+  const dualPrice = formatDualPrice(coil.price);
+  const isCriticalStock = coil.stock > 0 && coil.stock <= 2;
+
+  // Compra directa por WhatsApp (1-click)
+  const handleDirectWhatsAppBuy = () => {
+    const phone = normalizeWaPhone(ownerSettings?.ownerPhone || '04126497478');
+    const text = encodeURIComponent(
+      `¡Hola JF Auto Parts! 🚗 Deseo comprar directamente este repuesto:\n\n` +
+      `📦 *${coil.name}*\n` +
+      `🏷️ Marca/Modelo: ${coil.brand} - ${coil.carModel}\n` +
+      `⚙️ Código OEM: ${coil.oem || coil.id}\n` +
+      `💵 Precio: ${formatUSD(coil.price)} (${dualPrice.secondary})\n\n` +
+      `¿Tienen disponibilidad para retiro o despacho inmediato?`
+    );
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  };
+
+  // Compartir repuesto
+  const handleShare = () => {
+    const textToShare = `Mira este repuesto en JF Auto Parts: ${coil.name} (${formatUSD(coil.price)}): ${window.location.href}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(textToShare);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 2000);
+    }
+  };
+
   return (
-    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1.5 transition-all duration-300 group animate-fade-in">
+    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1.5 transition-all duration-300 group animate-fade-in relative">
       <div>
         {/* Badge & Stock Status - Altura fija de 28px sin wrap para nivelar perfectamente todas las fotos */}
         <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 h-6 sm:h-7">
@@ -29,9 +63,22 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
             </span>
           </div>
 
-          <div className={`flex items-center gap-1.5 text-xs ${coil.stock > 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold whitespace-nowrap flex-shrink-0`}>
-            <span className={`h-2 w-2 rounded-full ${coil.stock > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'} flex-shrink-0`}></span>
-            <span>{coil.stock > 0 ? `${coil.stock} en stock` : 'Agotado'}</span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap flex-shrink-0">
+            {coil.stock <= 0 ? (
+              <span className="inline-flex items-center gap-1 text-rose-400">
+                <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+                <span>Agotado</span>
+              </span>
+            ) : isCriticalStock ? (
+              <span className="inline-flex items-center gap-1 text-amber-300 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold animate-pulse">
+                <span>🔥 ¡Últimas {coil.stock}!</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{coil.stock} en stock</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -51,7 +98,6 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
                 style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
               />
-              {/* Overlay hover sutil para indicar zoom */}
               <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                 <span className="p-1.5 rounded-full bg-slate-900/80 text-white text-xs border border-slate-700/80 shadow-lg">
                   <i className="fa-solid fa-magnifying-glass-plus"></i>
@@ -74,12 +120,21 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           <span className="absolute top-2 right-2 text-[10px] font-semibold text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/80 shadow-md pointer-events-none">
             <i className="fa-solid fa-shield text-rose-400 mr-1"></i>{coil.warranty || '12 meses'}
           </span>
-          {/* El código interno / ID solo es visible para el Administrador */}
           {isAdmin && (
             <span className="absolute top-2 left-2 text-[10px] font-mono font-bold text-amber-300 bg-slate-950/90 backdrop-blur-md px-2 py-0.5 rounded border border-amber-500/50 shadow-md pointer-events-none">
               {coil.id}
             </span>
           )}
+
+          {/* Botón flotante para compartir */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); handleShare(); }}
+            className="absolute bottom-2 left-2 p-1.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-[10px] transition cursor-pointer"
+            title="Copiar enlace del repuesto"
+          >
+            <i className={`fa-solid ${copiedShare ? 'fa-check text-emerald-400' : 'fa-share-nodes'}`}></i>
+          </button>
         </div>
 
         {/* Titles & Compatibility */}
@@ -119,18 +174,25 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
       </div>
 
       {/* Price & Actions Footer */}
-      <div className="pt-2 sm:pt-4 border-t border-slate-700/70 space-y-1.5 sm:space-y-3">
+      <div className="pt-2 sm:pt-4 border-t border-slate-700/70 space-y-2">
         <div className="flex items-baseline justify-between">
           <div>
-            <span className="text-base sm:text-2xl font-extrabold text-white font-mono">{formatUSD(coil.price)}</span>
-            {Number(coil.oldPrice) > Number(coil.price) && (
-              <span className="text-xs text-slate-400 line-through ml-1.5 font-mono">
-                {formatUSD(coil.oldPrice)}
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base sm:text-2xl font-extrabold text-white font-mono">
+                {dualPrice.primary}
               </span>
-            )}
+              {Number(coil.oldPrice) > Number(coil.price) && (
+                <span className="text-xs text-slate-400 line-through font-mono">
+                  {formatUSD(coil.oldPrice)}
+                </span>
+              )}
+            </div>
+            {/* Precio Bimoneda calculado en tiempo real */}
+            <p className="text-[10px] sm:text-xs text-amber-300/90 font-mono font-medium -mt-0.5">
+              {dualPrice.secondary}
+            </p>
           </div>
 
-          {/* Only visible when Admin is logged in */}
           {isAdmin && (
             <button 
               onClick={() => onEditProduct(coil)}
@@ -142,6 +204,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           )}
         </div>
 
+        {/* Acciones: Carrito, WhatsApp Directo y Consulta IA */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button 
             onClick={() => addToCart(coil.id)} 
@@ -153,18 +216,29 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
             }`}
           >
             <i className={`fa-solid ${coil.stock > 0 ? 'fa-cart-plus' : 'fa-ban'}`}></i>
-            <span>{coil.stock > 0 ? 'Agregar' : 'Sin Stock'}</span>
+            <span>{coil.stock > 0 ? 'Al Carrito' : 'Sin Stock'}</span>
           </button>
 
           <button 
-            onClick={() => onAskAI && onAskAI(coil)}
-            className="px-2 py-1.5 sm:px-3 sm:py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer"
-            title="Consultar disponibilidad y precio al Asistente IA"
+            onClick={handleDirectWhatsAppBuy}
+            disabled={coil.stock <= 0}
+            className="px-2 py-1.5 sm:px-3 sm:py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Comprar directamente por WhatsApp con mensaje prearmado"
           >
-            <i className="fa-solid fa-robot text-xs"></i>
-            <span>Consultar IA</span>
+            <i className="fa-brands fa-whatsapp text-sm"></i>
+            <span>Comprar Ya</span>
           </button>
         </div>
+
+        {/* Botón secundario Asistente IA */}
+        <button 
+          onClick={() => onAskAI && onAskAI(coil)}
+          className="w-full py-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/80 rounded-lg text-[10px] font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
+          title="Consultar compatibilidad al Asistente IA"
+        >
+          <i className="fa-solid fa-robot text-emerald-400 text-[10px]"></i>
+          <span>Consultar dudas al Asistente IA</span>
+        </button>
       </div>
 
       {/* Lightbox / Modal de Foto Ampliada Completa */}
@@ -199,14 +273,13 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
               <img 
                 src={coil.image} 
                 alt={coil.name} 
-                className="max-h-[60vh] w-auto max-w-full object-contain mx-auto" 
+                className="max-h-full max-w-full object-contain"
               />
             </div>
             
-            <div className="flex flex-wrap items-center justify-between text-xs text-slate-300 pt-1 gap-2">
-              <span>OEM: <strong className="text-white font-mono bg-slate-800 px-1.5 py-0.5 rounded">{primaryOem || 'N/A'}</strong></span>
-              <span>Garantía: <strong className="text-emerald-400">{coil.warranty || '12 meses'}</strong></span>
-              <span>Stock: <strong className={coil.stock > 0 ? "text-emerald-400" : "text-rose-400"}>{coil.stock > 0 ? `${coil.stock} disponibles` : 'Agotado'}</strong></span>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+              <span className="text-slate-400">Compatibilidad: <strong className="text-white">{coil.carModel}</strong></span>
+              <span className="text-brand-400 font-mono font-bold text-base">{formatUSD(coil.price)}</span>
             </div>
           </div>
         </div>
