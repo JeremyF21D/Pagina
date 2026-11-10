@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { SalesTable } from './SalesTable';
 import { SalesDatabaseModal } from '../modals/SalesDatabaseModal';
+import { ExchangeRateLiveBanner } from './ExchangeRateLiveBanner';
 import { formatUSD } from '../../utils/formatters';
 
 export function SalesView({ onOpenManualSaleModal }) {
@@ -110,6 +111,9 @@ export function SalesView({ onOpenManualSaleModal }) {
           )}
         </div>
       </div>
+
+      {/* Monitor de Tasas de Cambio en Vivo (Binance P2P & BCV Oficial) */}
+      <ExchangeRateLiveBanner />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

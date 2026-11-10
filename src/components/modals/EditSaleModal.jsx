@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
+import { getCachedExchangeRates, formatVES } from '../../services/exchangeRatesService';
 
 // Helper de parsing para extraer datos estructurados de referencia_pago
 export function parsePaymentReference(rawText, defaultPrice = 0, defaultCustomer = '', defaultPhone = '') {
@@ -849,6 +850,35 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                         placeholder="Ej: Bs 3,250 o $15.00"
                         className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                       />
+                      {/* Botones de conversión rápida a tasa Binance y BCV */}
+                      {(() => {
+                        const cachedRates = getCachedExchangeRates();
+                        if (!cachedRates) return null;
+                        return (
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            {cachedRates.binance > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setPagoMovilMonto(formatVES(calculatedTotal * cachedRates.binance))}
+                                className="text-[10px] bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded cursor-pointer transition font-mono"
+                                title="Calcular automáticamente en Bolívares a tasa Binance P2P"
+                              >
+                                ⚡ Binance: {formatVES(calculatedTotal * cachedRates.binance)}
+                              </button>
+                            )}
+                            {cachedRates.bcv > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setPagoMovilMonto(formatVES(calculatedTotal * cachedRates.bcv))}
+                                className="text-[10px] bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded cursor-pointer transition font-mono"
+                                title="Calcular automáticamente en Bolívares a tasa oficial BCV"
+                              >
+                                🏛️ BCV: {formatVES(calculatedTotal * cachedRates.bcv)}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
