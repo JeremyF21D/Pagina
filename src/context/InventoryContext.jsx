@@ -761,8 +761,8 @@ Directrices de conversación:
 
     const payload = {
       order_id: cleanOrderId,
-      fecha: order.timestamp || order.fecha || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      fecha_hora: new Date().toISOString(),
+      fecha: order.timestamp && order.timestamp.includes('T') ? order.timestamp : (order.fecha || new Date().toISOString()),
+      fecha_hora: (order.timestamp && order.timestamp.includes('T')) ? order.timestamp : new Date().toISOString(),
       cliente_nombre: String(order.customerName || order.cliente_nombre || 'Cliente WhatsApp').trim(),
       cliente_telefono: String(order.customerPhone || order.cliente_telefono || '').trim(),
       producto_id: coil ? coil.id : String(order.coilId || order.producto_id || '').trim(),
@@ -846,7 +846,7 @@ Directrices de conversación:
 
       const newOrder = {
         orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toISOString(),
         userId: userId || 'CLI-GUEST',
         customerName: customerName || 'Cliente WhatsApp Directo',
         customerPhone: customerPhone || 'No especificado',
@@ -1363,7 +1363,7 @@ Directrices de conversación:
 
               return {
                 orderId: String(item.order_id || item.id).replace(/^#/, ''),
-                timestamp: item.fecha || item.fecha_hora || item.created_at || 'Hoy',
+                timestamp: item.fecha_hora || item.created_at || item.fecha || new Date().toISOString(),
                 customerName: item.cliente_nombre || item.customer_name || 'Cliente',
                 customerPhone: item.cliente_telefono || item.customer_phone || '',
                 coilId: matchedCoil ? matchedCoil.id : (rawProdId || 'BOB-GEN'),

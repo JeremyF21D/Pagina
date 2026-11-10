@@ -340,7 +340,7 @@ export function parseSalesCSV(csvText, catalogCoils = []) {
     const rawTotal = parseFloat(r.total_usd || r.totalPrice || r.total || 0);
     const rawPayRef = r.referencia_pago || r.paymentRef || r.pago || r.referencia || 'Transferencia / Pago Móvil';
     const rawStatus = (r.estado_orden || r.estado || r.status || 'CONFIRMED').toUpperCase();
-    const rawDate = r.fecha_hora || r.fecha || r.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const rawDate = r.fecha_hora || r.fecha || r.timestamp || new Date().toISOString();
 
     // CONNECT WITH CATALOG PRODUCT:
     // 1. By ID

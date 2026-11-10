@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatUSD } from '../../utils/formatters';
+import { formatUSD, formatOrderDate } from '../../utils/formatters';
 import logoImg from '../../assets/logo.png';
 
 export function ReceiptModal({ isOpen, order, onClose }) {
@@ -17,7 +17,7 @@ export function ReceiptModal({ isOpen, order, onClose }) {
 `🧾 *COMPROBANTE DE COMPRA • JF AUTO PARTS*
 ━━━━━━━━━━━━━━━━━━━━
 📌 *Orden #:* ${order.orderId}
-📅 *Fecha:* ${order.timestamp || new Date().toLocaleString()}
+📅 *Fecha:* ${formatOrderDate(order.timestamp, true)}
 👤 *Cliente:* ${order.customerName}
 📞 *Teléfono:* ${order.customerPhone || 'N/A'}
 ━━━━━━━━━━━━━━━━━━━━
@@ -101,7 +101,7 @@ export function ReceiptModal({ isOpen, order, onClose }) {
             </div>
             <div className="text-right">
               <span className="text-[10px] text-slate-400 block uppercase font-mono print:text-gray-600">Fecha y Hora</span>
-              <span className="text-slate-300 font-mono text-[11px] print:text-black">{order.timestamp || 'Reciente'}</span>
+              <span className="text-slate-300 font-mono text-[11px] print:text-black">{formatOrderDate(order.timestamp, true)}</span>
             </div>
             <div className="col-span-2 pt-1 border-t border-slate-800/80 print:border-gray-200">
               <span className="text-[10px] text-slate-400 block uppercase font-mono print:text-gray-600">Cliente</span>

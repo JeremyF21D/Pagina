@@ -6,7 +6,6 @@ import { CartProvider } from './context/CartContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 
 import { TopNoticeBar } from './components/layout/TopNoticeBar';
-import { LocalPreviewNoticeBar } from './components/common/LocalPreviewNoticeBar';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { OwnerNotificationBanner } from './components/common/OwnerNotificationBanner';
@@ -76,9 +75,6 @@ function MainApp() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-brand-500 selection:text-white">
-      {/* Banner de Entorno Local de Pruebas */}
-      <LocalPreviewNoticeBar />
-
       {/* Top Banner Ribbon Promocional */}
       <TopNoticeBar />
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { buildOwnerAlertUrl } from '../../utils/whatsapp';
-import { formatUSD } from '../../utils/formatters';
+import { formatUSD, parseOrderDate, formatOrderDate } from '../../utils/formatters';
 import { ProductHoverPreview } from './ProductHoverPreview';
 import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
 import { EditSaleModal } from '../modals/EditSaleModal';
@@ -22,16 +22,23 @@ export function SalesTable() {
     if (filter === 'REVERTED' && ord.status !== 'REVERTED') return false;
     if (filter === 'PENDING' && ord.status !== 'PENDING_APPROVAL') return false;
 
-    // Filtro por fecha para cuadre de caja
-    if (dateFilter !== 'ALL' && ord.timestamp) {
-      const ordDate = new Date(ord.timestamp);
-      const now = new Date();
-      if (!isNaN(ordDate.getTime())) {
+    // Filtro dinámico por fecha para cuadre de caja
+    if (dateFilter !== 'ALL') {
+      const ordDate = parseOrderDate(ord.timestamp);
+      if (!ordDate || isNaN(ordDate.getTime())) {
+        if (dateFilter === 'TODAY' && String(ord.timestamp || '').toLowerCase().includes('hoy')) {
+          // Pasa si dice 'hoy' explícitamente
+        } else {
+          return false;
+        }
+      } else {
+        const now = new Date();
         if (dateFilter === 'TODAY') {
           if (ordDate.toDateString() !== now.toDateString()) return false;
         } else if (dateFilter === 'WEEK') {
-          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          if (ordDate < oneWeekAgo) return false;
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+          const sevenDaysAgo = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (ordDate < sevenDaysAgo) return false;
         } else if (dateFilter === 'MONTH') {
           if (ordDate.getMonth() !== now.getMonth() || ordDate.getFullYear() !== now.getFullYear()) return false;
         }
@@ -50,6 +57,8 @@ export function SalesTable() {
     return true;
   });
 
+  const totalPeriodUSD = filteredOrders.reduce((sum, ord) => sum + (Number(ord.totalPrice) || 0), 0);
+
   const handleNotifyOwner = (order) => {
     const url = buildOwnerAlertUrl({
       ownerPhone: ownerSettings.ownerPhone,
@@ -62,12 +71,18 @@ export function SalesTable() {
     <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
       {/* Table Filter Header */}
       <div className="p-4 bg-slate-850 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <i className="fa-solid fa-list-check text-brand-400"></i>
           <h3 className="text-sm font-bold text-white">Registro de Órdenes y Ventas WhatsApp</h3>
-          <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">
+          <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700 font-mono">
             {filteredOrders.length}
           </span>
+          {dateFilter !== 'ALL' && (
+            <span className="text-[11px] bg-emerald-500/15 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-mono font-bold inline-flex items-center gap-1.5 shadow-xs">
+              <i className="fa-solid fa-cash-register text-[10px]"></i>
+              <span>Total {dateFilter === 'TODAY' ? 'Hoy' : dateFilter === 'WEEK' ? 'Semana' : 'Mes'}: {formatUSD(totalPeriodUSD)}</span>
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -167,8 +182,11 @@ export function SalesTable() {
                       #{ord.orderId}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
-                    {ord.timestamp}
+                  <td className="py-3 px-4 text-slate-300 whitespace-nowrap font-mono text-[11px]" title={ord.timestamp}>
+                    <span className="inline-flex items-center gap-1.5">
+                      <i className="fa-regular fa-clock text-[10px] text-slate-500"></i>
+                      <span>{formatOrderDate(ord.timestamp)}</span>
+                    </span>
                   </td>
                   <td className="py-3 px-4 font-medium text-white">
                     <div>{ord.customerName}</div>

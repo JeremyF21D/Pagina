@@ -404,3 +404,121 @@ export function formatUSD(amount) {
   const num = Number(amount) || 0;
   return `$${num.toFixed(2)}`;
 }
+
+/**
+ * Parsea de forma robusta cualquier formato de fecha registrado en las órdenes
+ * (ISO 8601, cadenas con "Hoy", "Ayer", formato latino DD/MM/AAAA, o solo hora HH:mm)
+ */
+export function parseOrderDate(raw) {
+  if (!raw) return null;
+  if (raw instanceof Date && !isNaN(raw.getTime())) return raw;
+  const str = String(raw).trim();
+  if (!str) return null;
+
+  // 1. Cadenas que inician con "Hoy" (ej: "Hoy, 09:15 AM", "Hoy")
+  if (/^hoy/i.test(str)) {
+    const d = new Date();
+    const timeMatch = str.match(/(\d{1,2}):(\d{2})(?:\s*([ap]\.?m\.?))?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      const mins = parseInt(timeMatch[2], 10);
+      const meridiem = (timeMatch[3] || '').toLowerCase().replace(/\./g, '');
+      if (meridiem === 'pm' && hours < 12) hours += 12;
+      if (meridiem === 'am' && hours === 12) hours = 0;
+      d.setHours(hours, mins, 0, 0);
+    }
+    return d;
+  }
+
+  // 2. Cadenas que inician con "Ayer" (ej: "Ayer, 04:30 PM", "Ayer")
+  if (/^ayer/i.test(str)) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const timeMatch = str.match(/(\d{1,2}):(\d{2})(?:\s*([ap]\.?m\.?))?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      const mins = parseInt(timeMatch[2], 10);
+      const meridiem = (timeMatch[3] || '').toLowerCase().replace(/\./g, '');
+      if (meridiem === 'pm' && hours < 12) hours += 12;
+      if (meridiem === 'am' && hours === 12) hours = 0;
+      d.setHours(hours, mins, 0, 0);
+    }
+    return d;
+  }
+
+  // 3. Solo hora (ej: "04:12 PM", "16:12") -> asume la fecha de hoy
+  if (/^\d{1,2}:\d{2}(\s*[ap]\.?m\.?)?$/i.test(str)) {
+    const d = new Date();
+    const timeMatch = str.match(/(\d{1,2}):(\d{2})(?:\s*([ap]\.?m\.?))?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      const mins = parseInt(timeMatch[2], 10);
+      const meridiem = (timeMatch[3] || '').toLowerCase().replace(/\./g, '');
+      if (meridiem === 'pm' && hours < 12) hours += 12;
+      if (meridiem === 'am' && hours === 12) hours = 0;
+      d.setHours(hours, mins, 0, 0);
+    }
+    return d;
+  }
+
+  // 4. Formato estándar ISO (ej: 2026-11-10T19:30:00.000Z) o RFC
+  const standardDate = new Date(str);
+  if (!isNaN(standardDate.getTime())) {
+    return standardDate;
+  }
+
+  // 5. Formato latino DD/MM/AAAA o DD-MM-AAAA con hora opcional
+  const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[,\s]+(\d{1,2}):(\d{2})(?:\s*([ap]\.?m\.?))?)?/i);
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    const month = parseInt(dmyMatch[2], 10) - 1;
+    const year = parseInt(dmyMatch[3], 10);
+    let hours = dmyMatch[4] ? parseInt(dmyMatch[4], 10) : 0;
+    const mins = dmyMatch[5] ? parseInt(dmyMatch[5], 10) : 0;
+    const meridiem = (dmyMatch[6] || '').toLowerCase().replace(/\./g, '');
+    if (meridiem === 'pm' && hours < 12) hours += 12;
+    if (meridiem === 'am' && hours === 12) hours = 0;
+    return new Date(year, month, day, hours, mins, 0);
+  }
+
+  return null;
+}
+
+/**
+ * Formatea una fecha de orden de manera dinámica y amigable:
+ * - "Hoy, 04:15 PM"
+ * - "Ayer, 02:30 PM"
+ * - "10/11/2026, 04:15 PM"
+ */
+export function formatOrderDate(raw, full = false) {
+  if (!raw) return 'Fecha sin registrar';
+  const parsed = parseOrderDate(raw);
+  if (!parsed || isNaN(parsed.getTime())) {
+    return String(raw);
+  }
+
+  const now = new Date();
+  const isToday = parsed.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = parsed.toDateString() === yesterday.toDateString();
+
+  const timeStr = parsed.toLocaleTimeString('es-VE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  if (!full) {
+    if (isToday) return `Hoy, ${timeStr}`;
+    if (isYesterday) return `Ayer, ${timeStr}`;
+  }
+
+  const dateStr = parsed.toLocaleDateString('es-VE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  return `${dateStr}, ${timeStr}`;
+}
+
