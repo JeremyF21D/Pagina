@@ -13,6 +13,7 @@ import { CatalogView } from './components/catalog/CatalogView';
 import { SalesView } from './components/sales/SalesView';
 import { DatabaseView } from './components/database/DatabaseView';
 import { AdminConfigView } from './components/admin/AdminConfigView';
+import { ProposalsPreviewView } from './components/proposals/ProposalsPreviewView';
 
 import { FloatingAIChat } from './components/simulator/FloatingAIChat';
 
@@ -88,6 +89,10 @@ function MainApp() {
             onAskAIAboutCoil={handleAskAIAboutCoil}
             onEditCoil={handleOpenEditProduct}
           />
+        )}
+
+        {activeTab === 'proposals' && (
+          <ProposalsPreviewView />
         )}
 
         {activeTab === 'sales' && (
