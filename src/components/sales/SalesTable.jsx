@@ -347,7 +347,7 @@ export function SalesTable() {
           onClick={() => setSelectedNoteModal(null)}
         >
           <div 
-            className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4 animate-scaleUp"
+            className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4 animate-modal-pop"
             onClick={e => e.stopPropagation()}
           >
             {/* Cabecera */}

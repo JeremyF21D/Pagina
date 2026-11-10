@@ -131,7 +131,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
       onClick={onClose}
     >
       <div 
-        className="relative max-w-lg w-full bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200"
+        className="relative max-w-lg w-full bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-modal-pop"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -150,7 +150,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
           <button 
             type="button" 
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition"
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-all duration-200 cursor-pointer hover:rotate-90"
           >
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>

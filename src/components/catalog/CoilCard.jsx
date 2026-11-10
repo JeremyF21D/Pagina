@@ -15,7 +15,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
   const catConfig = getCategoryConfig(categoryId);
 
   return (
-    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/50 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-brand-500/10 transition-all duration-300 group">
+    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1.5 transition-all duration-300 group animate-fade-in">
       <div>
         {/* Badge & Stock Status - Altura fija de 28px sin wrap para nivelar perfectamente todas las fotos */}
         <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 h-6 sm:h-7">
@@ -174,7 +174,7 @@ export function CoilCard({ coil, onAskAI, onEditProduct }) {
           onClick={(e) => { e.stopPropagation(); setIsZoomOpen(false); }}
         >
           <div 
-            className="relative max-w-xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl space-y-3 animate-in fade-in zoom-in-95 duration-200" 
+            className="relative max-w-xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl space-y-3 animate-modal-pop" 
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">

@@ -126,9 +126,13 @@ export function ExchangeRateLiveBanner({ initialAmount = 15 }) {
             </span>
           </div>
 
-          <div className="text-xl sm:text-2xl font-black text-amber-400 font-mono tracking-tight">
-            {formatVES(rates.binance)}
-          </div>
+          {isLoading ? (
+            <div className="h-8 w-44 rounded-lg skeleton-shimmer my-1"></div>
+          ) : (
+            <div className="text-xl sm:text-2xl font-black text-amber-400 font-mono tracking-tight animate-fade-in">
+              {formatVES(rates.binance)}
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-slate-800/80">
             <span>Compra: {formatVES(rates.binanceBuy)}</span>
@@ -148,9 +152,13 @@ export function ExchangeRateLiveBanner({ initialAmount = 15 }) {
             </span>
           </div>
 
-          <div className="text-xl sm:text-2xl font-black text-sky-400 font-mono tracking-tight">
-            {formatVES(rates.bcv)}
-          </div>
+          {isLoading ? (
+            <div className="h-8 w-40 rounded-lg skeleton-shimmer my-1"></div>
+          ) : (
+            <div className="text-xl sm:text-2xl font-black text-sky-400 font-mono tracking-tight animate-fade-in">
+              {formatVES(rates.bcv)}
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-slate-800/80">
             <span>Tasa Oficial de Ley</span>
@@ -170,14 +178,18 @@ export function ExchangeRateLiveBanner({ initialAmount = 15 }) {
             </span>
           </div>
 
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-2xl font-black text-white font-mono">
-              +{rates.spreadPct}%
-            </span>
-            <span className="text-[11px] font-mono text-amber-400">
-              ({formatVES((rates.binance || 0) - (rates.bcv || 0))})
-            </span>
-          </div>
+          {isLoading ? (
+            <div className="h-8 w-32 rounded-lg skeleton-shimmer my-1"></div>
+          ) : (
+            <div className="flex items-baseline gap-2 animate-fade-in">
+              <span className="text-xl sm:text-2xl font-black text-white font-mono">
+                +{rates.spreadPct}%
+              </span>
+              <span className="text-[11px] font-mono text-amber-400">
+                ({formatVES((rates.binance || 0) - (rates.bcv || 0))})
+              </span>
+            </div>
+          )}
 
           <div className="text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-800/80 truncate">
             Margen de cotización entre Oficial y Cripto
@@ -188,7 +200,7 @@ export function ExchangeRateLiveBanner({ initialAmount = 15 }) {
 
       {/* CALCULADORA RÁPIDA DE CONVERSIÓN PARA VENTAS */}
       {isCalculatorOpen && (
-        <div className="p-3.5 sm:p-4 bg-slate-950 border-t border-slate-800/80 space-y-3">
+        <div className="p-3.5 sm:p-4 bg-slate-950 border-t border-slate-800/80 space-y-3 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-white flex items-center gap-1.5">

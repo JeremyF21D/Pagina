@@ -61,11 +61,91 @@
 .pulsing-dot:nth-child(2) { animation-delay: 0.2s; }
 .pulsing-dot:nth-child(3) { animation-delay: 0.4s; }
 
+/* ── ANIMACIONES MODERNAS Y FLUIDAS ──────────────────────────── */
+
+/* Fade In Suave */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Skeleton Loading Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
+}
+
+/* Entrada de Modales con Escala y Desenfoque */
+@keyframes modalPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-pop {
+  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Deslizamiento de Drawers Laterales (Carrito) */
+@keyframes drawerSlideIn {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-drawer-in {
+  animation: drawerSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Deslizamiento desde Abajo (Slide Up) */
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Resplandor pulsante suave para el botón de WhatsApp */
+@keyframes softGlowWhatsApp {
+  0%, 100% {
+    box-shadow: 0 0 15px -2px rgba(37, 211, 102, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px 4px rgba(37, 211, 102, 0.7);
+  }
+}
+
+.glow-whatsapp {
+  animation: softGlowWhatsApp 3s infinite ease-in-out;
 }

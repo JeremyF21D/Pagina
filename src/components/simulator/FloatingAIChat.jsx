@@ -121,7 +121,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
     <>
       {/* ── Floating chat window ──────────────────────────────────────────── */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col gap-3 animate-fade-in"
+        <div className="fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col gap-3 animate-modal-pop"
           style={{ width: 'min(92vw, 400px)' }}
         >
           {/* Admin SQL Console (above chat window) */}
@@ -293,7 +293,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
           className={`h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
             isOpen
               ? 'bg-slate-700 hover:bg-slate-600 rotate-0'
-              : 'bg-[#25d366] hover:bg-[#20bd5a] scale-100 hover:scale-105'
+              : 'bg-[#25d366] hover:bg-[#20bd5a] scale-100 hover:scale-105 glow-whatsapp'
           }`}
           title={isOpen ? 'Cerrar asistente' : 'Abrir Asesor IA'}
           aria-label="Asesor de IA"

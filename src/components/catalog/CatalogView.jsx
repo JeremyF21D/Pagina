@@ -116,10 +116,30 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
 
       {/* Grid of Products or Empty/Loading State */}
       {isDbLoading ? (
-        <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3 animate-fade-in">
-          <div className="h-10 w-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <h3 className="text-sm font-bold text-white">Cargando catálogo de repuestos...</h3>
-          <p className="text-xs text-slate-400">Verificando disponibilidad e inventario en tiempo real.</p>
+        <div className="space-y-4 animate-fade-in">
+          <div className="flex items-center gap-2 text-xs text-sky-400 font-semibold px-1">
+            <i className="fa-solid fa-spinner fa-spin"></i>
+            <span>Sincronizando inventario con Supabase en tiempo real...</span>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-slate-800/60 border border-slate-700/60 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="h-5 w-20 rounded-full skeleton-shimmer"></div>
+                  <div className="h-4 w-16 rounded-full skeleton-shimmer"></div>
+                </div>
+                <div className="h-28 sm:h-44 rounded-xl skeleton-shimmer border border-slate-700/40"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-3/4 rounded-lg skeleton-shimmer"></div>
+                  <div className="h-3 w-1/2 rounded-lg skeleton-shimmer"></div>
+                </div>
+                <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between">
+                  <div className="h-6 w-16 rounded-lg skeleton-shimmer"></div>
+                  <div className="h-8 w-24 rounded-xl skeleton-shimmer"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : coils.length === 0 ? (
         apiConnectionStatus.status === 'error' ? (

@@ -30,7 +30,7 @@ export function CartDrawer() {
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
-        <div className="w-screen max-w-md bg-slate-900 border-l border-slate-700/80 shadow-2xl flex flex-col justify-between">
+        <div className="w-screen max-w-md bg-slate-900 border-l border-slate-700/80 shadow-2xl flex flex-col justify-between animate-drawer-in">
           
           {/* Header */}
           <div className="p-4 bg-slate-950 border-b border-slate-850 flex items-center justify-between">
@@ -47,7 +47,7 @@ export function CartDrawer() {
             </div>
             <button 
               onClick={closeCart}
-              className="text-slate-400 hover:text-white p-2 rounded-lg"
+              className="text-slate-400 hover:text-white p-2 rounded-lg transition-transform duration-200 hover:rotate-90 cursor-pointer"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
