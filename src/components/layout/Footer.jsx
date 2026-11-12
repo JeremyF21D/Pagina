@@ -16,7 +16,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs mt-12">
+    <footer className="bg-black border-t border-[#2d2f35] text-slate-400 text-xs mt-12">
       {/* 4 Column Layout (Figma Footer Style) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -26,13 +26,13 @@ export function Footer() {
               <img
                 src={jfEmblem}
                 alt="JF AUTO PARTS"
-                className="h-8 w-auto object-contain shrink-0"
+                className="h-7 w-auto object-contain shrink-0"
               />
               <span className="text-base font-black text-white font-sans tracking-tight">
-                <span className="text-red-500 font-black">JF</span> <span className="font-bold">AUTO PARTS</span>
+                <span className="text-[#de2420] font-black">JF</span> <span className="font-bold">AUTO PARTS</span>
               </span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed font-sans">
               Distribución y venta directa de bobinas de encendido, inyectores, conectores y repuestos automotrices garantizados con despachos a toda Venezuela.
             </p>
             <p className="text-[11px] text-slate-500 font-mono">
@@ -46,20 +46,20 @@ export function Footer() {
               Repuestos & Categorías
             </h4>
             <ul className="space-y-2 text-xs">
-              <li className="hover:text-red-400 transition cursor-pointer flex items-center gap-2">
-                <i className="fa-solid fa-angle-right text-[10px] text-red-500"></i>
+              <li className="hover:text-[#de2420] transition cursor-pointer flex items-center gap-2">
+                <i className="fa-solid fa-angle-right text-[10px] text-[#de2420]"></i>
                 <span>Bobinas de Encendido Secas & Lápiz</span>
               </li>
-              <li className="hover:text-red-400 transition cursor-pointer flex items-center gap-2">
-                <i className="fa-solid fa-angle-right text-[10px] text-red-500"></i>
+              <li className="hover:text-[#de2420] transition cursor-pointer flex items-center gap-2">
+                <i className="fa-solid fa-angle-right text-[10px] text-[#de2420]"></i>
                 <span>Inyectores de Gasolina Multipunto</span>
               </li>
-              <li className="hover:text-red-400 transition cursor-pointer flex items-center gap-2">
-                <i className="fa-solid fa-angle-right text-[10px] text-red-500"></i>
+              <li className="hover:text-[#de2420] transition cursor-pointer flex items-center gap-2">
+                <i className="fa-solid fa-angle-right text-[10px] text-[#de2420]"></i>
                 <span>Conectores Eléctricos Automotrices</span>
               </li>
-              <li className="hover:text-red-400 transition cursor-pointer flex items-center gap-2">
-                <i className="fa-solid fa-angle-right text-[10px] text-red-500"></i>
+              <li className="hover:text-[#de2420] transition cursor-pointer flex items-center gap-2">
+                <i className="fa-solid fa-angle-right text-[10px] text-[#de2420]"></i>
                 <span>Estoperas & Empacaduras de Motor</span>
               </li>
             </ul>
@@ -72,11 +72,11 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-2 text-slate-300">
-                <i className="fa-solid fa-location-dot text-red-500 text-xs"></i>
+                <i className="fa-solid fa-location-dot text-[#de2420] text-xs"></i>
                 <span>Caracas / Envíos Nacionales</span>
               </li>
               <li className="flex items-center gap-2 text-slate-300">
-                <i className="fa-solid fa-truck-fast text-red-500 text-xs"></i>
+                <i className="fa-solid fa-truck-fast text-[#de2420] text-xs"></i>
                 <span>MRW, Tealca, Zoom y Domesa</span>
               </li>
               <li className="flex items-center gap-2 text-slate-300">
@@ -84,7 +84,7 @@ export function Footer() {
                 <span>Atención inmediata vía WhatsApp</span>
               </li>
               <li className="flex items-center gap-2 text-slate-300">
-                <i className="fa-solid fa-clock text-red-500 text-xs"></i>
+                <i className="fa-solid fa-clock text-[#de2420] text-xs"></i>
                 <span>Lunes a Sábado: 8:00 AM - 6:00 PM</span>
               </li>
             </ul>
@@ -95,9 +95,9 @@ export function Footer() {
             <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
               Garantía & Confianza
             </h4>
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-xl p-3 space-y-2">
               <div className="flex items-center gap-2 text-white font-bold text-xs">
-                <i className="fa-solid fa-shield-halved text-red-500"></i>
+                <i className="fa-solid fa-shield-halved text-[#de2420]"></i>
                 <span>100% Repuestos Probados</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-tight">

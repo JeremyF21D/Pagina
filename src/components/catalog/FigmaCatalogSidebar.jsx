@@ -39,11 +39,11 @@ export function FigmaCatalogSidebar({
   };
 
   return (
-    <aside className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-5">
+    <aside className="w-full bg-[#1d1e23] border border-[#2d2f35] rounded-2xl p-4 sm:p-5 shadow-xl space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-[#2d2f35]">
         <div className="flex items-center gap-2">
-          <i className="fa-solid fa-filter text-red-500 text-sm"></i>
+          <i className="fa-solid fa-filter text-[#de2420] text-sm"></i>
           <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
             Filtración
           </h3>
@@ -51,7 +51,7 @@ export function FigmaCatalogSidebar({
         <button
           type="button"
           onClick={handleClear}
-          className="text-[11px] text-slate-400 hover:text-red-400 font-semibold transition cursor-pointer"
+          className="text-[11px] text-slate-400 hover:text-[#de2420] font-semibold transition cursor-pointer"
         >
           Limpiar
         </button>
@@ -73,17 +73,17 @@ export function FigmaCatalogSidebar({
                 onClick={() => onCategoryChange(cat.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition cursor-pointer text-left ${
                   isSelected
-                    ? 'bg-red-500/15 text-red-400 border border-red-500/30 font-bold'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-[#de2420]/15 text-[#de2420] border border-[#de2420]/30 font-bold'
+                    : 'text-slate-300 hover:bg-[#25272e] hover:text-white'
                 }`}
               >
                 <span className="flex items-center gap-2 truncate">
-                  <i className={`${cat.icon} text-[11px] ${isSelected ? 'text-red-400' : 'text-slate-500'}`}></i>
+                  <i className={`${cat.icon} text-[11px] ${isSelected ? 'text-[#de2420]' : 'text-slate-500'}`}></i>
                   <span className="truncate">{cat.name}</span>
                 </span>
                 {count !== undefined && (
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
-                    isSelected ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-400'
+                    isSelected ? 'bg-[#de2420] text-white' : 'bg-[#141518] text-slate-400'
                   }`}>
                     {count}
                   </span>
@@ -95,14 +95,14 @@ export function FigmaCatalogSidebar({
       </div>
 
       {/* 2. Marca del Vehículo */}
-      <div className="space-y-2 pt-2 border-t border-slate-800">
+      <div className="space-y-2 pt-2 border-t border-[#2d2f35]">
         <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block font-mono">
           Marca del Auto
         </label>
         <select
           value={selectedBrand}
           onChange={(e) => onBrandChange(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 cursor-pointer"
+          className="w-full bg-[#141518] border border-[#2d2f35] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#de2420] cursor-pointer"
         >
           <option value="ALL">Todas las Marcas</option>
           {brands.map(brand => (
@@ -112,7 +112,7 @@ export function FigmaCatalogSidebar({
       </div>
 
       {/* 3. Rango de Precio ($ USD) con botón Aplicar */}
-      <div className="space-y-2 pt-2 border-t border-slate-800">
+      <div className="space-y-2 pt-2 border-t border-[#2d2f35]">
         <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block font-mono">
           Rango de Precio ($)
         </label>
@@ -127,7 +127,7 @@ export function FigmaCatalogSidebar({
                 placeholder="0"
                 value={minInput}
                 onChange={(e) => setMinInput(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-red-500"
+                className="w-full bg-[#141518] border border-[#2d2f35] rounded-lg px-2.5 py-1.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-[#de2420]"
               />
             </div>
             <div>
@@ -139,13 +139,13 @@ export function FigmaCatalogSidebar({
                 placeholder="100"
                 value={maxInput}
                 onChange={(e) => setMaxInput(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-red-500"
+                className="w-full bg-[#141518] border border-[#2d2f35] rounded-lg px-2.5 py-1.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-[#de2420]"
               />
             </div>
           </div>
           <button
             type="submit"
-            className="w-full py-1.5 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-xs rounded-lg transition shadow-md shadow-red-600/20 cursor-pointer"
+            className="w-full py-1.5 bg-[#de2420] hover:bg-[#c81e1a] active:scale-95 text-white font-bold text-xs rounded-lg transition shadow-md shadow-[#de2420]/20 cursor-pointer"
           >
             Aplicar Filtro
           </button>
@@ -153,7 +153,7 @@ export function FigmaCatalogSidebar({
       </div>
 
       {/* 4. Disponibilidad */}
-      <div className="space-y-2 pt-2 border-t border-slate-800">
+      <div className="space-y-2 pt-2 border-t border-[#2d2f35]">
         <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block font-mono">
           Disponibilidad
         </label>
@@ -162,14 +162,14 @@ export function FigmaCatalogSidebar({
             type="checkbox"
             checked={stockFilter === 'IN_STOCK'}
             onChange={(e) => onStockFilterChange(e.target.checked ? 'IN_STOCK' : 'ALL')}
-            className="rounded bg-slate-950 border-slate-700 text-red-600 focus:ring-red-500 h-4 w-4 cursor-pointer"
+            className="rounded bg-[#141518] border-[#2d2f35] text-[#de2420] focus:ring-[#de2420] h-4 w-4 cursor-pointer"
           />
           <span>Solo artículos en stock</span>
         </label>
       </div>
 
-      {/* Botón Verde Inferior (Figma style) */}
-      <div className="pt-2 border-t border-slate-800">
+      {/* Botón Inferior */}
+      <div className="pt-2 border-t border-[#2d2f35]">
         <button
           type="button"
           onClick={handleClear}

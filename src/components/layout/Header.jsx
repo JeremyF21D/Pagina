@@ -48,8 +48,8 @@ export function Header({ activeTab, setActiveTab }) {
 
   return (
     <>
-      <header className="bg-black sticky top-0 z-40 border-b border-white/5 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 sm:h-14 flex items-center justify-between gap-3">
+      <header className="bg-black sticky top-0 z-40 border-b border-[#2d2f35]/60 shadow-md">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-12 sm:h-14 flex items-center justify-between gap-3">
           
           {/* Brand / Logo (Strictly proportional to Figma: Clean Compact Emblem + Red JF + Bold White AUTO PARTS) */}
           <div
@@ -63,8 +63,8 @@ export function Header({ activeTab, setActiveTab }) {
               className="h-6 w-auto sm:h-7 object-contain group-hover:scale-105 transition-transform"
             />
             <div className="flex items-center gap-1 leading-none">
-              <span className="text-base sm:text-lg font-black text-red-600 tracking-wider">JF</span>
-              <span className="text-base sm:text-lg font-black text-white tracking-widest">AUTO PARTS</span>
+              <span className="text-base sm:text-lg font-black text-[#de2420] tracking-wider font-sans">JF</span>
+              <span className="text-base sm:text-lg font-black text-white tracking-widest font-sans">AUTO PARTS</span>
             </div>
           </div>
 
@@ -78,13 +78,13 @@ export function Header({ activeTab, setActiveTab }) {
             <button
               type="button"
               onClick={toggleCart}
-              className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white/[0.04] hover:bg-white/[0.08] text-white rounded-lg border border-white/10 hover:border-red-500/40 transition flex items-center justify-center cursor-pointer active:scale-95"
+              className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white/[0.04] hover:bg-white/[0.08] text-white rounded-lg border border-white/10 hover:border-[#de2420]/50 transition flex items-center justify-center cursor-pointer active:scale-95"
               title="Ver mi carrito de compra"
               aria-label="Carrito de compra"
             >
               <i className="fa-solid fa-cart-shopping text-xs sm:text-sm text-slate-200"></i>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text-white font-black text-[9px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border border-black shadow-md font-mono">
+                <span className="absolute -top-1 -right-1 bg-[#de2420] text-white font-black text-[9px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border border-black shadow-md font-mono">
                   {cartCount}
                 </span>
               )}
@@ -117,9 +117,9 @@ export function Header({ activeTab, setActiveTab }) {
 
               {/* Admin Floating Dropdown Menu */}
               {isAdmin && adminDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl animate-fade-in text-slate-100">
-                  <div className="px-3 py-2 border-b border-slate-800 mb-1 flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold text-xs shrink-0">
+                <div className="absolute right-0 mt-2 w-64 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl animate-fade-in text-slate-100">
+                  <div className="px-3 py-2 border-b border-[#2d2f35] mb-1 flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-[#de2420]/20 border border-[#de2420]/40 flex items-center justify-center text-[#de2420] font-bold text-xs shrink-0">
                       <i className="fa-solid fa-shield-halved text-[11px]"></i>
                     </div>
                     <div className="overflow-hidden">
@@ -136,8 +136,8 @@ export function Header({ activeTab, setActiveTab }) {
                       onClick={() => handleSelectAdminTab('catalog')}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition cursor-pointer ${
                         activeTab === 'catalog'
-                          ? 'bg-red-600 text-white font-bold'
-                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                          ? 'bg-[#de2420] text-white font-bold'
+                          : 'hover:bg-[#25272e] text-slate-200 font-medium'
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -151,8 +151,8 @@ export function Header({ activeTab, setActiveTab }) {
                       onClick={() => handleSelectAdminTab('sales')}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition cursor-pointer ${
                         activeTab === 'sales'
-                          ? 'bg-red-600 text-white font-bold'
-                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                          ? 'bg-[#de2420] text-white font-bold'
+                          : 'hover:bg-[#25272e] text-slate-200 font-medium'
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -160,7 +160,7 @@ export function Header({ activeTab, setActiveTab }) {
                         <span>Auditoría de Ventas</span>
                       </span>
                       {salesHistory.length > 0 && (
-                        <span className="bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.2 rounded-full text-[10px] font-mono">
+                        <span className="bg-[#de2420]/20 text-red-300 border border-[#de2420]/30 px-1.5 py-0.2 rounded-full text-[10px] font-mono">
                           {salesHistory.length}
                         </span>
                       )}
@@ -170,8 +170,8 @@ export function Header({ activeTab, setActiveTab }) {
                       onClick={() => handleSelectAdminTab('database')}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition cursor-pointer ${
                         activeTab === 'database'
-                          ? 'bg-red-600 text-white font-bold'
-                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                          ? 'bg-[#de2420] text-white font-bold'
+                          : 'hover:bg-[#25272e] text-slate-200 font-medium'
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -185,8 +185,8 @@ export function Header({ activeTab, setActiveTab }) {
                       onClick={() => handleSelectAdminTab('admin')}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition cursor-pointer ${
                         activeTab === 'admin'
-                          ? 'bg-red-600 text-white font-bold'
-                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                          ? 'bg-[#de2420] text-white font-bold'
+                          : 'hover:bg-[#25272e] text-slate-200 font-medium'
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export function Header({ activeTab, setActiveTab }) {
                     </button>
                   </div>
 
-                  <div className="pt-1.5 mt-1 border-t border-slate-800">
+                  <div className="pt-1.5 mt-1 border-t border-[#2d2f35]">
                     <button
                       onClick={() => { logout(); setAdminDropdownOpen(false); }}
                       className="w-full text-left px-3 py-1.5 rounded-xl text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-2 text-xs font-bold cursor-pointer"
@@ -216,9 +216,9 @@ export function Header({ activeTab, setActiveTab }) {
 
       {/* Admin Mode Sub-Header Bar (Only visible when logged in AND outside catalog) */}
       {isAdmin && activeTab !== 'catalog' && (
-        <div className="bg-slate-900/90 border-b border-red-500/30 px-4 sm:px-8 py-2 flex items-center justify-between text-xs backdrop-blur-md">
+        <div className="bg-[#1c1d22] border-b border-[#de2420]/30 px-4 sm:px-8 py-2 flex items-center justify-between text-xs backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-red-600/20 text-red-400 text-xs font-bold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#de2420]/20 text-[#de2420] text-xs font-bold">
               <i className="fa-solid fa-shield-halved text-[11px]"></i>
             </span>
             <span className="text-slate-400 hidden sm:inline">Modo Administrador:</span>
@@ -226,7 +226,7 @@ export function Header({ activeTab, setActiveTab }) {
           </div>
           <button
             onClick={() => setActiveTab('catalog')}
-            className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+            className="px-3 py-1 bg-[#de2420] hover:bg-[#c81e1a] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
           >
             <i className="fa-solid fa-arrow-left text-[11px]"></i>
             <span>Volver a la Tienda</span>
