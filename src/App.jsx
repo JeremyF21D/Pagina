@@ -5,7 +5,6 @@ import { InventoryProvider } from './context/InventoryContext';
 import { CartProvider } from './context/CartContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 
-import { TopNoticeBar } from './components/layout/TopNoticeBar';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { OwnerNotificationBanner } from './components/common/OwnerNotificationBanner';
@@ -75,14 +74,11 @@ function MainApp() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-red-600 selection:text-white">
-      {/* Top Banner Ribbon Promocional */}
-      <TopNoticeBar />
-
-      {/* Main App Header */}
+      {/* Main App Header (Faithful to Figma: slim, direct, no bulky ribbon above) */}
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Main Body View */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-8 sm:pt-4 sm:pb-12">
         {activeTab === 'catalog' && (
           <CatalogView
             onNavigateTab={setActiveTab}
