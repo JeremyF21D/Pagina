@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useInventory } from '../../context/InventoryContext';
 import { normalizeWaPhone } from '../../utils/whatsapp';
-import logoImg from '../../assets/logo.png';
+import jfEmblem from '../../assets/jf_emblem_clean.png';
 
 export function Header({ activeTab, setActiveTab }) {
   const { isAdmin, openAuthModal, logout } = useAuth();
@@ -55,35 +55,27 @@ export function Header({ activeTab, setActiveTab }) {
 
   return (
     <>
-      <header className="bg-black/95 backdrop-blur-md sticky top-0 z-40 border-b border-white/10 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+      <header className="bg-black sticky top-0 z-40 border-b border-white/10 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-4">
           
-          {/* Brand / Logo (Faithful to Figma: Red JF + Bold White AUTO PARTS) */}
+          {/* Brand / Logo (Strictly faithful to Figma: Clean Transparent Emblem + Red JF + Bold White AUTO PARTS, NO BORDER) */}
           <div
-            className="flex items-center gap-3 cursor-pointer select-none group"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group"
             onClick={() => { setActiveTab('catalog'); setAdminDropdownOpen(false); }}
-            title="Ir a la tienda principal"
+            title="JF Auto Parts - Inicio"
           >
-            <div className="relative">
-              <img
-                src={logoImg}
-                alt="JF AUTO PARTS Logo"
-                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-cover border border-white/15 shadow-lg group-hover:scale-105 transition-transform"
-              />
-              <div className="absolute inset-0 rounded-xl bg-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="text-xl sm:text-2xl font-black text-red-500 tracking-wider">JF</span>
-                <span className="text-xl sm:text-2xl font-black text-white tracking-widest">AUTO PARTS</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold tracking-widest uppercase mt-0.5 hidden xs:block">
-                Especialistas en Encendido Automotriz
-              </span>
+            <img
+              src={jfEmblem}
+              alt="JF Auto Parts"
+              className="h-8 w-auto sm:h-9 object-contain group-hover:scale-105 transition-transform"
+            />
+            <div className="flex items-center gap-1.5 leading-none">
+              <span className="text-xl sm:text-2xl font-black text-red-600 tracking-wider">JF</span>
+              <span className="text-xl sm:text-2xl font-black text-white tracking-widest">AUTO PARTS</span>
             </div>
           </div>
 
-          {/* Center Area: Intentionally Clean & Minimalist (Figma Layout) */}
+          {/* Center Area: Intentionally Clean & Empty (Figma Layout) */}
           <div className="flex-1"></div>
 
           {/* Right Actions: WhatsApp Pill + Cart Icon with Red Badge + User Avatar */}
