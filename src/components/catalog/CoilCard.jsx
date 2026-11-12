@@ -9,8 +9,7 @@ export function CoilCard({ coil, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
   const { ownerSettings } = useInventory();
-  const [isZoomOpen, setIsZoomOpen] = useState(false);
-  const [copiedShare, setCopiedShare] = useState(false);
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
 
   const oemList = (coil.oem || '').split(/[,/]+/).map(s => s.trim()).filter(Boolean);
   const primaryOem = oemList[0] || '';
@@ -30,16 +29,6 @@ export function CoilCard({ coil, onEditProduct }) {
       `¿Tienen disponibilidad para retiro o despacho inmediato?`
     );
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-  };
-
-  // Compartir repuesto
-  const handleShare = () => {
-    const textToShare = `Mira este repuesto en JF Auto Parts: ${coil.name} (${formatUSD(coil.price)}): ${window.location.href}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(textToShare);
-      setCopiedShare(true);
-      setTimeout(() => setCopiedShare(false), 2000);
-    }
   };
 
   return (
@@ -72,28 +61,26 @@ export function CoilCard({ coil, onEditProduct }) {
           </div>
         </div>
 
-        {/* Product Visual Header / Image */}
+        {/* Product Visual Header / Image con animación de expansión in-place */}
         <div 
-          className={`h-28 sm:h-48 rounded-lg sm:rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-2 sm:p-3 mb-2 sm:mb-4 cursor-pointer`}
+          className={`h-28 sm:h-48 rounded-lg sm:rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-2 sm:p-3 mb-2 sm:mb-4 cursor-pointer select-none`}
           style={coil.image ? { backgroundColor: '#ffffff', isolation: 'isolate' } : {}}
-          onClick={() => coil.image && setIsZoomOpen(true)}
-          title={coil.image ? "Haz clic para ampliar la foto" : ""}
+          onClick={() => coil.image && setIsImageExpanded(prev => !prev)}
+          onMouseLeave={() => setIsImageExpanded(false)}
+          title={coil.image ? (isImageExpanded ? "Clic para reducir" : "Clic para expandir imagen") : ""}
         >
           {coil.image ? (
-            <>
-              <img 
-                src={coil.image} 
-                alt={coil.name} 
-                className="max-h-full max-w-full w-auto h-auto object-contain mx-auto group-hover:scale-105 transition duration-300 drop-shadow-sm mix-blend-multiply"
-                style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
-                onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
-              />
-              <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <span className="p-1.5 rounded-full bg-slate-900/80 text-white text-xs border border-slate-700/80 shadow-lg">
-                  <i className="fa-solid fa-magnifying-glass-plus"></i>
-                </span>
-              </div>
-            </>
+            <img 
+              src={coil.image} 
+              alt={coil.name} 
+              className={`max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 ease-out drop-shadow-sm mix-blend-multiply ${
+                isImageExpanded 
+                  ? 'scale-125 sm:scale-135' 
+                  : 'group-hover:scale-105'
+              }`}
+              style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'flex'; }}
+            />
           ) : null}
           <div className={`h-full w-full flex-col items-center justify-center p-4 text-center ${coil.image ? 'hidden' : 'flex'}`}>
             <i className={`fa-solid fa-car-battery text-4xl ${coil.stock > 0 ? 'text-brand-400' : 'text-slate-600'} mb-2 group-hover:scale-110 transition duration-300`}></i>
@@ -115,16 +102,6 @@ export function CoilCard({ coil, onEditProduct }) {
               {coil.id}
             </span>
           )}
-
-          {/* Botón flotante para compartir */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleShare(); }}
-            className="absolute bottom-2 left-2 p-1.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-[10px] transition cursor-pointer"
-            title="Copiar enlace del repuesto"
-          >
-            <i className={`fa-solid ${copiedShare ? 'fa-check text-emerald-400' : 'fa-share-nodes'}`}></i>
-          </button>
         </div>
 
         {/* Titles & Compatibility */}
@@ -215,50 +192,6 @@ export function CoilCard({ coil, onEditProduct }) {
           </button>
         </div>
       </div>
-
-      {/* Lightbox / Modal de Foto Ampliada Completa */}
-      {isZoomOpen && coil.image && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={(e) => { e.stopPropagation(); setIsZoomOpen(false); }}
-        >
-          <div 
-            className="relative max-w-xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl space-y-3 animate-modal-pop" 
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <div className="min-w-0 pr-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-brand-400">{coil.id}</span>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 px-1.5 py-0.5 rounded bg-slate-800">{coil.brand}</span>
-                </div>
-                <h3 className="text-sm font-bold text-white truncate mt-0.5">{coil.name}</h3>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsZoomOpen(false)} 
-                className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition cursor-pointer"
-                aria-label="Cerrar vista previa"
-              >
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
-            
-            <div className="max-h-[65vh] flex items-center justify-center bg-slate-950 rounded-xl overflow-hidden p-2 border border-slate-800">
-              <img 
-                src={coil.image} 
-                alt={coil.name} 
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-            
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
-              <span className="text-slate-400">Compatibilidad: <strong className="text-white">{coil.carModel}</strong></span>
-              <span className="text-brand-400 font-mono font-bold text-base">{formatUSD(coil.price)}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
