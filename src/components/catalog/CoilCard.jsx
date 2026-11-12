@@ -9,7 +9,7 @@ export function CoilCard({ coil, onEditProduct }) {
   const { addToCart } = useCart();
   const { isAdmin } = useAuth();
   const { ownerSettings } = useInventory();
-  const [isImageExpanded, setIsImageExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const oemList = (coil.oem || '').split(/[,/]+/).map(s => s.trim()).filter(Boolean);
   const primaryOem = oemList[0] || '';
@@ -32,7 +32,16 @@ export function CoilCard({ coil, onEditProduct }) {
   };
 
   return (
-    <div className="bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between shadow-lg hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1.5 transition-all duration-300 group animate-fade-in relative">
+    <div 
+      onClick={() => setIsExpanded(prev => !prev)}
+      onMouseLeave={() => setIsExpanded(false)}
+      className={`rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col justify-between transition-all duration-300 ease-out cursor-pointer relative group animate-fade-in ${
+        isExpanded 
+          ? 'scale-[1.04] sm:scale-[1.05] -translate-y-2 border-2 border-brand-500 shadow-2xl shadow-brand-500/30 z-30 ring-2 ring-brand-500/40 bg-slate-800' 
+          : 'bg-slate-800/90 border border-slate-700/80 hover:border-brand-500/60 hover:scale-[1.025] hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-brand-500/20'
+      }`}
+      title={isExpanded ? "Toca para reducir" : "Toca para expandir tarjeta"}
+    >
       <div>
         {/* Badge & Stock Status - Limpio sin iconos de categoría */}
         <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 h-6 sm:h-7">
@@ -40,6 +49,11 @@ export function CoilCard({ coil, onEditProduct }) {
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 whitespace-nowrap flex-shrink-0">
               {coil.badge || 'OEM Spec'}
             </span>
+            {isExpanded && (
+              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-brand-500 text-white animate-fade-in flex-shrink-0">
+                Expandido
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap flex-shrink-0">
@@ -61,21 +75,20 @@ export function CoilCard({ coil, onEditProduct }) {
           </div>
         </div>
 
-        {/* Product Visual Header / Image con animación de expansión in-place */}
+        {/* Product Visual Header / Image con expansión dinámica de altura y zoom */}
         <div 
-          className={`h-28 sm:h-48 rounded-lg sm:rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden group-hover:border-slate-500 transition flex items-center justify-center p-2 sm:p-3 mb-2 sm:mb-4 cursor-pointer select-none`}
+          className={`rounded-lg sm:rounded-xl ${coil.image ? 'bg-white' : 'bg-slate-950'} border border-slate-700/60 relative overflow-hidden transition-all duration-300 flex items-center justify-center p-2 sm:p-3 mb-2 sm:mb-4 select-none ${
+            isExpanded ? 'h-36 sm:h-56 border-brand-500/50 shadow-inner' : 'h-28 sm:h-48 group-hover:border-slate-500'
+          }`}
           style={coil.image ? { backgroundColor: '#ffffff', isolation: 'isolate' } : {}}
-          onClick={() => coil.image && setIsImageExpanded(prev => !prev)}
-          onMouseLeave={() => setIsImageExpanded(false)}
-          title={coil.image ? (isImageExpanded ? "Clic para reducir" : "Clic para expandir imagen") : ""}
         >
           {coil.image ? (
             <img 
               src={coil.image} 
               alt={coil.name} 
               className={`max-h-full max-w-full w-auto h-auto object-contain mx-auto transition-transform duration-300 ease-out drop-shadow-sm mix-blend-multiply ${
-                isImageExpanded 
-                  ? 'scale-125 sm:scale-135' 
+                isExpanded 
+                  ? 'scale-115' 
                   : 'group-hover:scale-105'
               }`}
               style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
@@ -157,7 +170,8 @@ export function CoilCard({ coil, onEditProduct }) {
 
           {isAdmin && (
             <button 
-              onClick={() => onEditProduct(coil)}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onEditProduct(coil); }}
               className="text-[11px] text-slate-400 hover:text-sky-400 transition flex items-center gap-1 cursor-pointer" 
               title="Editar en Base de Datos (Solo Admin)"
             >
@@ -169,7 +183,8 @@ export function CoilCard({ coil, onEditProduct }) {
         {/* Acciones principales: Carrito y WhatsApp Directo */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button 
-            onClick={() => addToCart(coil.id)} 
+            type="button"
+            onClick={(e) => { e.stopPropagation(); addToCart(coil.id); }} 
             disabled={coil.stock <= 0}
             className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 shadow transition ${
               coil.stock > 0 
@@ -182,7 +197,8 @@ export function CoilCard({ coil, onEditProduct }) {
           </button>
 
           <button 
-            onClick={handleDirectWhatsAppBuy}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); handleDirectWhatsAppBuy(); }}
             disabled={coil.stock <= 0}
             className="px-2 py-1.5 sm:px-3 sm:py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             title="Comprar directamente por WhatsApp con mensaje prearmado"
