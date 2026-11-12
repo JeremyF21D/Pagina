@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useInventory } from '../../context/InventoryContext';
@@ -6,21 +6,23 @@ import { normalizeWaPhone } from '../../utils/whatsapp';
 import logoImg from '../../assets/logo.png';
 
 export function Header({ activeTab, setActiveTab }) {
-  const { isAdmin, openAuthModal, logout, requireAdminAuth } = useAuth();
+  const { isAdmin, openAuthModal, logout } = useAuth();
   const { cartCount, toggleCart } = useCart();
   const { salesHistory, ownerSettings } = useInventory();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const handleNavClick = (tabKey) => {
-    if (['sales', 'database', 'admin'].includes(tabKey) && !isAdmin) {
-      requireAdminAuth(() => setActiveTab(tabKey));
-      setMobileMenuOpen(false);
-      return;
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setAdminDropdownOpen(false);
+      }
     }
-    setActiveTab(tabKey);
-    setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleOpenDirectWhatsApp = () => {
     const phone = normalizeWaPhone(ownerSettings.ownerPhone);
@@ -28,169 +30,234 @@ export function Header({ activeTab, setActiveTab }) {
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   };
 
-  const navTabs = [
-    { key: 'catalog', label: 'Catálogo', icon: 'fa-car-battery', adminOnly: false },
-    { key: 'sales', label: 'Ventas', icon: 'fa-cash-register', adminOnly: true, iconColor: 'text-rose-400', badge: salesHistory.length },
-    { key: 'database', label: 'Base de Datos', icon: 'fa-database', adminOnly: true, iconColor: 'text-sky-400' },
-    { key: 'admin', label: 'Config IA', icon: 'fa-sliders', adminOnly: true },
-  ];
+  const handleSelectAdminTab = (tabKey) => {
+    setActiveTab(tabKey);
+    setAdminDropdownOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  const visibleTabs = navTabs.filter(t => !t.adminOnly || isAdmin);
+  const handleUserButtonClick = () => {
+    if (!isAdmin) {
+      openAuthModal();
+    } else {
+      setAdminDropdownOpen(prev => !prev);
+    }
+  };
+
+  const getAdminTabTitle = () => {
+    switch (activeTab) {
+      case 'sales': return 'Auditoría de Ventas';
+      case 'database': return 'Base de Datos & Repuestos';
+      case 'admin': return 'Configuración IA & Tienda';
+      default: return 'Panel Administrador';
+    }
+  };
 
   return (
-    <header className="bg-slate-950/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-800 shadow-xl">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-3">
-        {/* Brand / Logo (Figma Red & White Style) */}
-        <div
-          className="flex items-center gap-2.5 sm:gap-3 shrink-0 cursor-pointer select-none group"
-          onClick={() => { setActiveTab('catalog'); setMobileMenuOpen(false); }}
-        >
-          <img
-            src={logoImg}
-            alt="JF AUTO PARTS Logo"
-            className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-cover border border-slate-800 shadow-lg shadow-black/50 shrink-0 group-hover:scale-105 transition-transform"
-          />
-          <div>
-            <span className="text-base sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5 font-sans">
-              <span className="text-red-500 font-black">JF</span>
-              <span className="text-white tracking-wider font-extrabold">AUTO PARTS</span>
-            </span>
-            <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-semibold -mt-0.5 sm:-mt-1 hidden xs:block font-mono">
-              Repuestos & Encendido Automotriz
-            </p>
+    <>
+      <header className="bg-black/95 backdrop-blur-md sticky top-0 z-40 border-b border-white/10 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+          
+          {/* Brand / Logo (Faithful to Figma: Red JF + Bold White AUTO PARTS) */}
+          <div
+            className="flex items-center gap-3 cursor-pointer select-none group"
+            onClick={() => { setActiveTab('catalog'); setAdminDropdownOpen(false); }}
+            title="Ir a la tienda principal"
+          >
+            <div className="relative">
+              <img
+                src={logoImg}
+                alt="JF AUTO PARTS Logo"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-cover border border-white/15 shadow-lg group-hover:scale-105 transition-transform"
+              />
+              <div className="absolute inset-0 rounded-xl bg-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="text-xl sm:text-2xl font-black text-red-500 tracking-wider">JF</span>
+                <span className="text-xl sm:text-2xl font-black text-white tracking-widest">AUTO PARTS</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-semibold tracking-widest uppercase mt-0.5 hidden xs:block">
+                Especialistas en Encendido Automotriz
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Desktop Navigation Tabs */}
-        <nav className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 overflow-x-auto shadow-inner">
-          {visibleTabs.map(tab => (
+          {/* Center Area: Intentionally Clean & Minimalist (Figma Layout) */}
+          <div className="flex-1"></div>
+
+          {/* Right Actions: WhatsApp Pill + Cart Icon with Red Badge + User Avatar */}
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
+            
+            {/* WhatsApp Contact Button */}
             <button
-              key={tab.key}
-              onClick={() => handleNavClick(tab.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                activeTab === tab.key
-                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
+              onClick={handleOpenDirectWhatsApp}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
+              title="Consultar por WhatsApp"
             >
-              <i className={`fa-solid ${tab.icon} ${tab.iconColor || ''}`}></i>
-              <span>{tab.label}</span>
-              {tab.badge !== undefined && (
-                <span className="bg-red-500/20 text-red-300 border border-red-500/40 px-1.5 py-0.2 rounded-full text-[10px] font-mono">
-                  {tab.badge}
+              <i className="fa-brands fa-whatsapp text-sm sm:text-base"></i>
+              <span className="hidden sm:inline">WhatsApp</span>
+            </button>
+
+            {/* Shopping Cart Button with Red Notification Badge (Figma Style) */}
+            <button
+              type="button"
+              onClick={toggleCart}
+              className="relative w-10 h-10 sm:w-11 sm:h-11 bg-white/[0.04] hover:bg-white/[0.08] text-white rounded-xl border border-white/10 hover:border-red-500/40 transition shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+              title="Ver mi carrito de compra"
+              aria-label="Carrito de compra"
+            >
+              <i className="fa-solid fa-cart-shopping text-sm sm:text-base text-slate-200"></i>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-[10px] min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center border-2 border-black shadow-lg animate-pulse font-mono">
+                  {cartCount}
                 </span>
               )}
             </button>
-          ))}
-        </nav>
 
-        {/* Right side actions (Figma Header Icons: Cart with Badge + User Avatar) */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* WhatsApp Direct Pill */}
-          <button
-            onClick={handleOpenDirectWhatsApp}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs"
-            title="Abrir chat en WhatsApp"
-          >
-            <i className="fa-brands fa-whatsapp text-sm"></i>
-            <span>WhatsApp</span>
-          </button>
-
-          {/* Cart Trigger with Circular Red Badge (Figma Style) */}
-          <button
-            type="button"
-            onClick={toggleCart}
-            className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-900 hover:bg-slate-800 text-slate-100 rounded-xl border border-slate-800 hover:border-red-500/50 transition shadow-md flex items-center justify-center cursor-pointer active:scale-95"
-            title="Ver Mi Carrito de Compra"
-          >
-            <i className="fa-solid fa-cart-shopping text-sm text-slate-200"></i>
-            {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-[10px] h-5 w-5 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-md animate-pulse font-mono">
-                {cartCount}
-              </span>
-            )}
-          </button>
-
-          {/* User Avatar Circle (Figma Style) */}
-          {isAdmin ? (
-            <button
-              type="button"
-              onClick={logout}
-              className="w-9 h-9 sm:w-10 sm:h-10 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 border border-emerald-500/40 rounded-full transition shadow-md flex items-center justify-center cursor-pointer active:scale-95"
-              title="Sesión de Administrador activa. Clic para salir."
-            >
-              <i className="fa-solid fa-user-check text-sm"></i>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openAuthModal()}
-              className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-full border border-slate-800 hover:border-red-500/50 transition shadow-md flex items-center justify-center cursor-pointer active:scale-95"
-              title="Acceso de Administrador"
-            >
-              <i className="fa-regular fa-user text-sm"></i>
-            </button>
-          )}
-
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(prev => !prev)}
-            className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-xl transition cursor-pointer"
-            aria-label="Abrir menú"
-          >
-            <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'} text-base`}></i>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile drop menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-950 border-b border-slate-800 px-4 py-3 space-y-2 animate-fade-in shadow-2xl">
-          <div className="grid grid-cols-2 gap-2">
-            {visibleTabs.map(tab => (
+            {/* User Avatar Circle (Figma Style) with Admin Dropdown */}
+            <div className="relative" ref={dropdownRef}>
               <button
-                key={tab.key}
-                onClick={() => handleNavClick(tab.key)}
-                className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${
-                  activeTab === tab.key
-                    ? 'bg-red-600 text-white shadow'
-                    : 'text-slate-300 bg-slate-900 border border-slate-800'
+                type="button"
+                onClick={handleUserButtonClick}
+                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border transition shadow-sm flex items-center justify-center cursor-pointer active:scale-95 relative ${
+                  isAdmin
+                    ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-400 hover:border-emerald-400'
+                    : 'bg-white/[0.04] hover:bg-white/[0.08] border-white/15 text-slate-200 hover:text-white hover:border-red-500/40'
                 }`}
+                title={isAdmin ? 'Menú de Administrador' : 'Acceso de Administrador'}
+                aria-label="Perfil de usuario"
               >
-                <div className="flex items-center gap-2">
-                  <i className={`fa-solid ${tab.icon}`}></i>
-                  <span>{tab.label}</span>
-                </div>
-                {tab.badge !== undefined && (
-                  <span className="bg-red-500/20 text-red-300 px-1.5 py-0.2 rounded-full text-[10px] font-mono">
-                    {tab.badge}
-                  </span>
+                {isAdmin ? (
+                  <i className="fa-solid fa-user-shield text-sm"></i>
+                ) : (
+                  <i className="fa-regular fa-user text-sm"></i>
+                )}
+
+                {/* Status Dot */}
+                {isAdmin && (
+                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-black"></span>
                 )}
               </button>
-            ))}
-          </div>
 
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-            <button
-              onClick={handleOpenDirectWhatsApp}
-              className="text-emerald-400 font-bold flex items-center gap-1.5 py-1"
-            >
-              <i className="fa-brands fa-whatsapp text-sm"></i>
-              <span>WhatsApp de Soporte</span>
-            </button>
-            {isAdmin ? (
-              <button onClick={logout} className="text-rose-400 font-bold text-xs">
-                Cerrar Sesión Admin
-              </button>
-            ) : (
-              <button onClick={() => { openAuthModal(); setMobileMenuOpen(false); }} className="text-slate-400 hover:text-white font-medium text-xs">
-                Acceso Admin
-              </button>
-            )}
+              {/* Admin Floating Dropdown Menu */}
+              {isAdmin && adminDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl animate-fade-in text-slate-100">
+                  <div className="px-3 py-2.5 border-b border-slate-800 mb-1.5 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold text-xs shrink-0">
+                      <i className="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-xs font-bold text-white truncate">Administrador</p>
+                      <p className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping"></span>
+                        Sesión Activa
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-xs">
+                    <button
+                      onClick={() => handleSelectAdminTab('catalog')}
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition cursor-pointer ${
+                        activeTab === 'catalog'
+                          ? 'bg-red-600 text-white font-bold'
+                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <i className="fa-solid fa-shop text-sm"></i>
+                        <span>Ver Catálogo (Tienda)</span>
+                      </span>
+                      {activeTab === 'catalog' && <i className="fa-solid fa-check text-xs"></i>}
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectAdminTab('sales')}
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition cursor-pointer ${
+                        activeTab === 'sales'
+                          ? 'bg-red-600 text-white font-bold'
+                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <i className="fa-solid fa-cash-register text-rose-400 text-sm"></i>
+                        <span>Auditoría de Ventas</span>
+                      </span>
+                      {salesHistory.length > 0 && (
+                        <span className="bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.5 rounded-full text-[10px] font-mono">
+                          {salesHistory.length}
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectAdminTab('database')}
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition cursor-pointer ${
+                        activeTab === 'database'
+                          ? 'bg-red-600 text-white font-bold'
+                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <i className="fa-solid fa-database text-sky-400 text-sm"></i>
+                        <span>Base de Datos & Repuestos</span>
+                      </span>
+                      {activeTab === 'database' && <i className="fa-solid fa-check text-xs"></i>}
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectAdminTab('admin')}
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition cursor-pointer ${
+                        activeTab === 'admin'
+                          ? 'bg-red-600 text-white font-bold'
+                          : 'hover:bg-slate-800 text-slate-200 font-medium'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <i className="fa-solid fa-sliders text-amber-400 text-sm"></i>
+                        <span>Configuración IA & Tienda</span>
+                      </span>
+                      {activeTab === 'admin' && <i className="fa-solid fa-check text-xs"></i>}
+                    </button>
+                  </div>
+
+                  <div className="pt-2 mt-1.5 border-t border-slate-800">
+                    <button
+                      onClick={() => { logout(); setAdminDropdownOpen(false); }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-2.5 text-xs font-bold cursor-pointer"
+                    >
+                      <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
+      </header>
+
+      {/* Admin Mode Sub-Header Bar (Only visible when logged in AND outside catalog) */}
+      {isAdmin && activeTab !== 'catalog' && (
+        <div className="bg-slate-900/90 border-b border-red-500/30 px-4 sm:px-8 py-2.5 flex items-center justify-between text-xs backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-red-600/20 text-red-400 text-xs font-bold">
+              <i className="fa-solid fa-shield-halved"></i>
+            </span>
+            <span className="text-slate-400 hidden sm:inline">Modo Administrador:</span>
+            <span className="font-bold text-white uppercase tracking-wider">{getAdminTabTitle()}</span>
+          </div>
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+          >
+            <i className="fa-solid fa-arrow-left text-[11px]"></i>
+            <span>Volver a la Tienda</span>
+          </button>
+        </div>
       )}
-    </header>
+    </>
   );
 }

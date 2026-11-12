@@ -15,20 +15,20 @@ export function TopNoticeBar() {
   };
 
   return (
-    <aside aria-label="Estado del sistema" className="bg-gradient-to-r from-red-700 via-brand-600 to-red-800 text-xs py-1.5 px-4 text-center font-medium flex flex-wrap items-center justify-center gap-2 text-white shadow-sm">
+    <aside aria-label="Aviso comercial" className="bg-[#050608] border-b border-white/10 text-[11px] py-1 px-4 text-center font-medium flex flex-wrap items-center justify-center gap-2 text-slate-300">
       <span className="flex h-2 w-2 relative">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
       </span>
 
       <span>
-        ⚡ <strong>Despachos Inmediatos a Todo el País</strong> | Contacto oficial por{' '}
+        ⚡ <strong className="text-white">Despachos Inmediatos a Todo el País</strong> | Asesoría técnica directa por{' '}
         <button 
           onClick={handleOpenWhatsApp}
-          className="underline font-bold hover:text-emerald-200 transition cursor-pointer inline-flex items-center gap-1 ml-0.5"
+          className="text-emerald-400 hover:text-emerald-300 font-bold transition cursor-pointer inline-flex items-center gap-1 ml-0.5 underline decoration-emerald-500/40"
           title="Abrir chat en WhatsApp"
         >
-          <i className="fa-brands fa-whatsapp text-sm"></i>
+          <i className="fa-brands fa-whatsapp text-xs"></i>
           <span>WhatsApp</span>
         </button>
       </span>
@@ -36,12 +36,12 @@ export function TopNoticeBar() {
       {/* Only show DB & Admin Status when user is logged in as Admin */}
       {isAdmin && (
         <>
-          <span className="hidden md:inline-flex items-center gap-1.5 bg-black/25 px-2.5 py-0.5 rounded-full text-[11px] text-red-100 border border-white/15">
-            <i className="fa-solid fa-database text-[10px] text-emerald-300"></i>
+          <span className="hidden md:inline-flex items-center gap-1.5 bg-white/5 px-2 py-0.2 rounded-full text-[10px] text-slate-300 border border-white/10">
+            <i className="fa-solid fa-database text-[10px] text-emerald-400"></i>
             <span>DB: {getEngineLabel(dbEngine)} ({coils.length} items)</span>
           </span>
 
-          <span className="inline-flex items-center gap-1.5 bg-slate-950/50 px-2.5 py-0.5 rounded-full text-[11px] text-white border border-white/20">
+          <span className="inline-flex items-center gap-1.5 bg-emerald-950/40 px-2 py-0.2 rounded-full text-[10px] text-emerald-300 border border-emerald-500/30">
             <i className="fa-solid fa-unlock-keyhole text-emerald-400 text-[10px]"></i>
             <span>🔐 Administrador Activo</span>
           </span>
