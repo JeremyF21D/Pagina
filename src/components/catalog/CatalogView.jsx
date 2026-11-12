@@ -1,15 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { CoilCard } from './CoilCard';
-import { CatalogFilters } from './CatalogFilters';
-import { HeroBannerCarousel } from './HeroBannerCarousel';
+import { FigmaHeroBanner } from './FigmaHeroBanner';
+import { FigmaCatalogSidebar } from './FigmaCatalogSidebar';
+import { FigmaAdviceBanner } from './FigmaAdviceBanner';
+import { FigmaPaymentMethods } from './FigmaPaymentMethods';
 import { detectProductCategory } from '../../utils/formatters';
-import logoImg from '../../assets/logo.png';
 
 export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
-  const { coils, isDbLoading, dbEngine, dbCredentials, checkAndSyncDatabase, apiConnectionStatus } = useInventory();
+  const { coils, isDbLoading, dbEngine, checkAndSyncDatabase, apiConnectionStatus } = useInventory();
   const { toggleCart } = useCart();
   const { isAdmin } = useAuth();
 
@@ -17,6 +18,11 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedBrand, setSelectedBrand] = useState('ALL');
   const [stockFilter, setStockFilter] = useState('ALL');
+  const [priceRange, setPriceRange] = useState({ min: null, max: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  const catalogTopRef = useRef(null);
 
   // Extract unique brands dynamically from active database
   const brands = useMemo(() => {
@@ -25,6 +31,16 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
       if (c.brand) set.add(c.brand.trim());
     });
     return Array.from(set).sort();
+  }, [coils]);
+
+  // Compute counts per category
+  const categoryCounts = useMemo(() => {
+    const counts = { ALL: coils.length, bobina: 0, inyector: 0, conector: 0, estopera: 0 };
+    coils.forEach(item => {
+      const cat = detectProductCategory(item);
+      if (counts[cat] !== undefined) counts[cat]++;
+    });
+    return counts;
   }, [coils]);
 
   // Filter products
@@ -58,223 +74,267 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
         matchesStock = item.stock > 0;
       } else if (stockFilter === 'OUT_OF_STOCK') {
         matchesStock = item.stock <= 0;
-      } else if (stockFilter === 'PROMO') {
-        matchesStock = item.badge === 'Oferta' || (Number(item.oldPrice) > Number(item.price));
       }
 
-      return matchesQuery && matchesBrand && matchesCategory && matchesStock;
+      // Price range filter
+      let matchesPrice = true;
+      const price = Number(item.price) || 0;
+      if (priceRange.min !== null && price < priceRange.min) matchesPrice = false;
+      if (priceRange.max !== null && price > priceRange.max) matchesPrice = false;
+
+      return matchesQuery && matchesBrand && matchesCategory && matchesStock && matchesPrice;
     });
-  }, [coils, searchQuery, selectedCategory, selectedBrand, stockFilter]);
+  }, [coils, searchQuery, selectedCategory, selectedBrand, stockFilter, priceRange]);
+
+  // Reset to page 1 on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedBrand, stockFilter, priceRange]);
+
+  // Pagination (9 items per page for 3x3 grid as in Figma)
+  const itemsPerPage = 9;
+  const totalPages = Math.max(1, Math.ceil(filteredCoils.length / itemsPerPage));
+  const paginatedCoils = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredCoils.slice(start, start + itemsPerPage);
+  }, [filteredCoils, currentPage, itemsPerPage]);
+
+  const handleScrollToCatalog = () => {
+    if (catalogTopRef.current) {
+      catalogTopRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('ALL');
+    setSelectedBrand('ALL');
+    setStockFilter('ALL');
+    setPriceRange({ min: null, max: null });
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+    selectedCategory !== 'ALL' ||
+    selectedBrand !== 'ALL' ||
+    stockFilter !== 'ALL' ||
+    priceRange.min !== null ||
+    priceRange.max !== null
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Hero Banner Carousel Automático */}
-      <HeroBannerCarousel 
-        onNavigateTab={onNavigateTab} 
-        onOpenCart={toggleCart} 
-        isAdmin={isAdmin} 
-      />
+    <div className="space-y-8">
+      {/* 1. Hero Banner Principal (Figma Design) */}
+      <FigmaHeroBanner onScrollToCatalog={handleScrollToCatalog} />
 
-      {/* Search & Filters */}
-      <CatalogFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        selectedBrand={selectedBrand}
-        onBrandChange={setSelectedBrand}
-        stockFilter={stockFilter}
-        onStockFilterChange={setStockFilter}
-        brands={brands}
-        onQuickSearch={(tag) => setSearchQuery(tag)}
-      />
+      {/* 2. Anchor Ref para Navegación Directa al Catálogo */}
+      <div ref={catalogTopRef} className="pt-2"></div>
 
-      {/* Results Header Count & Commercial Badge */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <p className="text-xs text-slate-300">
-            Mostrando <strong className="text-white font-bold">{filteredCoils.length}</strong> de {coils.length} repuestos disponibles
-          </p>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] text-emerald-400 font-medium shadow-xs">
-            <i className="fa-solid fa-circle-check text-xs"></i>
-            <span>Catálogo Oficial • Disponibilidad Inmediata</span>
+      {/* 3. Layout Principal: Barra Lateral de Filtros (Sidebar) + Grilla de Productos */}
+      <div className="flex flex-col lg:flex-row items-start gap-6">
+        {/* Botón flotante/toggle para móvil */}
+        <div className="lg:hidden w-full flex items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl shadow-md">
+          <button
+            type="button"
+            onClick={() => setMobileFilterOpen(prev => !prev)}
+            className="flex items-center gap-2 text-xs font-bold text-white bg-red-600 hover:bg-red-500 px-3.5 py-2 rounded-lg transition"
+          >
+            <i className="fa-solid fa-sliders text-xs"></i>
+            <span>{mobileFilterOpen ? 'Ocultar Filtros' : 'Mostrar Filtros'}</span>
+            {hasActiveFilters && (
+              <span className="w-2 h-2 rounded-full bg-white"></span>
+            )}
+          </button>
+          <span className="text-xs text-slate-400 font-mono">
+            {filteredCoils.length} repuestos
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
-            disabled={isDbLoading}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-sky-400 hover:text-sky-300 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-xs disabled:opacity-50"
-            title="Refrescar catálogo y verificar productos en la base de datos"
-          >
-            <i className={`fa-solid fa-arrows-rotate text-[11px] ${isDbLoading ? 'fa-spin text-brand-400' : ''}`}></i>
-            <span>{isDbLoading ? 'Sincronizando...' : 'Actualizar Catálogo'}</span>
-          </button>
+        {/* Sidebar Izquierda (Filtros Figma) */}
+        <div className={`w-full lg:w-64 xl:w-72 shrink-0 ${mobileFilterOpen ? 'block' : 'hidden lg:block'}`}>
+          <FigmaCatalogSidebar
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            selectedBrand={selectedBrand}
+            onBrandChange={setSelectedBrand}
+            stockFilter={stockFilter}
+            onStockFilterChange={setStockFilter}
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+            brands={brands}
+            categoryCounts={categoryCounts}
+            onResetFilters={handleResetAllFilters}
+          />
         </div>
-      </div>
 
-      {/* Grid of Products or Empty/Loading State */}
-      {isDbLoading ? (
-        <div className="space-y-4 animate-fade-in">
-          <div className="flex items-center gap-2 text-xs text-sky-400 font-semibold px-1">
-            <i className="fa-solid fa-spinner fa-spin"></i>
-            <span>Sincronizando inventario con Supabase en tiempo real...</span>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-slate-800/60 border border-slate-700/60 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between space-y-4 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div className="h-5 w-20 rounded-full skeleton-shimmer"></div>
-                  <div className="h-4 w-16 rounded-full skeleton-shimmer"></div>
-                </div>
-                <div className="h-28 sm:h-44 rounded-xl skeleton-shimmer border border-slate-700/40"></div>
-                <div className="space-y-2">
-                  <div className="h-4 w-3/4 rounded-lg skeleton-shimmer"></div>
-                  <div className="h-3 w-1/2 rounded-lg skeleton-shimmer"></div>
-                </div>
-                <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between">
-                  <div className="h-6 w-16 rounded-lg skeleton-shimmer"></div>
-                  <div className="h-8 w-24 rounded-xl skeleton-shimmer"></div>
-                </div>
+        {/* Contenido Derecho: Buscador Superior + Grilla de 3 Columnas + Paginación */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Buscador Superior Ancho (Figma Style) */}
+          <div className="space-y-2">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar repuesto por nombre, modelo de auto o código OEM..."
+                className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl pl-11 pr-10 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition shadow-inner"
+              />
+              <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )}
+            </div>
+
+            {/* Pills de Filtros Activos & Contador */}
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-slate-400 text-xs">
+                  Mostrando <strong className="text-white">{filteredCoils.length}</strong> repuestos disponibles
+                </span>
+                {selectedCategory !== 'ALL' && (
+                  <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-lg text-[11px] font-bold">
+                    <span>{categoryCounts[selectedCategory] ? selectedCategory.toUpperCase() : 'Categoría'}</span>
+                    <i className="fa-solid fa-xmark cursor-pointer" onClick={() => setSelectedCategory('ALL')}></i>
+                  </span>
+                )}
+                {selectedBrand !== 'ALL' && (
+                  <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-lg text-[11px] font-bold">
+                    <span>{selectedBrand}</span>
+                    <i className="fa-solid fa-xmark cursor-pointer" onClick={() => setSelectedBrand('ALL')}></i>
+                  </span>
+                )}
+                {stockFilter === 'IN_STOCK' && (
+                  <span className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[11px] font-bold">
+                    <span>En Stock</span>
+                    <i className="fa-solid fa-xmark cursor-pointer" onClick={() => setStockFilter('ALL')}></i>
+                  </span>
+                )}
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetAllFilters}
+                    className="text-[11px] text-red-400 hover:underline font-semibold ml-1 cursor-pointer"
+                  >
+                    Limpiar todos
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      ) : coils.length === 0 ? (
-        apiConnectionStatus.status === 'error' ? (
-          /* Estado de Atención Comercial si hay problemas de red */
-          <div className="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl backdrop-blur">
-            <div className="h-16 w-16 bg-brand-500/15 border border-brand-500/30 rounded-full flex items-center justify-center mx-auto text-brand-400 text-2xl shadow-inner">
-              <i className="fa-solid fa-headset"></i>
-            </div>
-            <h3 className="text-xl font-extrabold text-white tracking-tight">
-              Atención y Cotizaciones por WhatsApp
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Para consultar disponibilidad inmediata, cotizaciones de repuestos o despachos a nivel nacional, comunícate directamente con nuestro equipo de atención al cliente.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2.5 pt-2">
-              <a
-                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20y%20precios%20de%20repuestos."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-emerald-600/20"
-              >
-                <i className="fa-brands fa-whatsapp text-sm"></i> Contactar por WhatsApp (0412-6497478)
-              </a>
-              <button 
+
+              <button
+                type="button"
                 onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700"
+                className="text-slate-400 hover:text-sky-400 text-xs flex items-center gap-1.5 transition cursor-pointer"
+                title="Sincronizar inventario en tiempo real"
               >
-                <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Reintentar
+                <i className={`fa-solid fa-arrows-rotate text-[11px] ${isDbLoading ? 'fa-spin text-red-500' : ''}`}></i>
+                <span>Sincronizar</span>
               </button>
-              {isAdmin && (
-                <button 
-                  onClick={() => onNavigateTab('database')}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-semibold transition cursor-pointer border border-amber-500/40 flex items-center gap-1.5"
-                >
-                  <i className="fa-solid fa-database text-amber-400"></i> Configurar Base de Datos (Admin)
-                </button>
-              )}
             </div>
-          </div>
-        ) : (
-          /* Inventario en Actualización Comercial */
-          <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-8 sm:p-12 text-center max-w-lg mx-auto space-y-4 shadow-xl backdrop-blur-xs">
-            <div className="h-16 w-16 bg-brand-500/10 border border-brand-500/20 rounded-full flex items-center justify-center mx-auto text-brand-400 text-2xl shadow-inner">
-              <i className="fa-solid fa-boxes-packing"></i>
-            </div>
-            <h3 className="text-xl font-extrabold text-white tracking-tight">
-              Inventario en Actualización
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Estamos actualizando nuestro catálogo e incorporando nuevos lotes de repuestos automotrices.
-            </p>
-            <p className="text-xs text-slate-400">
-              ¿Buscas un repuesto o modelo de vehículo específico? Escríbenos directamente y te confirmamos disponibilidad y precio al instante.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2.5 pt-2">
-              <a
-                href="https://wa.me/584126497478?text=Hola,%20deseo%20consultar%20disponibilidad%20y%20precio%20de%20un%20repuesto%20automotriz."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 cursor-pointer"
-              >
-                <i className="fa-brands fa-whatsapp text-sm"></i> Consultar Repuesto por WhatsApp
-              </a>
-              <button 
-                onClick={() => checkAndSyncDatabase(dbEngine, null, true)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-700 active:scale-95"
-              >
-                <i className="fa-solid fa-arrows-rotate text-sky-400"></i> Actualizar Catálogo
-              </button>
-              {isAdmin && (
-                <button 
-                  onClick={() => onNavigateTab('database')}
-                  className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-brand-500/20 active:scale-95"
-                >
-                  <i className="fa-solid fa-plus"></i> Cargar Repuestos (Admin)
-                </button>
-              )}
-            </div>
-          </div>
-        )
-      ) : filteredCoils.length > 0 ? (
-        <div className="space-y-2.5">
-          {/* Indicador de desplazamiento en móvil cuando hay más de 4 productos */}
-          <div className="flex sm:hidden items-center justify-between px-1 text-[11px] text-slate-400">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <i className="fa-solid fa-boxes-stacked text-brand-400"></i> Catálogo ({filteredCoils.length} repuestos)
-            </span>
-            {filteredCoils.length > 4 && (
-              <span className="text-brand-400 font-bold bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20 animate-pulse flex items-center gap-1 text-[10px]">
-                <i className="fa-solid fa-arrow-down text-[9px]"></i> Desliza para ver más
-              </span>
-            )}
           </div>
 
-          {/* Contenedor del Catálogo: En móvil altura fija para 4 artículos (2x2) con scroll interno; en PC cuadrícula completa */}
-          <div className="max-h-[530px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0 rounded-2xl sm:rounded-none border border-slate-800/80 sm:border-0 p-1.5 sm:p-0 bg-slate-900/30 sm:bg-transparent">
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-5">
-              {filteredCoils.map(coil => (
-                <CoilCard
-                  key={coil.id}
-                  coil={coil}
-                  onAskAI={() => onAskAIAboutCoil(coil)}
-                  onEditProduct={onEditCoil}
-                />
+          {/* Grilla de Productos (3 columnas en desktop como en Figma) */}
+          {isDbLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 animate-pulse">
+              {[1, 2, 3, 4, 5, 6].map(n => (
+                <div key={n} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 h-80 flex flex-col justify-between">
+                  <div className="h-4 w-20 bg-slate-800 rounded"></div>
+                  <div className="h-40 bg-slate-800 rounded-xl"></div>
+                  <div className="h-4 w-3/4 bg-slate-800 rounded"></div>
+                  <div className="h-8 w-full bg-slate-800 rounded-xl"></div>
+                </div>
               ))}
             </div>
-          </div>
+          ) : paginatedCoils.length > 0 ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+                {paginatedCoils.map(coil => (
+                  <CoilCard
+                    key={coil.id}
+                    coil={coil}
+                    onAskAI={() => onAskAIAboutCoil(coil)}
+                    onEditProduct={onEditCoil}
+                  />
+                ))}
+              </div>
 
-          {/* Pie informativo rápido en móvil para orientar al cliente */}
-          {filteredCoils.length > 4 && (
-            <div className="flex sm:hidden items-center justify-between text-[10px] text-slate-500 px-1 pt-1">
-              <span>Mostrando en ventana de 4 repuestos</span>
-              <span className="text-slate-400 flex items-center gap-1">
-                <i className="fa-solid fa-hand-pointer text-[10px] text-brand-400"></i> Desplaza hacia abajo
-              </span>
+              {/* Barra de Paginación (Figma Style) */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4 pb-2 border-t border-slate-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage(p => Math.max(1, p - 1));
+                      handleScrollToCatalog();
+                    }}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    <i className="fa-solid fa-chevron-left text-[10px]"></i>
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => {
+                        setCurrentPage(page);
+                        handleScrollToCatalog();
+                      }}
+                      className={`w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                          : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage(p => Math.min(totalPages, p + 1));
+                      handleScrollToCatalog();
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    <i className="fa-solid fa-chevron-right text-[10px]"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-3">
+              <i className="fa-solid fa-box-open text-slate-600 text-4xl mb-2"></i>
+              <h3 className="text-base font-bold text-white">No se encontraron repuestos</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                No hay productos que coincidan con los filtros seleccionados. Intenta restablecer los filtros o buscar por otro código OEM.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetAllFilters}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
+              >
+                Restablecer Filtros
+              </button>
             </div>
           )}
         </div>
-      ) : (
-        <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-3">
-          <div className="h-16 w-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl">
-            <i className="fa-solid fa-magnifying-glass"></i>
-          </div>
-          <h3 className="text-lg font-bold text-white">No se encontraron repuestos</h3>
-          <p className="text-xs text-slate-400">
-            No hay productos que coincidan con los filtros aplicados. Intenta buscar por otra categoría, modelo o código OEM.
-          </p>
-          <button 
-            onClick={() => { setSearchQuery(''); setSelectedCategory('ALL'); setSelectedBrand('ALL'); setStockFilter('ALL'); }}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
-          >
-            Limpiar Filtros
-          </button>
-        </div>
-      )}
+      </div>
+
+      {/* 4. Pre-Footer Banner de Asistencia / Consultas (Figma Design) */}
+      <FigmaAdviceBanner />
+
+      {/* 5. Sección de Métodos de Pago Instantáneos (Figma Design) */}
+      <FigmaPaymentMethods />
     </div>
   );
 }

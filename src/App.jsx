@@ -74,7 +74,7 @@ function MainApp() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-brand-500 selection:text-white">
+    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-red-600 selection:text-white">
       {/* Top Banner Ribbon Promocional */}
       <TopNoticeBar />
 
