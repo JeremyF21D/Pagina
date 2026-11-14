@@ -52,9 +52,9 @@ ${itemsSummary}
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in print:static print:inset-auto print:p-0 print:m-0 print:bg-white print:block">
       <div 
-        className="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-modal-pop print:border-none print:shadow-none print:bg-white print:text-black"
+        id="printable-receipt" className="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-modal-pop print:static print:w-full print:max-w-none print:border-none print:shadow-none print:bg-white print:text-black print:p-0 print:m-0 print:rounded-none receipt-print-card"
         onClick={e => e.stopPropagation()}
       >
         {/* Barra de Acciones Superior (Oculta en Impresión) */}

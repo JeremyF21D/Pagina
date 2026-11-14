@@ -18,7 +18,7 @@ export function OwnerNotificationBanner() {
   };
 
   return (
-    <div className="fixed bottom-24 right-6 z-50 max-w-sm w-full animate-bounce-subtle">
+    <div className="fixed bottom-24 right-6 z-50 max-w-sm w-full animate-bounce-subtle print:hidden">
       <div className="bg-slate-900/95 border-2 border-emerald-500 rounded-2xl p-4 shadow-2xl backdrop-blur-md">
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-2">

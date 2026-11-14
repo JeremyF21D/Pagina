@@ -102,6 +102,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   // ==============================================================
   // 1. TODOS LOS HOOKS ARRIBA (REGLAS ESTRICTAS DE REACT)
   // ==============================================================
+  const [itemsList, setItemsList] = useState([]);
+  const [activeItemIndex, setActiveItemIndex] = useState(0);
   const [selectedCoilId, setSelectedCoilId] = useState('');
   const [qty, setQty] = useState(1);
   const [unitPrice, setUnitPrice] = useState(0);
@@ -145,9 +147,24 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
         rawNotes = rawNotes || parts[1]?.replace(/\]$/, '').trim() || '';
       }
 
-      setSelectedCoilId(order.coilId || (Array.isArray(coils) && coils[0]?.id) || '');
-      setQty(Number(order.qty) || 1);
-      setUnitPrice(Number(order.unitPrice || order.totalPrice || 0));
+      const initialItems = (order.items && Array.isArray(order.items) && order.items.length > 0)
+        ? JSON.parse(JSON.stringify(order.items))
+        : [{
+            coilId: order.coilId,
+            name: order.coilName,
+            oem: order.oem,
+            qty: Number(order.qty) || 1,
+            unitPrice: Number(order.unitPrice || order.totalPrice || 0),
+            subtotal: Number(order.totalPrice || 0)
+          }];
+
+      setItemsList(initialItems);
+      setActiveItemIndex(0);
+
+      const firstItem = initialItems[0];
+      setSelectedCoilId(firstItem.coilId || order.coilId || (Array.isArray(coils) && coils[0]?.id) || '');
+      setQty(Number(firstItem.qty) || Number(order.qty) || 1);
+      setUnitPrice(Number(firstItem.unitPrice || order.unitPrice || order.totalPrice || 0));
       setCustomerName(order.customerName || '');
       setCustomerPhone(order.customerPhone || '');
       setStatus(order.status || 'CONFIRMED');
@@ -234,20 +251,108 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     return null;
   };
 
+  const currentActiveItem = itemsList[activeItemIndex] || itemsList[0] || {};
   const currentSelectedCoil = Array.isArray(coils) ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(selectedCoilId).toLowerCase()) || null : null;
-  const originalCoil = Array.isArray(coils) ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(order.coilId || '').toLowerCase()) || null : null;
+  const originalCoil = Array.isArray(coils) 
+    ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(currentActiveItem.coilId || order.coilId || '').toLowerCase()) || null 
+    : null;
 
-  const isCoilChanged = Boolean(selectedCoilId && order.coilId && String(selectedCoilId).toLowerCase() !== String(order.coilId).toLowerCase());
-  const calculatedTotal = (Number(unitPrice) || 0) * (Number(qty) || 1);
+  const isCoilChanged = Boolean(
+    selectedCoilId && 
+    currentActiveItem.coilId && 
+    String(selectedCoilId).toLowerCase() !== String(currentActiveItem.coilId).toLowerCase()
+  );
+
+  const calculatedTotal = itemsList.length > 1
+    ? itemsList.reduce((acc, it, idx) => {
+        if (idx === activeItemIndex) {
+          return acc + ((Number(unitPrice) || 0) * (Number(qty) || 1));
+        }
+        return acc + ((Number(it.unitPrice) || 0) * (Number(it.qty) || 1));
+      }, 0)
+    : (Number(unitPrice) || 0) * (Number(qty) || 1);
+
+  const handleSwitchActiveItem = (newIndex) => {
+    if (newIndex === activeItemIndex) return;
+
+    // Guardar los cambios del ítem saliente
+    const curCoil = Array.isArray(coils) ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(selectedCoilId).toLowerCase()) : null;
+    const updated = itemsList.map((it, idx) => {
+      if (idx === activeItemIndex) {
+        return {
+          ...it,
+          coilId: selectedCoilId,
+          name: curCoil ? curCoil.name : it.name,
+          oem: curCoil ? curCoil.oem : it.oem,
+          qty: Number(qty) || 1,
+          unitPrice: Number(unitPrice) || 0,
+          subtotal: (Number(unitPrice) || 0) * (Number(qty) || 1)
+        };
+      }
+      return it;
+    });
+
+    setItemsList(updated);
+    setActiveItemIndex(newIndex);
+
+    const targetItem = updated[newIndex] || itemsList[newIndex];
+    if (targetItem) {
+      setSelectedCoilId(targetItem.coilId || targetItem.id || '');
+      setQty(Number(targetItem.qty) || 1);
+      setUnitPrice(Number(targetItem.unitPrice) || 0);
+    }
+    setIsPickerOpen(false);
+  };
 
   const handleSelectCoil = (coil) => {
     if (!coil) return;
     setSelectedCoilId(coil.id);
     setIsPickerOpen(false);
-    // Si el precio unitario es 0 o coincide con el repuesto anterior, sugerir el precio de lista del nuevo repuesto
-    if (!unitPrice || unitPrice === 0 || unitPrice === originalCoil?.price) {
-      setUnitPrice(coil.price || 0);
-    }
+    setUnitPrice(coil.price || 0);
+
+    setItemsList(prev => prev.map((it, idx) => {
+      if (idx === activeItemIndex) {
+        return {
+          ...it,
+          coilId: coil.id,
+          name: coil.name,
+          oem: coil.oem,
+          unitPrice: coil.price || 0,
+          subtotal: (coil.price || 0) * (Number(qty) || 1)
+        };
+      }
+      return it;
+    }));
+  };
+
+  const handleQtyChange = (val) => {
+    const q = Math.max(1, parseInt(val || 1, 10));
+    setQty(q);
+    setItemsList(prev => prev.map((it, idx) => {
+      if (idx === activeItemIndex) {
+        return {
+          ...it,
+          qty: q,
+          subtotal: (Number(unitPrice) || 0) * q
+        };
+      }
+      return it;
+    }));
+  };
+
+  const handleUnitPriceChange = (val) => {
+    const p = parseFloat(val) || 0;
+    setUnitPrice(p);
+    setItemsList(prev => prev.map((it, idx) => {
+      if (idx === activeItemIndex) {
+        return {
+          ...it,
+          unitPrice: p,
+          subtotal: p * (Number(qty) || 1)
+        };
+      }
+      return it;
+    }));
   };
 
   // Construir la cadena de pago formateada según el método activo
@@ -277,12 +382,46 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     const builtRef = getBuiltPaymentReference();
     const finalPaymentRef = notes.trim() ? `${builtRef} | [AJUSTE: ${notes.trim()}]` : builtRef;
 
+    const curCoil = Array.isArray(coils) ? coils.find(c => c && c.id && String(c.id).toLowerCase() === String(selectedCoilId).toLowerCase()) : null;
+    const finalItems = itemsList.map((it, idx) => {
+      if (idx === activeItemIndex) {
+        return {
+          ...it,
+          coilId: selectedCoilId,
+          name: curCoil ? curCoil.name : it.name,
+          oem: curCoil ? curCoil.oem : it.oem,
+          qty: Number(qty) || 1,
+          unitPrice: Number(unitPrice) || 0,
+          subtotal: (Number(unitPrice) || 0) * (Number(qty) || 1)
+        };
+      }
+      return it;
+    });
+
+    const isMulti = finalItems.length > 1;
+    const totalOrderQty = finalItems.reduce((acc, it) => acc + (Number(it.qty) || 1), 0);
+    const summaryCoilName = isMulti 
+      ? finalItems.map(it => `${it.qty}x ${it.name}`).join(', ')
+      : (curCoil ? curCoil.name : order.coilName);
+
+    const inventoryAdjustments = [];
+    if (order.status === 'CONFIRMED' && isCoilChanged) {
+      if (currentActiveItem.coilId) {
+        inventoryAdjustments.push({ coilId: currentActiveItem.coilId, delta: Number(currentActiveItem.qty) || 1 });
+      }
+      if (selectedCoilId) {
+        inventoryAdjustments.push({ coilId: selectedCoilId, delta: -(Number(qty) || 1) });
+      }
+    }
+
     try {
       await onSave(order.orderId, {
+        items: isMulti ? finalItems : undefined,
+        inventoryAdjustments: inventoryAdjustments.length > 0 ? inventoryAdjustments : undefined,
         coilId: selectedCoilId || order.coilId,
-        coilName: currentSelectedCoil ? currentSelectedCoil.name : order.coilName,
-        oem: currentSelectedCoil ? currentSelectedCoil.oem : order.oem,
-        qty: Number(qty) || 1,
+        coilName: summaryCoilName,
+        oem: curCoil ? curCoil.oem : order.oem,
+        qty: isMulti ? totalOrderQty : (Number(qty) || 1),
         unitPrice: Number(unitPrice) || 0,
         totalPrice: calculatedTotal,
         customerName,
@@ -347,6 +486,69 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
         {/* Formulario con Scroll */}
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto text-xs flex-1">
 
+          {/* Selector de Artículos para Órdenes con Varios Repuestos */}
+          {itemsList.length > 1 && (
+            <div className="p-3.5 bg-slate-950/90 border border-sky-500/30 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <i className="fa-solid fa-layer-group"></i>
+                  <span>Artículos de la Orden ({itemsList.length} repuestos)</span>
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  Selecciona cuál deseas cambiar:
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {itemsList.map((it, idx) => {
+                  const isCurActive = idx === activeItemIndex;
+                  const itCoil = coils.find(c => {
+                    const tid = it.coilId || it.id;
+                    return tid && c.id && String(c.id).toLowerCase() === String(tid).toLowerCase();
+                  });
+                  const itImg = getCoilImage(itCoil) || it.image;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => handleSwitchActiveItem(idx)}
+                      className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center gap-2.5 text-left relative ${
+                        isCurActive
+                          ? 'bg-sky-500/15 border-sky-500 ring-2 ring-sky-500/40 shadow-lg shadow-sky-500/10'
+                          : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${
+                        itImg ? 'bg-white border border-slate-700/80 p-0.5' : 'bg-slate-950 border border-slate-800'
+                      }`}>
+                        {itImg ? (
+                          <img src={itImg} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                        ) : (
+                          <i className="fa-solid fa-bolt text-sky-400 text-sm"></i>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-mono text-slate-400 font-bold">Ítem #{idx + 1}</span>
+                          {isCurActive && (
+                            <span className="text-[9px] bg-sky-500 text-slate-950 px-1.5 py-0.2 rounded font-extrabold uppercase">
+                              Editando
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-bold text-white truncate text-xs">{it.name}</div>
+                        <div className="text-[10px] text-slate-400 flex items-center justify-between font-mono">
+                          <span>{it.qty} ud(s)</span>
+                          <span className="text-emerald-400 font-bold">{formatUSD(it.subtotal || (it.unitPrice * it.qty))}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ============================================================== */}
           {/* SECCIÓN 1: SELECTOR VISUAL DE REPUESTOS CON FOTOS */}
           {/* ============================================================== */}
@@ -354,7 +556,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
             <div className="flex items-center justify-between">
               <label className="text-slate-300 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                 <i className="fa-solid fa-box text-sky-400"></i>
-                <span>Repuesto Entregado al Cliente</span>
+                <span>Repuesto Entregado al Cliente {itemsList.length > 1 ? `(Ítem #${activeItemIndex + 1})` : ''}</span>
               </label>
 
               {!isPickerOpen && (
@@ -602,7 +804,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                       ↩️ Se Devuelve al Stock (+{qty})
                     </span>
                     <p className="text-white font-semibold truncate text-[11px]">
-                      {order.coilName || originalCoil?.name || order.coilId}
+                      {currentActiveItem.name || order.coilName || originalCoil?.name || order.coilId}
                     </p>
                   </div>
                 </div>
@@ -646,7 +848,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                 min="1"
                 max="99"
                 value={qty}
-                onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || 1, 10)))}
+                onChange={(e) => handleQtyChange(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-sky-500"
                 required
               />
@@ -663,7 +865,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                   step="0.01"
                   min="0"
                   value={unitPrice}
-                  onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleUnitPriceChange(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 pl-6 text-white font-mono font-bold focus:outline-none focus:border-sky-500 text-xs"
                   placeholder="15.00"
                   required

@@ -431,3 +431,61 @@
   }
 }
 
+
+/* ==========================================================================
+   STRICT PRINT STYLES FOR RECEIPTS (EXACT 1-PAGE TICKET)
+   ========================================================================== */
+@media print {
+  @page {
+    size: portrait;
+    margin: 6mm 8mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar absolutamente todo el contenido de la web para evitar hojas sobrantes */
+  header,
+  footer,
+  nav,
+  aside,
+  .print\:hidden,
+  [class*="FloatingAI"],
+  [class*="OwnerNotification"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Hacer que el comprobante sea el centro único del documento de impresión */
+  #printable-receipt {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    z-index: 999999 !important;
+  }
+
+  #printable-receipt .print\:hidden,
+  #printable-receipt .print\:hidden * {
+    display: none !important;
+  }
+}

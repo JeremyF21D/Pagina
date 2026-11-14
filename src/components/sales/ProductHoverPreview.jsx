@@ -14,6 +14,28 @@ export function ProductHoverPreview({ order, coils = [] }) {
 
   const hasMultipleItems = order.items && Array.isArray(order.items) && order.items.length > 1;
 
+  // Helper para resolver la imagen de cualquier repuesto (individual o dentro de items)
+  const getItemImage = (it) => {
+    if (!it) return null;
+    if (it.image) return it.image;
+    const coilMatch = coils.find(c => {
+      if (it.coilId && c.id && String(c.id).toLowerCase() === String(it.coilId).toLowerCase()) return true;
+      if (it.id && c.id && String(c.id).toLowerCase() === String(it.id).toLowerCase()) return true;
+      if (it.oem && c.oem && String(c.oem).toLowerCase() === String(it.oem).toLowerCase()) return true;
+      if (it.name && c.name && String(c.name).toLowerCase() === String(it.name).toLowerCase()) return true;
+      return false;
+    });
+    if (coilMatch?.image) return coilMatch.image;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+        if (it.coilId && stored[it.coilId]) return stored[it.coilId];
+        if (it.id && stored[it.id]) return stored[it.id];
+        if (coilMatch?.id && stored[coilMatch.id]) return stored[coilMatch.id];
+      } catch (e) {}
+    }
+    return null;
+  };
   // 1. Encontrar la bobina / repuesto en el catálogo activo (para orden de 1 ítem)
   const matchedCoil = coils.find(c => {
     if (order.coilId && c.id && String(c.id).toLowerCase() === String(order.coilId).toLowerCase()) return true;
@@ -238,16 +260,25 @@ export function ProductHoverPreview({ order, coils = [] }) {
 
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {order.items.map((it, idx) => {
-                  const coilMatch = coils.find(c => c.id.toLowerCase() === String(it.coilId).toLowerCase());
+                  const itemImg = getItemImage(it);
                   return (
                     <div key={idx} className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                          {coilMatch?.image ? (
-                            <img src={coilMatch.image} alt={it.name} className="max-h-7 max-w-7 object-contain mix-blend-multiply" />
-                          ) : (
-                            <i className="fa-solid fa-bolt text-[#de2420] text-xs"></i>
-                          )}
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${
+                          itemImg ? 'bg-white border border-slate-700/80 p-0.5' : 'bg-slate-900 border border-slate-800'
+                        }`}>
+                          {itemImg ? (
+                            <img 
+                              src={itemImg} 
+                              alt={it.name} 
+                              className="w-full h-full object-contain mix-blend-multiply" 
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'block';
+                              }}
+                            />
+                          ) : null}
+                          <i className={`fa-solid fa-bolt text-[#de2420] text-xs ${itemImg ? 'hidden' : 'block'}`}></i>
                         </div>
                         <div className="truncate">
                           <h5 className="font-bold text-white truncate text-[11px]">{it.name}</h5>

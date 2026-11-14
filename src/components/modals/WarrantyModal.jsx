@@ -36,6 +36,28 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
     }
   }, [order, items]);
 
+  const getProductImage = (item) => {
+    if (!item) return null;
+    if (item.image) return item.image;
+    const match = coils.find(c => {
+      if (item.coilId && c.id && String(c.id).toLowerCase() === String(item.coilId).toLowerCase()) return true;
+      if (item.id && c.id && String(c.id).toLowerCase() === String(item.id).toLowerCase()) return true;
+      if (item.oem && c.oem && String(c.oem).toLowerCase() === String(item.oem).toLowerCase()) return true;
+      if (item.name && c.name && String(c.name).toLowerCase() === String(item.name).toLowerCase()) return true;
+      return false;
+    });
+    if (match?.image) return match.image;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('JF_PRODUCT_CUSTOM_IMAGES') || '{}');
+        if (item.coilId && stored[item.coilId]) return stored[item.coilId];
+        if (item.id && stored[item.id]) return stored[item.id];
+        if (match?.id && stored[match.id]) return stored[match.id];
+      } catch (e) {}
+    }
+    return null;
+  };
+
   if (!isOpen || !order) return null;
 
   const currentDefectiveItem = items.find(it => it.coilId === selectedCoilId) || items[0];
@@ -177,9 +199,27 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 shrink-0">
-                      <i className="fa-solid fa-bolt text-[#de2420]"></i>
-                    </div>
+                    {(() => {
+                      const itemImg = getProductImage(it);
+                      return (
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${
+                          itemImg ? 'bg-white border border-slate-700/80 p-0.5' : 'bg-slate-950 border border-slate-800 text-slate-400'
+                        }`}>
+                          {itemImg ? (
+                            <img 
+                              src={itemImg} 
+                              alt={it.name} 
+                              className="w-full h-full object-contain mix-blend-multiply" 
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'block';
+                              }}
+                            />
+                          ) : null}
+                          <i className={`fa-solid fa-bolt text-[#de2420] text-sm ${itemImg ? 'hidden' : 'block'}`}></i>
+                        </div>
+                      );
+                    })()}
                     <div className="truncate">
                       <h4 className="text-xs font-bold text-white truncate">{it.name}</h4>
                       <p className="text-[11px] text-slate-400 font-mono">
@@ -261,9 +301,26 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
                   ))}
                 </select>
                 {replacementCoil && (
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Stock actual de este modelo: <strong className="text-white">{replacementCoil.stock} uds</strong> ➔ quedará en <strong className="text-emerald-400">{Math.max(0, replacementCoil.stock - 1)} uds</strong>.
-                  </p>
+                  <div className="flex items-center gap-2.5 mt-2 p-2 rounded-xl bg-slate-950 border border-slate-800">
+                    {(() => {
+                      const repImg = getProductImage(replacementCoil);
+                      return (
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${
+                          repImg ? 'bg-white border border-slate-700/80 p-0.5' : 'bg-slate-900 border border-slate-800'
+                        }`}>
+                          {repImg ? (
+                            <img src={repImg} alt={replacementCoil.name} className="w-full h-full object-contain mix-blend-multiply" />
+                          ) : (
+                            <i className="fa-solid fa-bolt text-purple-400 text-xs"></i>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    <div className="text-[11px] min-w-0">
+                      <div className="font-semibold text-white truncate">{replacementCoil.name}</div>
+                      <div className="text-slate-400">Stock actual: <strong className="text-white">{replacementCoil.stock} uds</strong> ➔ quedará en <strong className="text-emerald-400">{Math.max(0, replacementCoil.stock - 1)} uds</strong></div>
+                    </div>
+                  </div>
                 )}
               </div>
 

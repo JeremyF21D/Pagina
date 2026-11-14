@@ -1364,7 +1364,13 @@ Directrices de conversación:
     // Calcular ajustes de inventario si la orden estaba confirmada o pasa a estar confirmada
     const inventoryAdjustments = []; // Array de { coilId, newStock }
 
-    if (wasConfirmed || isNowConfirmed) {
+    if (updateData.inventoryAdjustments && Array.isArray(updateData.inventoryAdjustments)) {
+      for (const adj of updateData.inventoryAdjustments) {
+        const c = coils.find(item => item.id.toLowerCase() === String(adj.coilId).toLowerCase());
+        const curStock = c ? c.stock : 0;
+        inventoryAdjustments.push({ coilId: adj.coilId, newStock: Math.max(0, curStock + Number(adj.delta || 0)) });
+      }
+    } else if (wasConfirmed || isNowConfirmed) {
       if (oldCoilId.toLowerCase() === newCoilId.toLowerCase()) {
         if (wasConfirmed && !isNowConfirmed) {
           // Ya no está confirmada: devolver stock
@@ -1460,6 +1466,7 @@ Directrices de conversación:
     // Construir la orden actualizada
     const updatedOrder = {
       ...existingOrder,
+      items: updateData.items !== undefined ? updateData.items : existingOrder.items,
       customerName: updateData.customerName !== undefined ? String(updateData.customerName).trim() : existingOrder.customerName,
       customerPhone: updateData.customerPhone !== undefined ? String(updateData.customerPhone).trim() : existingOrder.customerPhone,
       coilId: newCoilId,

@@ -121,7 +121,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
     <>
       {/* ── Floating chat window ──────────────────────────────────────────── */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col gap-3 animate-modal-pop"
+        <div className="fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col gap-3 animate-modal-pop print:hidden"
           style={{ width: 'min(92vw, 400px)' }}
         >
           {/* Admin SQL Console (above chat window) */}
@@ -275,7 +275,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
       )}
 
       {/* ── Floating trigger button ───────────────────────────────────────── */}
-      <div className="fixed bottom-5 right-4 sm:right-6 z-50 flex flex-col items-end gap-2">
+      <div className="fixed bottom-5 right-4 sm:right-6 z-50 flex flex-col items-end gap-2 print:hidden">
         {/* "¿Necesitas ayuda?" tooltip — shown when closed */}
         {!isOpen && (
           <div className="flex items-center gap-2 bg-slate-900 border border-slate-700/80 text-white text-xs font-semibold px-3 py-2 rounded-2xl shadow-xl animate-fade-in select-none">
