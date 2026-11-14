@@ -140,12 +140,8 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
       {/* 1. Hero Banner Principal (Figma Design) */}
       <FigmaHeroBanner onScrollToCatalog={handleScrollToCatalog} />
 
-      {/* 2. Marcas de Autos - Logo Loop Animado (React Bits) */}
-      <CarBrandsLogoLoop
-        selectedBrand={selectedBrand}
-        onSelectBrand={setSelectedBrand}
-        onScrollToCatalog={handleScrollToCatalog}
-      />
+      {/* 2. Marcas de Autos - Logo Loop Animado Visual (React Bits) */}
+      <CarBrandsLogoLoop />
 
       {/* 3. Anchor Ref para Navegación Directa al Catálogo */}
       <div ref={catalogTopRef} className="pt-1"></div>
