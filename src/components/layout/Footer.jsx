@@ -33,7 +33,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-sans">
-              Distribución y venta directa de bobinas de encendido, inyectores, conectores y repuestos automotrices garantizados con despachos a toda Venezuela.
+              Distribución y venta directa de bobinas de encendido, inyectores, conectores y repuestos automotrices garantizados desde Maracaibo con despachos a toda Venezuela.
             </p>
             <p className="text-[11px] text-slate-500 font-mono">
               &copy; {new Date().getFullYear()} JF Auto Parts. Todos los derechos reservados.
@@ -73,7 +73,11 @@ export function Footer() {
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-2 text-slate-300">
                 <i className="fa-solid fa-location-dot text-[#de2420] text-xs"></i>
-                <span>Caracas / Envíos Nacionales</span>
+                <span>Maracaibo, Edo. Zulia / Envíos Nacionales</span>
+              </li>
+              <li className="flex items-center gap-2 text-slate-300">
+                <i className="fa-solid fa-motorcycle text-[#de2420] text-xs"></i>
+                <span>Entregas Personales & Delivery en Maracaibo</span>
               </li>
               <li className="flex items-center gap-2 text-slate-300">
                 <i className="fa-solid fa-truck-fast text-[#de2420] text-xs"></i>
