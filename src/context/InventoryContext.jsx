@@ -133,7 +133,7 @@ export function InventoryProvider({ children }) {
         }
       }
     } catch (e) {}
-    return [];
+    return DEFAULT_BOBINAS_SEED.map(normalizeCoilRecord);
   });
 
   const [isDbLoading, setIsDbLoading] = useState(true);

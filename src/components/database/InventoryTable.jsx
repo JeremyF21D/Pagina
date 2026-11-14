@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
-import { formatUSD, detectProductCategory, getCategoryConfig, PRODUCT_CATEGORIES } from '../../utils/formatters';
+import { formatUSD, detectProductCategory, getCategoryConfig, PRODUCT_CATEGORIES, matchesSearchTerms } from '../../utils/formatters';
 
 export function InventoryTable({ onEditCoil, onDeleteCoil }) {
   const { coils, upsertCoil } = useInventory();
@@ -36,14 +36,15 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
     if (stockStatusFilter === 'AVAILABLE' && b.stock <= 0) return false;
 
     if (search.trim()) {
-      const q = search.toLowerCase();
-      return (
-        b.id.toLowerCase().includes(q) ||
-        b.name.toLowerCase().includes(q) ||
-        b.carModel.toLowerCase().includes(q) ||
-        b.oem.toLowerCase().includes(q) ||
-        (b.brand && b.brand.toLowerCase().includes(q))
-      );
+      return matchesSearchTerms([
+        b.id,
+        b.name,
+        b.carModel,
+        b.oem,
+        b.brand,
+        b.type,
+        b.connector
+      ], search);
     }
     return true;
   });

@@ -1,4 +1,4 @@
-import { DEFAULT_BOBINAS_SEED } from '../data/seedData';
+import { DEFAULT_BOBINAS_SEED } from '../data/seedData.js';
 
 /**
  * Categorías de repuestos automotrices con sus configuraciones técnicas y prefijos oficiales
@@ -521,4 +521,37 @@ export function formatOrderDate(raw, full = false) {
   });
   return `${dateStr}, ${timeStr}`;
 }
+
+/**
+ * Normaliza cualquier texto para búsquedas en español:
+ * - Insensible a mayúsculas/minúsculas
+ * - Remueve tildes y acentos (á→a, é→e, í→i, ó→o, ú→u)
+ * - Remueve diéresis (ü→u, como en 'cigüeñal' -> 'ciguenal')
+ * - Normaliza 'ñ' a 'n' para que buscar 'cigueñal', 'cigüeñal' o 'ciguenal' siempre coincidan
+ */
+export function normalizeSearchText(str) {
+  if (!str) return '';
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+/**
+ * Verifica si un registro coincide con todos los términos de búsqueda introducidos.
+ * Soporta búsquedas con múltiples palabras en cualquier orden (ej: "sensor cigueñal sentra", "estopera cigueñal").
+ */
+export function matchesSearchTerms(fields, query) {
+  if (!query || !String(query).trim()) return true;
+  const terms = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return true;
+
+  const targetText = Array.isArray(fields)
+    ? normalizeSearchText(fields.filter(Boolean).join(' '))
+    : normalizeSearchText(fields);
+
+  return terms.every(term => targetText.includes(term));
+}
+
 

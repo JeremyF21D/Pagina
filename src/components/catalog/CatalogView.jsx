@@ -7,7 +7,7 @@ import { FigmaHeroBanner } from './FigmaHeroBanner';
 import { FigmaCatalogSidebar } from './FigmaCatalogSidebar';
 import { FigmaAdviceBanner } from './FigmaAdviceBanner';
 import { FigmaPaymentMethods } from './FigmaPaymentMethods';
-import { detectProductCategory } from '../../utils/formatters';
+import { detectProductCategory, normalizeSearchText, matchesSearchTerms } from '../../utils/formatters';
 
 export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
   const { coils, isDbLoading, dbEngine, checkAndSyncDatabase, apiConnectionStatus } = useInventory();
@@ -35,7 +35,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
 
   // Compute counts per category
   const categoryCounts = useMemo(() => {
-    const counts = { ALL: coils.length, bobina: 0, inyector: 0, conector: 0, estopera: 0 };
+    const counts = { ALL: coils.length, bobina: 0, inyector: 0, conector: 0, estopera: 0, sensor: 0 };
     coils.forEach(item => {
       const cat = detectProductCategory(item);
       if (counts[cat] !== undefined) counts[cat]++;
@@ -48,35 +48,38 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
     { id: 'bobina', name: 'Bobinas' },
     { id: 'inyector', name: 'Inyectores' },
     { id: 'conector', name: 'Conectores' },
-    { id: 'estopera', name: 'Estoperas' }
+    { id: 'estopera', name: 'Estoperas' },
+    { id: 'sensor', name: 'Sensores' }
   ];
 
   // Filter products
   const filteredCoils = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
     return coils.filter(item => {
-      // Search text query
-      const matchesQuery = !q ||
-        item.name.toLowerCase().includes(q) ||
-        item.carModel.toLowerCase().includes(q) ||
-        item.engine.toLowerCase().includes(q) ||
-        item.oem.toLowerCase().includes(q) ||
-        item.brand.toLowerCase().includes(q) ||
-        item.id.toLowerCase().includes(q) ||
-        (item.type && item.type.toLowerCase().includes(q)) ||
-        (item.connector && item.connector.toLowerCase().includes(q));
+      // 1. Búsqueda inteligente por texto: insensible a mayúsculas, tildes (á/a) y diéresis (ü/u) o ñ/n
+      const matchesQuery = matchesSearchTerms([
+        item.name,
+        item.carModel,
+        item.engine,
+        item.oem,
+        item.brand,
+        item.id,
+        item.type,
+        item.connector,
+        item.badge
+      ], searchQuery);
 
-      // Brand filter
-      const matchesBrand = (selectedBrand === 'ALL') || (item.brand.toLowerCase() === selectedBrand.toLowerCase());
+      // 2. Brand filter
+      const matchesBrand = (selectedBrand === 'ALL') || 
+        (normalizeSearchText(item.brand) === normalizeSearchText(selectedBrand));
 
-      // Category filter
+      // 3. Category filter
       let matchesCategory = true;
       if (selectedCategory !== 'ALL') {
         const itemCat = detectProductCategory(item);
         matchesCategory = itemCat === selectedCategory;
       }
 
-      // Stock filter
+      // 4. Stock filter
       let matchesStock = true;
       if (stockFilter === 'IN_STOCK') {
         matchesStock = item.stock > 0;
@@ -84,7 +87,7 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
         matchesStock = item.stock <= 0;
       }
 
-      // Price range filter
+      // 5. Price range filter
       let matchesPrice = true;
       const price = Number(item.price) || 0;
       if (priceRange.min !== null && price < priceRange.min) matchesPrice = false;

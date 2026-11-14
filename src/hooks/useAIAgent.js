@@ -176,7 +176,7 @@ function levenshtein(a, b) {
 function scoreProduct(product, tokens) {
   if (!tokens.length) return 0;
 
-  // Build searchable field groups with different weights
+  // Build searchable field groups with different weights (normalized without diacritics)
   const highPriorityHaystack = [
     product.name,
     product.brand,
@@ -184,13 +184,19 @@ function scoreProduct(product, tokens) {
     product.engine,
     product.oem,
     product.id,
-  ].join(' ').toLowerCase();
+  ].join(' ')
+   .toLowerCase()
+   .normalize('NFD')
+   .replace(/[\u0300-\u036f]/g, '');
 
   const lowPriorityHaystack = [
     product.type,
     product.connector,
     product.badge,
-  ].join(' ').toLowerCase();
+  ].join(' ')
+   .toLowerCase()
+   .normalize('NFD')
+   .replace(/[\u0300-\u036f]/g, '');
 
   // Pre-tokenize the product's own fields for fuzzy comparison
   const productWords = highPriorityHaystack

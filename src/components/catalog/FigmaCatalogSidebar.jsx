@@ -21,7 +21,8 @@ export function FigmaCatalogSidebar({
     { id: 'bobina', name: 'Bobinas de Encendido', icon: 'fa-solid fa-bolt' },
     { id: 'inyector', name: 'Inyectores de Gasolina', icon: 'fa-solid fa-syringe' },
     { id: 'conector', name: 'Conectores / Ramales', icon: 'fa-solid fa-plug' },
-    { id: 'estopera', name: 'Estoperas / Retenes', icon: 'fa-solid fa-circle-notch' }
+    { id: 'estopera', name: 'Estoperas / Retenes', icon: 'fa-solid fa-circle-notch' },
+    { id: 'sensor', name: 'Sensores Automotrices', icon: 'fa-solid fa-satellite-dish' }
   ];
 
   const handleApplyPrice = (e) => {

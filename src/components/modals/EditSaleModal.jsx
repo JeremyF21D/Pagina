@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
+import { formatUSD, detectProductCategory, getCategoryConfig, matchesSearchTerms } from '../../utils/formatters';
 import { getCachedExchangeRates, formatVES } from '../../services/exchangeRatesService';
 
 // Helper de parsing para extraer datos estructurados de referencia_pago
@@ -203,15 +203,16 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
       }
       if (!searchQuery.trim()) return true;
 
-      const q = searchQuery.toLowerCase();
-      return (
-        (c.name || '').toLowerCase().includes(q) ||
-        (c.brand || '').toLowerCase().includes(q) ||
-        (c.carModel || '').toLowerCase().includes(q) ||
-        (c.engine || '').toLowerCase().includes(q) ||
-        (c.oem || '').toLowerCase().includes(q) ||
-        (c.id || '').toLowerCase().includes(q)
-      );
+      return matchesSearchTerms([
+        c.name,
+        c.brand,
+        c.carModel,
+        c.engine,
+        c.oem,
+        c.id,
+        c.type,
+        c.connector
+      ], searchQuery);
     });
   }, [coils, searchQuery, selectedBrandFilter]);
 
