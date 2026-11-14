@@ -120,9 +120,11 @@ export function CoilCard({ coil, onEditProduct }) {
           <h3 className="text-[11px] sm:text-sm font-bold text-white group-hover:text-red-400 transition leading-snug line-clamp-2 min-h-[28px] sm:min-h-[38px]">
             {coil.name}
           </h3>
-          <div className="text-[10px] sm:text-[11px] text-slate-400 flex items-start gap-1 pt-0.5 leading-snug">
-            <i className="fa-solid fa-car-side text-slate-500 text-[9px] shrink-0 mt-0.5"></i>
-            <span className="leading-snug break-words">
+          <div className={`text-[10px] sm:text-[11px] text-slate-400 flex gap-1 pt-0.5 ${
+            isExpanded ? 'items-start leading-snug' : 'items-center truncate'
+          }`}>
+            <i className={`fa-solid fa-car-side text-slate-500 text-[9px] shrink-0 ${isExpanded ? 'mt-0.5' : ''}`}></i>
+            <span className={isExpanded ? 'leading-snug break-words' : 'truncate'}>
               Para: <strong className="text-slate-200 font-medium">{coil.carModel}</strong>
             </span>
           </div>
