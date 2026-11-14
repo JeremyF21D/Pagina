@@ -108,6 +108,19 @@ export function Footer() {
                 Verificamos la impedancia y funcionamiento de cada bobina antes del despacho.
               </p>
             </div>
+            
+            <a
+              href="/carta_presentacion.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1c1d22] hover:bg-[#25272e] text-slate-200 hover:text-white border border-[#2d2f35] hover:border-[#de2420]/50 text-xs font-medium transition w-full justify-center group shadow-sm"
+              title="Ver o imprimir carta de presentación institucional con código QR"
+            >
+              <i className="fa-solid fa-file-lines text-[#de2420] text-sm group-hover:scale-110 transition-transform"></i>
+              <span>Carta Corporativa & QR</span>
+              <i className="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-500 group-hover:text-slate-300 ml-0.5"></i>
+            </a>
+
             {isAdmin && (
               <div className="pt-1 text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono">
                 <i className="fa-solid fa-database text-[10px]"></i>

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta de Presentación Corporativa | JF AUTO PARTS</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================================================================
+       JF AUTO PARTS - CORPORATE PRESENTATION LETTER STYLESHEET
+       Design Standard: High-Performance Automotive Engineering
+       Palette: Carbon Black (#0A0B0D, #141518, #1C1D22), Racing Red (#DE2420),
+                Pure White (#FFFFFF), Muted Slate (#94A3B8), WhatsApp (#25D366)
+       ===================================================================== */
+    
+    :root {
+      --bg-page: #07080a;
+      --surface-card: #121316;
+      --surface-border: #23252a;
+      --surface-card-subtle: #18191e;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --brand-red: #de2420;
+      --brand-red-dark: #b91c1c;
+      --brand-red-glow: rgba(222, 36, 32, 0.25);
+      --accent-whatsapp: #25d366;
+      --accent-emerald: #10b981;
+      --font-heading: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    /* Light Print / White Mode */
+    html.light {
+      --bg-page: #f1f5f9;
+      --surface-card: #ffffff;
+      --surface-border: #e2e8f0;
+      --surface-card-subtle: #f8fafc;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --brand-red: #c81e1a;
+      --brand-red-dark: #991b1b;
+      --brand-red-glow: rgba(200, 30, 26, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 60px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Action Toolbar (Screen only) */
+    .toolbar-container {
+      width: 100%;
+      max-width: 840px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: rgba(20, 21, 24, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--surface-border);
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    html.light .toolbar-container {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .toolbar-title {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toolbar-title .badge {
+      background: var(--brand-red);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      cursor: pointer;
+      border: none;
+      font-family: var(--font-heading);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--brand-red);
+      color: #ffffff;
+      box-shadow: 0 4px 12px var(--brand-red-glow);
+    }
+    .btn-primary:hover {
+      background: var(--brand-red-dark);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--surface-card-subtle);
+      color: var(--text-primary);
+      border: 1px solid var(--surface-border);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-border);
+    }
+
+    /* =====================================================================
+       DOCUMENT CANVAS (Simulates Letter / A4 Proportions)
+       ===================================================================== */
+    .document-page {
+      width: 100%;
+      max-width: 840px;
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 48px 52px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Accent Stripe */
+    .document-page::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--brand-red) 0%, #ff4b45 50%, var(--brand-red) 100%);
+    }
+
+    /* Background Watermark Emblem */
+    .bg-watermark {
+      position: absolute;
+      right: -80px;
+      bottom: 120px;
+      width: 480px;
+      height: 480px;
+      opacity: 0.025;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      filter: grayscale(100%);
+    }
+
+    /* -------------------------------------------------------------
+       1. HEADER BLOCK
+       ------------------------------------------------------------- */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--surface-border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand-logo {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+    }
+
+    .brand-title-box h1 {
+      font-family: var(--font-heading);
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+    .brand-title-box h1 span {
+      color: var(--brand-red);
+    }
+
+    .brand-tagline {
+      font-family: var(--font-heading);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .doc-meta {
+      text-align: right;
+    }
+    .doc-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--brand-red);
+      background: var(--brand-red-glow);
+      border: 1px solid rgba(222, 36, 32, 0.3);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .doc-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* -------------------------------------------------------------
+       2. RECIPIENT & SALUTATION
+       ------------------------------------------------------------- */
+    .doc-salutation {
+      margin-top: 28px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .recipient-tag {
+      font-family: var(--font-heading);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand-red);
+      margin-bottom: 4px;
+    }
+    .recipient-target {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    .recipient-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* -------------------------------------------------------------
+       3. INTRODUCTORY LETTER BODY
+       ------------------------------------------------------------- */
+    .doc-body {
+      position: relative;
+      z-index: 1;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .doc-body p {
+      margin-bottom: 14px;
+    }
+    .doc-body strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* -------------------------------------------------------------
+       4. VALUE PILLARS (GRID OF 4)
+       ------------------------------------------------------------- */
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin: 22px 0 26px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pillar-card {
+      background: var(--surface-card-subtle);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pillar-card:hover {
+      border-color: rgba(222, 36, 32, 0.4);
+      transform: translateY(-2px);
+    }
+    .pillar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pillar-icon-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--brand-red-glow);
+      border: 1px solid rgba(222, 36, 32, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand-red);
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .pillar-title {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    .pillar-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* -------------------------------------------------------------
+       5. CORE PRODUCT FAMILIES PILLS
+       ------------------------------------------------------------- */
+    .families-section {
+      background: var(--surface-card-subtle);
+      border: 1px dashed var(--surface-border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .families-header {
+      font-family: var(--font-heading);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .families-header::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--brand-red);
+      border-radius: 50%;
+    }
+    .families-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chip strong {
+      color: var(--text-primary);
+    }
+
+    /* -------------------------------------------------------------
+       6. HERO INTERACTIVE QR SECTION (THE CORE PIECE)
+       ------------------------------------------------------------- */
+    .qr-hero-card {
+      background: linear-gradient(135deg, rgba(222, 36, 32, 0.08) 0%, rgba(20, 21, 24, 0.95) 100%);
+      border: 1.5px solid rgba(222, 36, 32, 0.4);
+      border-radius: 14px;
+      padding: 22px 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 30px -8px rgba(222, 36, 32, 0.2);
+    }
+    html.light .qr-hero-card {
+      background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+      border-color: rgba(200, 30, 26, 0.3);
+      box-shadow: 0 8px 24px rgba(200, 30, 26, 0.08);
+    }
+
+    .qr-info-side {
+      flex: 1;
+    }
+    .qr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--brand-red);
+      background: var(--brand-red-glow);
+      padding: 3px 9px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .qr-badge .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--brand-red);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--brand-red);
+    }
+    .qr-title {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+    .qr-instructions {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+    .qr-url-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .qr-url-pill a {
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .qr-url-pill a:hover {
+      color: var(--brand-red);
+    }
+
+    .qr-code-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .qr-frame {
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .qr-frame img {
+      width: 120px;
+      height: 120px;
+      display: block;
+    }
+    .qr-scan-label {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    /* -------------------------------------------------------------
+       7. FOOTER & DIRECT CONTACT STRIP
+       ------------------------------------------------------------- */
+    .doc-footer {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 20px;
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .contact-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .contact-icon {
+      font-size: 15px;
+      color: var(--brand-red);
+    }
+    .contact-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+    .contact-value {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .contact-value a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .contact-value a:hover {
+      color: var(--accent-whatsapp);
+    }
+
+    .shipping-partners {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .shipping-label {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    .partner-pill {
+      background: var(--surface-card-subtle);
+      border: 1px solid var(--surface-border);
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* =====================================================================
+       PRINT MEDIA SPECIFICATIONS
+       Target: Standard Letter / A4 physical print & PDF export
+       ===================================================================== */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+      }
+      .toolbar-container {
+        display: none !important;
+      }
+      .document-page {
+        max-width: 100% !important;
+        width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 32px 36px !important;
+        background: #ffffff !important;
+        border-radius: 0 !important;
+      }
+      .document-page::before {
+        background: #c81e1a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .bg-watermark {
+        display: none !important;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .pillar-card, .families-section, .qr-hero-card {
+        page-break-inside: avoid;
+      }
+      a {
+        text-decoration: none !important;
+        color: inherit !important;
+      }
+    }
+
+    /* Responsive styling for small screens preview */
+    @media (max-width: 768px) {
+      .document-page {
+        padding: 28px 20px;
+      }
+      .doc-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .doc-meta {
+        text-align: left;
+      }
+      .pillars-grid {
+        grid-template-columns: 1fr;
+      }
+      .qr-hero-card {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+      }
+      .qr-url-pill {
+        justify-content: center;
+      }
+      .doc-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Action Toolbar (Screen only) -->
+  <div class="toolbar-container">
+    <div class="toolbar-title">
+      <span>JF AUTO PARTS</span>
+      <span class="badge">Propuesta Gráfica</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn btn-secondary" onclick="toggleTheme()" id="themeBtn" title="Alternar entre modo oscuro de lujo y modo blanco de impresión">
+        🌓 Fondo Claro / Oscuro
+      </button>
+      <button class="btn btn-primary" onclick="window.print()" title="Imprimir documento o Guardar como PDF en alta resolución">
+        🖨️ Imprimir / Guardar PDF
+      </button>
+      <a href="/" class="btn btn-secondary" title="Regresar al Catálogo Web">
+        ← Ir a la Tienda
+      </a>
+    </div>
+  </div>
+
+  <!-- Document Canvas (A4 / Letter Proportions) -->
+  <main class="document-page" id="printableDoc">
+    
+    <!-- Watermark Background -->
+    <img src="/jf_emblem_clean.png" alt="" class="bg-watermark">
+
+    <!-- 1. Header Block -->
+    <header class="doc-header">
+      <div class="brand-group">
+        <img src="/jf_emblem_clean.png" alt="JF AUTO PARTS Logo" class="brand-logo">
+        <div class="brand-title-box">
+          <h1>JF AUTO <span>PARTS</span></h1>
+          <p class="brand-tagline">Encendido • Inyección • Sensores Automotrices</p>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <span class="doc-badge">Catálogo Oficial 2026</span>
+        <p class="doc-date">Caracas • Despacho Nacional</p>
+      </div>
+    </header>
+
+    <!-- 2. Salutation & Recipient Target -->
+    <section class="doc-salutation">
+      <div class="recipient-tag">Carta de Presentación & Alianza Comercial</div>
+      <h2 class="recipient-target">A la Dirección de Compras, Talleres y Profesionales Automotrices</h2>
+      <p class="recipient-sub">Presentación de soluciones en repuestos automotrices de alta rotación y precisión.</p>
+    </section>
+
+    <!-- 3. Professional Letter Copy -->
+    <section class="doc-body">
+      <p>
+        Estimados aliados comerciales y especialistas del sector automotriz:
+      </p>
+      <p>
+        Es un placer presentarles formalmente a <strong>JF AUTO PARTS</strong>, especialistas en componentes críticos de <strong>encendido, inyección electrónica y sensores de motor</strong> para el parque automotor venezolano. En un mercado donde el tiempo de entrega y la precisión del repuesto determinan la satisfacción de sus clientes, nos posicionamos como su aliado estratégico directo.
+      </p>
+      <p>
+        Contamos con un riguroso control de calidad, garantía de compatibilidad exacta por código OEM y una plataforma digital moderna que le permite verificar stock, especificaciones y precios en tiempo real sin fricciones.
+      </p>
+    </section>
+
+    <!-- 4. Value Pillars (Grid of 4) -->
+    <section class="pillars-grid">
+      <div class="pillar-card">
+        <div class="pillar-header">
+          <div class="pillar-icon-box">⚡</div>
+          <h3 class="pillar-title">Calidad & Banco de Pruebas</h3>
+        </div>
+        <p class="pillar-desc">Componentes verificados que cumplen con la curva de desempeño OEM. Resistencia térmica y durabilidad garantizada.</p>
+      </div>
+
+      <div class="pillar-card">
+        <div class="pillar-header">
+          <div class="pillar-icon-box">🔍</div>
+          <h3 class="pillar-title">Precisión por Código OEM</h3>
+        </div>
+        <p class="pillar-desc">Asesoría técnica para evitar errores de compra: compatibilidad verificada por serial, número de parte o muestra física.</p>
+      </div>
+
+      <div class="pillar-card">
+        <div class="pillar-header">
+          <div class="pillar-icon-box">🚚</div>
+          <h3 class="pillar-title">Despachos Express a Nivel Nacional</h3>
+        </div>
+        <p class="pillar-desc">Envíos diarios cobro a destino y asegurados por las principales agencias de encomienda en toda Venezuela.</p>
+      </div>
+
+      <div class="pillar-card">
+        <div class="pillar-header">
+          <div class="pillar-icon-box">💼</div>
+          <h3 class="pillar-title">Precios Especiales para Talleres</h3>
+        </div>
+        <p class="pillar-desc">Condiciones comerciales competitivas, cotizaciones directas por lote y atención personalizada vía WhatsApp.</p>
+      </div>
+    </section>
+
+    <!-- 5. Specialized Product Families -->
+    <section class="families-section">
+      <div class="families-header">Líneas de Especialidad en Inventario</div>
+      <div class="families-chips">
+        <div class="chip">🔥 <strong>Bobinas de Encendido</strong> (COP, paquetes, 3 y 4 pines)</div>
+        <div class="chip">⚙️ <strong>Sensores de Cigüeñal (CKP)</strong> y Árbol de Levas (CMP)</div>
+        <div class="chip">💨 <strong>Sensores MAF / MAP</strong> (Flujo de Aire & Presión)</div>
+        <div class="chip">🔌 <strong>Conectores Automotrices</strong> de Inyectores y Sensores</div>
+        <div class="chip">⛽ <strong>Inyectores de Gasolina</strong> y Microfiltros</div>
+        <div class="chip">🛡️ <strong>Estoperas y Empacaduras</strong> de Alta Resistencia</div>
+      </div>
+    </section>
+
+    <!-- 6. Hero QR Section (Direct Scan to Platform) -->
+    <section class="qr-hero-card">
+      <div class="qr-info-side">
+        <div class="qr-badge">
+          <span class="pulse-dot"></span>
+          Plataforma Digital En Vivo
+        </div>
+        <h3 class="qr-title">Acceda a Nuestro Catálogo Digital Interactivo</h3>
+        <p class="qr-instructions">
+          Escanee el código QR con la cámara de su teléfono inteligente para consultar disponibilidad de repuestos, especificaciones técnicas, precios al día y solicitar su pedido al instante.
+        </p>
+        <div class="qr-url-pill">
+          🌐 <a href="https://jfautoparts.vercel.app" target="_blank" rel="noopener">jfautoparts.vercel.app</a>
+        </div>
+      </div>
+
+      <div class="qr-code-side">
+        <div class="qr-frame">
+          <img src="/qr_code_jfautoparts.svg" alt="Código QR Catálogo Web JF Auto Parts">
+        </div>
+        <span class="qr-scan-label">Escanear para Explorar</span>
+      </div>
+    </section>
+
+    <!-- 7. Footer & Direct Contact Strip -->
+    <footer class="doc-footer">
+      <div class="contact-items">
+        <div class="contact-item">
+          <span class="contact-icon">📲</span>
+          <div>
+            <div class="contact-label">WhatsApp Directo</div>
+            <div class="contact-value"><a href="https://wa.me/584126497478" target="_blank" rel="noopener">+58 412-6497478</a></div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <span class="contact-icon">📍</span>
+          <div>
+            <div class="contact-label">Ubicación</div>
+            <div class="contact-value">Caracas, Venezuela</div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <span class="contact-icon">⏰</span>
+          <div>
+            <div class="contact-label">Horario de Atención</div>
+            <div class="contact-value">Lun - Sáb: 8:00 AM - 5:30 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shipping-partners">
+        <span class="shipping-label">Envíos Nacionales:</span>
+        <span class="partner-pill">MRW</span>
+        <span class="partner-pill">TEALCA</span>
+        <span class="partner-pill">ZOOM</span>
+        <span class="partner-pill">DOMESA</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    // Check URL query param ?theme=light or dark
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('theme') === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+
+    // Theme toggle function for previewing Dark Luxury vs White Print mode
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        html.classList.add('light');
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+      }
+    }
+  </script>
+</body>
+</html>
