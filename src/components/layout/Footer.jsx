@@ -79,7 +79,11 @@ export function Footer() {
                 <i className="fa-solid fa-truck-fast text-[#de2420] text-xs"></i>
                 <span>MRW, Tealca, Zoom y Domesa</span>
               </li>
-              <li className="flex items-center gap-2 text-slate-300">
+              <li 
+                onClick={handleOpenWhatsApp}
+                className="flex items-center gap-2 text-slate-300 hover:text-emerald-400 cursor-pointer transition"
+                title="Escribir por WhatsApp"
+              >
                 <i className="fa-brands fa-whatsapp text-emerald-400 text-sm"></i>
                 <span>Atención inmediata vía WhatsApp</span>
               </li>
@@ -114,19 +118,6 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Floating WhatsApp Action Pill (Bottom Right) */}
-      <div className="fixed bottom-5 right-5 z-40">
-        <button
-          onClick={handleOpenWhatsApp}
-          className="flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-full shadow-2xl shadow-emerald-600/40 border border-emerald-400/40 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-          title="Hablar con un asesor por WhatsApp"
-        >
-          <i className="fa-brands fa-whatsapp text-2xl"></i>
-          <span className="hidden sm:inline text-xs font-extrabold uppercase tracking-wider">
-            ¿Dudas? Escríbenos
-          </span>
-        </button>
-      </div>
     </footer>
   );
 }

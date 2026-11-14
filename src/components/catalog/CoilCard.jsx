@@ -40,7 +40,7 @@ export function CoilCard({ coil, onEditProduct }) {
           ? 'scale-[1.03] sm:scale-[1.05] -translate-y-1.5 border-2 border-[#de2420] shadow-2xl shadow-[#de2420]/25 z-30 ring-2 ring-[#de2420]/30 bg-[#1c1d22]' 
           : 'bg-[#1c1d22] border border-[#2d2f35] hover:border-[#de2420]/70 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#de2420]/15'
       }`}
-      title={isExpanded ? "Toca para reducir" : "Toca para expandir tarjeta"}
+      title={coil.name}
     >
       <div>
         {/* Badge & Stock Status */}
@@ -49,11 +49,6 @@ export function CoilCard({ coil, onEditProduct }) {
             <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-wider bg-[#de2420]/15 text-[#de2420] border border-[#de2420]/30 whitespace-nowrap flex-shrink-0">
               {coil.badge || 'OEM Spec'}
             </span>
-            {isExpanded && (
-              <span className="px-1.5 py-0.5 rounded text-[7px] sm:text-[8px] font-bold uppercase bg-[#de2420] text-white animate-fade-in flex-shrink-0">
-                Expandido
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0">
@@ -125,10 +120,12 @@ export function CoilCard({ coil, onEditProduct }) {
           <h3 className="text-[11px] sm:text-sm font-bold text-white group-hover:text-red-400 transition leading-snug line-clamp-2 min-h-[28px] sm:min-h-[38px]">
             {coil.name}
           </h3>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1 pt-0.5 truncate">
-            <i className="fa-solid fa-car-side text-slate-500 text-[9px] shrink-0"></i>
-            <span className="truncate">Para: <strong className="text-slate-200">{coil.carModel}</strong></span>
-          </p>
+          <div className="text-[10px] sm:text-[11px] text-slate-400 flex items-start gap-1 pt-0.5 leading-snug">
+            <i className="fa-solid fa-car-side text-slate-500 text-[9px] shrink-0 mt-0.5"></i>
+            <span className="leading-snug break-words">
+              Para: <strong className="text-slate-200 font-medium">{coil.carModel}</strong>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -136,11 +133,11 @@ export function CoilCard({ coil, onEditProduct }) {
       <div className="pt-2 border-t border-[#2d2f35] space-y-2">
         <div className="flex items-baseline justify-between">
           <div className="flex items-baseline gap-1">
-            <span className="text-sm sm:text-xl font-black text-[#de2420] font-mono">
+            <span className="text-sm sm:text-xl font-black text-white font-mono">
               {formatUSD(coil.price)}
             </span>
             {Number(coil.oldPrice) > Number(coil.price) && (
-              <span className="text-[10px] sm:text-xs text-slate-500 line-through font-mono">
+              <span className="text-[10px] sm:text-xs text-slate-400 line-through font-mono">
                 {formatUSD(coil.oldPrice)}
               </span>
             )}
