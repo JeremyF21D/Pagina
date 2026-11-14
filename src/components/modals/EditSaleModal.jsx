@@ -481,7 +481,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
 
     try {
       await onSave(order.orderId, {
-        items: isMulti ? finalItems : undefined,
+        items: finalItems,
         inventoryAdjustments: inventoryAdjustments.length > 0 ? inventoryAdjustments : undefined,
         coilId: selectedCoilId || order.coilId,
         coilName: summaryCoilName,

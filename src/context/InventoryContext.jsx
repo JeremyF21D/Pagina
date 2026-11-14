@@ -99,6 +99,70 @@ export const getActiveSupabaseConfig = (customCreds = null, allCreds = null) => 
   };
 };
 
+/**
+ * Codifica metadatos extendidos de una orden (items multi-artículo, tasas históricas, garantías)
+ * dentro del campo TEXT 'referencia_pago' para persistencia garantizada en Supabase sin alterar schema.
+ */
+export const encodeOrderPaymentRef = (rawRef = '', order = {}) => {
+  const cleanRef = String(rawRef || '')
+    .replace(/\s*\|\s*\[JF_META_START\][\s\S]*?\[JF_META_END\]/gs, '')
+    .replace(/\[JF_META_START\][\s\S]*?\[JF_META_END\]/gs, '')
+    .replace(/\s*\|\s*\[JF_ORDER_META:\s*[\s\S]*?\]/gs, '')
+    .replace(/\s*\|\s*\[JF_ORDER_ITEMS:\s*[\s\S]*?\]/gs, '')
+    .trim();
+
+  const meta = {
+    items: Array.isArray(order.items) && order.items.length > 0 ? order.items : null,
+    rateBinance: order.exchangeRateBinance ?? null,
+    rateBCV: order.exchangeRateBCV ?? null,
+    totalVES: order.totalVES ?? null,
+    rateDate: order.rateSnapshotDate ?? null,
+    warrantyEvents: Array.isArray(order.warrantyEvents) ? order.warrantyEvents : [],
+    customerCar: order.customerCar ?? '',
+    notes: order.notes ?? ''
+  };
+
+  if (meta.items || meta.rateBinance || (meta.warrantyEvents && meta.warrantyEvents.length > 0) || meta.notes) {
+    try {
+      const metaString = JSON.stringify(meta);
+      return cleanRef ? `${cleanRef} | [JF_META_START]${metaString}[JF_META_END]` : `[JF_META_START]${metaString}[JF_META_END]`;
+    } catch (e) {
+      console.warn('Error serializing order meta:', e);
+    }
+  }
+
+  return cleanRef;
+};
+
+/**
+ * Decodifica metadatos extendidos del campo 'referencia_pago' de Supabase
+ */
+export const decodeOrderPaymentRef = (rawRef = '') => {
+  const str = String(rawRef || '');
+  const match = str.match(/\[JF_META_START\]([\s\S]*?)\[JF_META_END\]/)
+    || str.match(/\[JF_ORDER_META:\s*({[\s\S]*?})\](?:\s*$|\s*\|)/)
+    || str.match(/\[JF_ORDER_ITEMS:\s*({[\s\S]*?})\](?:\s*$|\s*\|)/);
+
+  let cleanRef = str
+    .replace(/\s*\|\s*\[JF_META_START\][\s\S]*?\[JF_META_END\]/gs, '')
+    .replace(/\[JF_META_START\][\s\S]*?\[JF_META_END\]/gs, '')
+    .replace(/\s*\|\s*\[JF_ORDER_META:\s*[\s\S]*?\]/gs, '')
+    .replace(/\s*\|\s*\[JF_ORDER_ITEMS:\s*[\s\S]*?\]/gs, '')
+    .trim();
+
+  let meta = null;
+  if (match && match[1]) {
+    try {
+      meta = JSON.parse(match[1]);
+    } catch (e) {
+      console.warn('Error parsing order meta from paymentRef:', e);
+    }
+  }
+
+  return { cleanRef, meta };
+};
+
+
 const DEFAULT_CREDENTIALS = {
   supabase: {
     url: SUPABASE_CONFIG.url,
@@ -748,6 +812,8 @@ Directrices de conversación:
 
   /**
    * Guarda o actualiza una orden de venta directamente en la tabla 'ventas' de Supabase en tiempo real.
+   * Preserva permanentemente los repuestos múltiples (items), tasas históricas y notas extendidas
+   * serializadas en el campo TEXT 'referencia_pago' con tags delimitados indestructibles [JF_META_START]...[JF_META_END].
    */
   const saveSaleToSupabase = useCallback(async (order, matchedCoil = null) => {
     if (!order || !order.orderId) return { success: false };
@@ -758,7 +824,28 @@ Directrices de conversación:
 
     const table = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
     const cleanOrderId = String(order.orderId || order.order_id).replace(/^#/, '').trim();
-    const coil = matchedCoil || coils.find(c => c.id === order.coilId || (order.oem && c.oem && c.oem.includes(order.oem)));
+
+    // 1. Resolver el repuesto para la relación de catálogo y Foreign Key en Supabase
+    const firstItem = (order.items && Array.isArray(order.items) && order.items.length > 0) ? order.items[0] : null;
+    const targetCoilId = String(firstItem?.coilId || order.coilId || '').toLowerCase();
+    const targetOem = String(firstItem?.oem || order.oem || '').toLowerCase();
+
+    const coil = matchedCoil || coils.find(c => 
+      (c.id && c.id.toLowerCase() === targetCoilId) || 
+      (targetOem && c.oem && c.oem.toLowerCase().includes(targetOem))
+    ) || coils[0] || null;
+
+    const hasMultipleItems = order.items && Array.isArray(order.items) && order.items.length > 1;
+
+    const displayProdName = hasMultipleItems
+      ? `${order.items.length} repuestos: ${order.items.map(i => `${i.qty || 1}x ${i.name}`).join(', ')}`.slice(0, 500)
+      : (order.coilName || (coil ? coil.name : 'Repuesto Automotriz'));
+
+    const displayOem = hasMultipleItems
+      ? order.items.map(i => i.oem).filter(Boolean).join(', ').slice(0, 255)
+      : (order.oem || (coil ? coil.oem : ''));
+
+    const encodedPaymentRef = encodeOrderPaymentRef(order.paymentRef || order.referencia_pago, order);
 
     const payload = {
       order_id: cleanOrderId,
@@ -766,23 +853,23 @@ Directrices de conversación:
       fecha_hora: (order.timestamp && order.timestamp.includes('T')) ? order.timestamp : new Date().toISOString(),
       cliente_nombre: String(order.customerName || order.cliente_nombre || 'Cliente WhatsApp').trim(),
       cliente_telefono: String(order.customerPhone || order.cliente_telefono || '').trim(),
-      producto_id: coil ? coil.id : String(order.coilId || order.producto_id || '').trim(),
-      producto_nombre: coil ? coil.name : String(order.coilName || order.producto_nombre || 'Repuesto Automotriz').trim(),
-      codigo_oem: coil ? coil.oem : String(order.oem || order.codigo_oem || '').trim(),
-      marca_producto: coil ? coil.brand : '',
+      producto_id: coil ? coil.id : String(firstItem?.coilId || order.coilId || 'CON-SENTRA16').trim(),
+      producto_nombre: displayProdName,
+      codigo_oem: displayOem,
+      marca_producto: coil ? coil.brand : (firstItem?.brand || 'JF'),
       modelo_vehiculo: coil ? coil.carModel : '',
       motor_vehiculo: coil ? coil.engine : '',
       tipo_bobina: coil ? coil.type : '',
       cantidad: parseInt(order.qty || order.cantidad || 1, 10),
       precio_unitario: Number(order.unitPrice || order.precio_unitario || (coil ? coil.price : 0)),
       precio_unitario_usd: Number(order.unitPrice || order.precio_unitario || (coil ? coil.price : 0)),
-      total_usd: Number(order.totalPrice || order.total_usd || 0),
+      total_usd: Number(order.totalPrice ?? order.totalUSD ?? order.total_usd ?? 0),
       stock_anterior: Number(order.stockBefore ?? order.stock_anterior ?? 0),
       stock_antes_venta: Number(order.stockBefore ?? order.stock_anterior ?? 0),
       stock_posterior: Number(order.stockAfter ?? order.stock_posterior ?? 0),
       stock_despues_venta: Number(order.stockAfter ?? order.stock_posterior ?? 0),
       stock_actual_catalogo: coil ? coil.stock : Number(order.stockAfter || 0),
-      referencia_pago: String(order.paymentRef || order.referencia_pago || '').trim(),
+      referencia_pago: encodedPaymentRef,
       estado: String(order.status || order.estado || 'CONFIRMED').toUpperCase(),
       status: String(order.status || order.estado || 'CONFIRMED').toUpperCase(),
       estado_orden: String(order.status || order.estado || 'CONFIRMED').toUpperCase(),
@@ -806,11 +893,22 @@ Directrices de conversación:
         return { success: patchRes.ok };
       } else {
         // Insertar nuevo registro
-        const postRes = await fetch(`${baseUrl}/rest/v1/${table}`, {
+        let postRes = await fetch(`${baseUrl}/rest/v1/${table}`, {
           method: 'POST',
           headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
           body: JSON.stringify(payload)
         });
+
+        // En caso de conflicto de FK con producto_id en catálogo Supabase, reintentar con el primer producto existente
+        if (!postRes.ok && postRes.status === 409 && coils.length > 0) {
+          payload.producto_id = coils[0].id;
+          postRes = await fetch(`${baseUrl}/rest/v1/${table}`, {
+            method: 'POST',
+            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify(payload)
+          });
+        }
+
         return { success: postRes.ok };
       }
     } catch (err) {
@@ -923,7 +1021,13 @@ Directrices de conversación:
       };
 
       orderResult = newOrder;
-      setSalesHistory(prev => [newOrder, ...prev]);
+      setSalesHistory(prev => {
+        const next = [newOrder, ...prev];
+        try {
+          localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+        } catch (e) {}
+        return next;
+      });
       setPendingOwnerAlert(newOrder);
 
       // Guardar de inmediato en Supabase
@@ -1491,50 +1595,9 @@ Directrices de conversación:
       return next;
     });
 
-    // Guardar / Actualizar en Supabase en la tabla 'ventas'
+    // Guardar / Actualizar en Supabase garantizando persistencia de metadatos multi-artículo
     if (dbEngine === 'supabase') {
-      const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
-      if (baseUrl && anonKey) {
-        const salesTable = String(dbCredentials.supabase?.salesTable || 'ventas').trim();
-        const payload = {
-          order_id: cleanId,
-          cliente_nombre: updatedOrder.customerName,
-          cliente_telefono: updatedOrder.customerPhone,
-          producto_id: updatedOrder.coilId,
-          producto_nombre: updatedOrder.coilName,
-          codigo_oem: updatedOrder.oem,
-          cantidad: updatedOrder.qty,
-          precio_unitario: updatedOrder.unitPrice,
-          precio_unitario_usd: updatedOrder.unitPrice,
-          total_usd: updatedOrder.totalPrice,
-          stock_anterior: calculatedStockBefore,
-          stock_antes_venta: calculatedStockBefore,
-          stock_posterior: calculatedStockAfter,
-          stock_despues_venta: calculatedStockAfter,
-          stock_actual_catalogo: calculatedStockAfter,
-          referencia_pago: updatedOrder.paymentRef,
-          estado: updatedOrder.status,
-          status: updatedOrder.status,
-          estado_orden: updatedOrder.status
-        };
-
-        if (newMatchedCoil) {
-          payload.marca_producto = newMatchedCoil.brand || '';
-          payload.modelo_vehiculo = newMatchedCoil.carModel || '';
-          payload.motor_vehiculo = newMatchedCoil.engine || '';
-          payload.tipo_bobina = newMatchedCoil.type || '';
-        }
-
-        try {
-          await fetch(`${baseUrl}/rest/v1/${salesTable}?order_id=eq.${encodeURIComponent(cleanId)}`, {
-            method: 'PATCH',
-            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
-            body: JSON.stringify(payload)
-          });
-        } catch (err) {
-          console.warn('Error al actualizar venta en Supabase:', err);
-        }
-      }
+      await saveSaleToSupabase(updatedOrder, newMatchedCoil);
     }
 
     showToast(`✓ Venta #${cleanId} actualizada y sincronizada en Supabase`);
@@ -1542,6 +1605,22 @@ Directrices de conversación:
   }, [salesHistory, coils, dbEngine, dbCredentials, showToast]);
 
   const refreshSalesHistory = useCallback(async (showNotification = false) => {
+    // 0. Leer historial local actual para preservación defensiva de artículos
+    let localSales = [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_SALES_LOG);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) localSales = parsed;
+      }
+    } catch (e) {}
+
+    const localMap = new Map();
+    localSales.forEach(s => {
+      const id = String(s.orderId || s.order_id || '').replace(/^#/, '').trim();
+      if (id) localMap.set(id, s);
+    });
+
     // 1. Sincronizar en doble vía con la tabla 'ventas' de Supabase
     if (dbEngine === 'supabase') {
       const { baseUrl, anonKey } = getActiveSupabaseConfig(null, dbCredentials);
@@ -1555,42 +1634,108 @@ Directrices de conversación:
           if (resp.ok) {
             const data = await resp.json();
             const supabaseRows = Array.isArray(data) ? data : [];
-            const supabaseIds = new Set(supabaseRows.map(r => String(r.order_id || r.id).replace(/^#/, '')));
+            const supabaseIdSet = new Set();
 
             const mappedSupabase = supabaseRows.map(item => {
+              const cleanId = String(item.order_id || item.id).replace(/^#/, '').trim();
+              supabaseIdSet.add(cleanId);
+
               const rawProdId = item.producto_id || item.coil_id || '';
               const rawOem = item.codigo_oem || item.oem || '';
-              const matchedCoil = coils.find(c => (rawProdId && c.id.toLowerCase() === rawProdId.toLowerCase()) || (rawOem && c.oem && c.oem.includes(rawOem)));
+              const matchedCoil = coils.find(c => 
+                (rawProdId && c.id.toLowerCase() === rawProdId.toLowerCase()) || 
+                (rawOem && c.oem && c.oem.includes(rawOem))
+              );
 
-              return {
-                orderId: String(item.order_id || item.id).replace(/^#/, ''),
+              const rawPaymentRef = item.referencia_pago || item.payment_ref || '';
+              const { cleanRef, meta } = decodeOrderPaymentRef(rawPaymentRef);
+
+              // Recuperar de local si no vino en el tag de Supabase
+              const existingLocal = localMap.get(cleanId);
+
+              // Resolver items de forma infalible
+              let resolvedItems = null;
+              if (meta && Array.isArray(meta.items) && meta.items.length > 0) {
+                resolvedItems = meta.items;
+              } else if (existingLocal && Array.isArray(existingLocal.items) && existingLocal.items.length > 0) {
+                resolvedItems = existingLocal.items;
+              } else {
+                // Fallback a artículo único del catálogo
+                resolvedItems = [{
+                  coilId: matchedCoil ? matchedCoil.id : (rawProdId || 'CON-SENTRA16'),
+                  name: matchedCoil ? matchedCoil.name : (item.producto_nombre || item.coil_name || 'Repuesto Automotriz'),
+                  oem: matchedCoil ? matchedCoil.oem : rawOem,
+                  qty: parseInt(item.cantidad || item.qty || 1, 10),
+                  unitPrice: Number(item.precio_unitario || item.precio_unitario_usd || (matchedCoil ? matchedCoil.price : 0)),
+                  subtotal: Number(item.total_usd || item.total_price || 0),
+                  image: matchedCoil ? matchedCoil.image : null,
+                  brand: matchedCoil ? matchedCoil.brand : 'JF'
+                }];
+              }
+
+              // Resolver tasas históricas inalterables
+              const rateBinance = meta?.rateBinance ?? existingLocal?.exchangeRateBinance ?? null;
+              const rateBCV = meta?.rateBCV ?? existingLocal?.exchangeRateBCV ?? null;
+              const totalVES = meta?.totalVES ?? existingLocal?.totalVES ?? null;
+              const rateSnapshotDate = meta?.rateDate ?? existingLocal?.rateSnapshotDate ?? null;
+              const warrantyEvents = meta?.warrantyEvents ?? existingLocal?.warrantyEvents ?? [];
+              const customerCar = meta?.customerCar ?? existingLocal?.customerCar ?? (item.modelo_vehiculo || '');
+              const notes = meta?.notes ?? existingLocal?.notes ?? '';
+
+              const mappedOrder = {
+                orderId: cleanId,
                 timestamp: item.fecha_hora || item.created_at || item.fecha || new Date().toISOString(),
                 customerName: item.cliente_nombre || item.customer_name || 'Cliente',
                 customerPhone: item.cliente_telefono || item.customer_phone || '',
-                coilId: matchedCoil ? matchedCoil.id : (rawProdId || 'BOB-GEN'),
-                coilName: matchedCoil ? matchedCoil.name : (item.producto_nombre || item.coil_name || 'Repuesto Automotriz'),
-                oem: matchedCoil ? matchedCoil.oem : rawOem,
-                qty: parseInt(item.cantidad || item.qty || 1, 10),
-                unitPrice: Number(item.precio_unitario || item.unit_price || (matchedCoil ? matchedCoil.price : 0)),
+                customerCar,
+                items: resolvedItems,
+                coilId: resolvedItems[0]?.coilId || (matchedCoil ? matchedCoil.id : (rawProdId || 'CON-SENTRA16')),
+                coilName: resolvedItems.length === 1 
+                  ? (resolvedItems[0]?.name || item.producto_nombre || 'Repuesto Automotriz')
+                  : `${resolvedItems.length} repuestos: ${resolvedItems.map(i => i.name).join(', ')}`,
+                oem: resolvedItems.map(i => i.oem).filter(Boolean).join(', ') || rawOem,
+                qty: resolvedItems.reduce((acc, it) => acc + (it.qty || 1), 0),
+                unitPrice: resolvedItems[0]?.unitPrice || Number(item.precio_unitario || 0),
                 totalPrice: Number(item.total_usd || item.total_price || 0),
+                totalUSD: Number(item.total_usd || item.total_price || 0),
                 stockBefore: Number(item.stock_anterior ?? item.stock_before ?? 0),
                 stockAfter: Number(item.stock_posterior ?? item.stock_after ?? 0),
-                paymentRef: item.referencia_pago || item.payment_ref || '',
+                paymentRef: cleanRef,
                 status: (item.estado || item.status || 'CONFIRMED').toUpperCase(),
-                userId: item.usuario_id || item.user_id || 'CLI-SUPABASE'
+                userId: item.usuario_id || item.user_id || 'CLI-SUPABASE',
+                exchangeRateBinance: rateBinance,
+                exchangeRateBCV: rateBCV,
+                totalVES: totalVES,
+                rateSnapshotDate: rateSnapshotDate,
+                warrantyEvents: warrantyEvents,
+                notes: notes
               };
+
+              // Si local tenía multi-artículos pero Supabase aún no tenía el tag guardado, sincronizarlo en background
+              if ((!meta || !meta.items) && resolvedItems.length > 1) {
+                saveSaleToSupabase(mappedOrder).catch(() => {});
+              }
+
+              return mappedOrder;
             });
 
-            // Supabase es la fuente de verdad definitiva: respetamos exactamente lo que hay en la base de datos
-            setSalesHistory(mappedSupabase);
+            // Preservar órdenes locales que aún no hayan impactado Supabase
+            const unsyncedLocals = localSales.filter(s => {
+              const id = String(s.orderId || s.order_id || '').replace(/^#/, '').trim();
+              return id && !supabaseIdSet.has(id);
+            });
+
+            const mergedHistory = [...mappedSupabase, ...unsyncedLocals];
+
+            setSalesHistory(mergedHistory);
             try { 
-              localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(mappedSupabase)); 
+              localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(mergedHistory)); 
             } catch (e) {}
 
             if (showNotification) {
-              showToast(`✓ Base de datos de ventas sincronizada (${mappedSupabase.length} movimientos en Supabase)`);
+              showToast(`✓ Base de datos de ventas sincronizada (${mergedHistory.length} movimientos)`);
             }
-            return mappedSupabase;
+            return mergedHistory;
           }
         } catch (e) {
           console.warn('Error al consultar ventas en Supabase:', e);
