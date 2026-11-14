@@ -1,31 +1,33 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { formatUSD } from '../../utils/formatters';
+import { formatUSD, parseOrderDate } from '../../utils/formatters';
 import defaultCoilImage from '../../assets/bobina_tiida_studio.jpg';
 import jfEmblem from '../../assets/jf_emblem_clean.png';
 
 const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-// Colores visuales distintivos para las curvas de la gráfica
+// Paleta de colores distintivos para las curvas de la gráfica
 const CURVE_COLORS = [
-  "#f97316", // Naranja brillante
-  "#06b6d4", // Cyan
-  "#a855f7", // Púrpura
+  "#de2420", // Rojo JF Racing
   "#10b981", // Esmeralda
+  "#06b6d4", // Cyan
+  "#f97316", // Naranja
+  "#a855f7", // Púrpura
   "#eab308", // Ámbar
-  "#f43f5e", // Rosa vibrante
-  "#3b82f6"  // Azul eléctrico
+  "#3b82f6", // Azul
+  "#ec4899"  // Rosa
 ];
 
 export function PerformanceView({ onNavigateTab }) {
   const { coils, salesHistory } = useInventory();
   const { rates, formatVES } = useCurrency();
 
-  // 1. Filtro de Fechas (Desde / Hasta) - Inicializado por defecto en un rango trimestral
+  // 1. Filtro de Fechas (Desde / Hasta) dinámico
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date();
-    d.setMonth(d.getMonth() - 3);
+    d.setMonth(d.getMonth() - 2); // Últimos meses por defecto
+    d.setDate(1);
     return d.toISOString().split('T')[0];
   });
   const [dateTo, setDateTo] = useState(() => {
@@ -61,29 +63,37 @@ export function PerformanceView({ onNavigateTab }) {
     }
   };
 
-  // 2. Resolver Costo de cada producto (Costo guardado > costo en objeto > estimado 55% de venta)
+  // 2. Costo del producto: POR DEFECTO TODOS LOS REPUESTOS REGISTRADOS COSTARON 0$
   const getProductCost = (coil) => {
-    if (customCosts[coil.id] !== undefined) return customCosts[coil.id];
+    if (!coil) return 0;
+    if (customCosts[coil.id] !== undefined) return Number(customCosts[coil.id]);
     if (coil.cost !== undefined && coil.cost !== null && !isNaN(Number(coil.cost))) {
       return Number(coil.cost);
     }
-    const price = Number(coil.price) || 20;
-    return Math.max(1, Math.round(price * 0.55));
+    // Todos los repuestos registrados costaron 0$ según requerimiento
+    return 0;
   };
 
-  // 3. Ventas confirmadas dentro del rango seleccionado
-  const confirmedSales = useMemo(() => {
+  // 3. Ventas confirmadas dentro del rango seleccionado (100% DINÁMICO)
+  const confirmedPeriodSales = useMemo(() => {
     const dFrom = new Date(dateFrom + 'T00:00:00');
     const dTo = new Date(dateTo + 'T23:59:59');
 
     return (salesHistory || []).filter(sale => {
-      if (sale.status !== 'CONFIRMED') return false;
-      const saleDate = new Date(sale.timestamp || sale.fecha_hora || sale.created_at || Date.now());
-      return saleDate >= dFrom && saleDate <= dTo;
+      // Filtrar órdenes confirmadas
+      const status = (sale.status || sale.estado || sale.estado_orden || '').toUpperCase();
+      if (status !== 'CONFIRMED') return false;
+
+      // Parsear fecha real con parseOrderDate
+      const rawDate = sale.timestamp || sale.fecha_hora || sale.created_at || sale.fecha;
+      const parsedDate = parseOrderDate(rawDate);
+      if (!parsedDate) return false;
+
+      return parsedDate >= dFrom && parsedDate <= dTo;
     });
   }, [salesHistory, dateFrom, dateTo]);
 
-  // 4. Calcular los meses activos comprendidos en el rango
+  // 4. Meses activos que abarca el filtro
   const activeMonths = useMemo(() => {
     const dFrom = new Date(dateFrom + 'T00:00:00');
     const dTo = new Date(dateTo + 'T23:59:59');
@@ -96,7 +106,6 @@ export function PerformanceView({ onNavigateTab }) {
     if (dTo.getFullYear() === dFrom.getFullYear()) {
       for (let m = mFrom; m <= mTo; m++) list.push(m);
     } else {
-      // Si cruza años o rango amplio
       for (let m = 0; m < 12; m++) {
         if (m >= mFrom || m <= mTo) list.push(m);
       }
@@ -111,92 +120,133 @@ export function PerformanceView({ onNavigateTab }) {
     return Math.max(1, Math.round((dTo - dFrom) / (1000 * 60 * 60 * 24)) + 1);
   }, [dateFrom, dateTo]);
 
-  // 5. Agregación de Rendimiento por Producto (con datos reales de Supabase + baseline)
-  const aggregatedProducts = useMemo(() => {
-    if (!coils || coils.length === 0) return [];
+  // 5. CÁLCULO 100% DINÁMICO: Agrupación de Ventas Reales por Producto y por Mes
+  const { aggregatedProducts, globalKpis } = useMemo(() => {
+    const productStatsMap = {};
+    let totalRevenue = 0;
+    let totalCost = 0;
 
-    // Mapeo de ventas reales acumuladas por producto y mes
-    const realSalesMap = {};
-    confirmedSales.forEach(order => {
-      const orderDate = new Date(order.timestamp || order.fecha_hora || Date.now());
-      const mIdx = orderDate.getMonth();
+    // Procesar cada orden confirmada del periodo
+    confirmedPeriodSales.forEach(order => {
+      const rawDate = order.timestamp || order.fecha_hora || order.created_at || order.fecha;
+      const parsedDate = parseOrderDate(rawDate) || new Date();
+      const mIdx = parsedDate.getMonth();
 
-      // Multi-artículos o artículo simple
-      const items = (order.items && order.items.length > 0)
+      // Desglosar artículos de la orden
+      const items = (order.items && Array.isArray(order.items) && order.items.length > 0)
         ? order.items
-        : [{ coilId: order.coilId, qty: order.qty || 1, price: order.unitPrice || order.totalPrice }];
+        : [{
+            coilId: order.coilId || order.producto_id,
+            name: order.coilName || order.producto_nombre,
+            qty: order.qty || order.cantidad || 1,
+            price: order.unitPrice || order.precio_unitario_usd || (order.totalPrice / (order.qty || 1)) || 0,
+            oem: order.oem || order.codigo_oem
+          }];
 
       items.forEach(it => {
-        const cId = String(it.coilId || '').trim();
-        if (!realSalesMap[cId]) {
-          realSalesMap[cId] = { totalUnits: 0, byMonth: Array(12).fill(0) };
-        }
+        const cId = String(it.coilId || it.id || '').trim();
+        const matchedCoil = (coils || []).find(c => String(c.id).trim().toLowerCase() === cId.toLowerCase()) || {};
+        const key = cId || String(matchedCoil.id || it.name || 'desconocido').trim();
+
         const qty = Number(it.qty) || 1;
-        realSalesMap[cId].totalUnits += qty;
-        realSalesMap[cId].byMonth[mIdx] += qty;
+        const unitPrice = Number(it.price !== undefined ? it.price : (matchedCoil.price || 0));
+        const unitCost = getProductCost(matchedCoil);
+
+        const rev = qty * unitPrice;
+        const cst = qty * unitCost; // Será 0 si el costo es 0$
+        const profit = rev - cst;
+
+        totalRevenue += rev;
+        totalCost += cst;
+
+        if (!productStatsMap[key]) {
+          productStatsMap[key] = {
+            units: 0,
+            revenue: 0,
+            cost: 0,
+            profit: 0,
+            monthlyUnits: Array(12).fill(0),
+            monthlyProfit: Array(12).fill(0)
+          };
+        }
+
+        productStatsMap[key].units += qty;
+        productStatsMap[key].revenue += rev;
+        productStatsMap[key].cost += cst;
+        productStatsMap[key].profit += profit;
+        productStatsMap[key].monthlyUnits[mIdx] += qty;
+        productStatsMap[key].monthlyProfit[mIdx] += profit;
       });
     });
 
-    return coils.map((coil, idx) => {
-      const cost = getProductCost(coil);
-      const price = Number(coil.price) || 20;
-      const real = realSalesMap[coil.id];
+    const netProfit = totalRevenue - totalCost;
+    const avgMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 100;
 
-      // Curva estacional: ventas reales registradas + rotación estimada representativa para comparar curvas
-      const baseMultiplier = (idx % 3 === 0) ? 1.6 : (idx % 2 === 0) ? 1.2 : 0.9;
-      const seasonalPattern = [
-        Math.round(4 * baseMultiplier),  // Ene
-        Math.round(6 * baseMultiplier),  // Feb
-        Math.round(9 * baseMultiplier),  // Mar
-        Math.round(8 * baseMultiplier),  // Abr
-        Math.round(7 * baseMultiplier),  // May
-        Math.round(14 * baseMultiplier), // Jun (temporada calor / repuestos)
-        Math.round(18 * baseMultiplier), // Jul
-        Math.round(20 * baseMultiplier), // Ago
-        Math.round(13 * baseMultiplier), // Sep
-        Math.round(11 * baseMultiplier), // Oct
-        Math.round(9 * baseMultiplier),  // Nov
-        Math.round(16 * baseMultiplier)  // Dic (zafra fin de año)
-      ];
+    // Mapear el catálogo completo con sus ventas reales
+    const productList = (coils || []).map((coil, idx) => {
+      const cId = String(coil.id).trim();
+      const stats = productStatsMap[cId] || {
+        units: 0,
+        revenue: 0,
+        cost: 0,
+        profit: 0,
+        monthlyUnits: Array(12).fill(0),
+        monthlyProfit: Array(12).fill(0)
+      };
 
-      // Unir ventas reales en los meses correspondientes
-      const unitsMonthly = seasonalPattern.map((base, m) => {
-        const realQty = real?.byMonth[m] || 0;
-        return base + realQty;
-      });
-
-      // Calcular unidades totales en el rango de meses activos
-      let periodUnits = 0;
-      activeMonths.forEach(m => {
-        periodUnits += unitsMonthly[m] || 0;
-      });
-
-      const periodRevenue = periodUnits * price;
-      const periodCost = periodUnits * cost;
-      const periodProfit = periodRevenue - periodCost;
-      const marginPct = price > 0 ? Math.round(((price - cost) / price) * 100) : 0;
+      const cost = getProductCost(coil); // 0$ por defecto
+      const price = Number(coil.price) || 0;
+      const unitProfit = price - cost;
+      const marginPct = price > 0 ? Math.round(((price - cost) / price) * 100) : 100;
 
       return {
         ...coil,
         cost,
         price,
-        periodUnits,
-        periodRevenue,
-        periodCost,
-        periodProfit,
+        unitProfit,
         marginPct,
-        unitsMonthly,
+        periodUnits: stats.units,
+        periodRevenue: stats.revenue,
+        periodCost: stats.cost,
+        periodProfit: stats.profit,
+        monthlyUnits: stats.monthlyUnits,
+        monthlyProfit: stats.monthlyProfit,
+        hasSales: stats.units > 0,
         color: CURVE_COLORS[idx % CURVE_COLORS.length]
       };
-    }).sort((a, b) => b.periodProfit - a.periodProfit);
-  }, [coils, confirmedSales, activeMonths, customCosts]);
+    });
 
-  // Selección de curvas activas en la gráfica (Top 5 productos seleccionados por defecto)
+    // Ordenar: primero los repuestos con ventas reales en el periodo, luego por mayor ganancia/precio
+    productList.sort((a, b) => {
+      if (b.periodUnits !== a.periodUnits) return b.periodUnits - a.periodUnits;
+      if (b.periodProfit !== a.periodProfit) return b.periodProfit - a.periodProfit;
+      return b.price - a.price;
+    });
+
+    return {
+      aggregatedProducts: productList,
+      globalKpis: {
+        totalRevenue,
+        totalCost,
+        netProfit,
+        avgMargin,
+        totalUnitsSold: confirmedPeriodSales.reduce((acc, s) => acc + (s.qty || s.cantidad || 1), 0),
+        totalOrdersCount: confirmedPeriodSales.length
+      }
+    };
+  }, [coils, confirmedPeriodSales, customCosts]);
+
+  // Selección de curvas para la gráfica
   const [activeCurveIds, setActiveCurveIds] = useState([]);
 
   useEffect(() => {
     if (aggregatedProducts.length > 0 && activeCurveIds.length === 0) {
-      setActiveCurveIds(aggregatedProducts.slice(0, 5).map(p => p.id));
+      // Activar los primeros repuestos con ventas, o los primeros del catálogo
+      const prodsWithSales = aggregatedProducts.filter(p => p.hasSales);
+      const defaults = prodsWithSales.length > 0
+        ? prodsWithSales.slice(0, 5).map(p => p.id)
+        : aggregatedProducts.slice(0, 4).map(p => p.id);
+      setActiveCurveIds(defaults);
     }
   }, [aggregatedProducts]);
 
@@ -206,35 +256,25 @@ export function PerformanceView({ onNavigateTab }) {
     );
   };
 
-  // 6. KPIs Globales del Periodo
-  const kpis = useMemo(() => {
-    const totalRevenue = aggregatedProducts.reduce((sum, p) => sum + p.periodRevenue, 0);
-    const totalCost = aggregatedProducts.reduce((sum, p) => sum + p.periodCost, 0);
-    const totalProfit = totalRevenue - totalCost;
-    const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
-
-    return { totalRevenue, totalCost, totalProfit, avgMargin };
-  }, [aggregatedProducts]);
-
-  // 7. Productos Top para la Columna Derecha (Top 4 por mayor ganancia)
-  const topProfitableProducts = useMemo(() => {
+  // Top Repuestos Más Rentables (Columna Derecha)
+  const topProducts = useMemo(() => {
     return aggregatedProducts.slice(0, 4);
   }, [aggregatedProducts]);
 
-  // 8. Gráfica SVG Multi-línea Interactiva
+  // 6. Gráfica SVG Multi-línea 100% Dinámica
   const chartData = useMemo(() => {
     const activeProds = aggregatedProducts.filter(p => activeCurveIds.includes(p.id));
-    let maxVal = 10;
+    let maxVal = 4; // Mínimo de escala para visualización limpia
 
     activeProds.forEach(p => {
       const series = activeMonths.map(m =>
-        chartMetric === 'units' ? p.unitsMonthly[m] : p.unitsMonthly[m] * (p.price - p.cost)
+        chartMetric === 'units' ? (p.monthlyUnits[m] || 0) : (p.monthlyProfit[m] || 0)
       );
       const localMax = Math.max(...series, 0);
       if (localMax > maxVal) maxVal = localMax;
     });
 
-    maxVal = Math.ceil(maxVal * 1.15) || 10;
+    maxVal = Math.ceil(maxVal * 1.2) || 4;
 
     const startX = 60;
     const endX = 780;
@@ -243,16 +283,15 @@ export function PerformanceView({ onNavigateTab }) {
     const chartHeight = zeroY - startY;
     const stepX = activeMonths.length > 1 ? (endX - startX) / (activeMonths.length - 1) : 0;
 
-    // Puntos y curvas Bezier
+    // Calcular curvas Bezier reales
     const curves = activeProds.map(p => {
       const points = activeMonths.map((m, idx) => {
-        const val = chartMetric === 'units' ? p.unitsMonthly[m] : p.unitsMonthly[m] * (p.price - p.cost);
+        const val = chartMetric === 'units' ? (p.monthlyUnits[m] || 0) : (p.monthlyProfit[m] || 0);
         const x = activeMonths.length > 1 ? startX + (idx * stepX) : 420;
         const y = zeroY - ((val / maxVal) * chartHeight);
         return { x, y, val, m };
       });
 
-      // Bezier curve string
       let path = "";
       if (points.length > 0) {
         path = `M ${points[0].x} ${points[0].y}`;
@@ -264,7 +303,6 @@ export function PerformanceView({ onNavigateTab }) {
         }
       }
 
-      // Área rellena
       let areaPath = "";
       if (points.length > 0) {
         areaPath = `${path} L ${points[points.length - 1].x} ${zeroY} L ${points[0].x} ${zeroY} Z`;
@@ -276,23 +314,21 @@ export function PerformanceView({ onNavigateTab }) {
     return { maxVal, startX, endX, startY, zeroY, chartHeight, stepX, curves };
   }, [aggregatedProducts, activeCurveIds, activeMonths, chartMetric]);
 
-  // Tooltip flotante interactivo en SVG
   const [hoveredMonth, setHoveredMonth] = useState(null);
-
   const binanceRate = Number(rates?.binance) || 1067;
 
   return (
     <div className="space-y-3 pb-8 animate-fade-in text-slate-100">
       
-      {/* 1. BARRA SUPERIOR DE CONTROL (SOLO DESDE / HASTA + SWITCH MÉTRICA) */}
+      {/* 1. BARRA SUPERIOR DE CONTROL EJECUTIVA (DESDE / HASTA SIN PRESETS) */}
       <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           
-          {/* Título & Tasa de Cambio */}
+          {/* Título & Tasa Oficial */}
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-[#de2420]/15 text-[#de2420] border border-[#de2420]/30">
-                Analítica de Margen & Rotación
+                Auditoría Financiera & Margen
               </span>
               <span className="text-slate-600 text-xs">•</span>
               <span className="text-xs font-mono text-amber-400 flex items-center gap-1">
@@ -307,14 +343,13 @@ export function PerformanceView({ onNavigateTab }) {
               <span>Rendimiento Financiero & Estacionalidad</span>
             </h1>
             <p className="text-[11px] text-slate-400">
-              Monitorea en tiempo real qué repuestos rotan más por temporada y el margen neto que ganas por producto.
+              Datos 100% dinámicos en vivo desde Supabase. Costo base aplicado: <strong>0$ USD</strong> por repuesto.
             </p>
           </div>
 
-          {/* Controles de Rango: Selector DESDE / HASTA (Sin los botones de 3 meses / 30 días solicitados para quitar) */}
+          {/* Selector de Rango Exclusivo: DESDE / HASTA */}
           <div className="flex flex-wrap items-center gap-2">
             
-            {/* Contenedor Limpio: Desde / Hasta */}
             <div className="flex items-center bg-[#141518] border border-[#2d2f35] rounded-xl p-1 shadow-inner text-xs">
               
               {/* Campo Desde */}
@@ -344,7 +379,7 @@ export function PerformanceView({ onNavigateTab }) {
 
             </div>
 
-            {/* Selector de Modo: Unidades vs Ganancia en Dólares */}
+            {/* Selector de Métrica: Unidades vs Ganancia ($) */}
             <div className="flex items-center bg-[#141518] border border-[#2d2f35] rounded-xl p-1 text-xs font-semibold">
               <button
                 type="button"
@@ -378,10 +413,10 @@ export function PerformanceView({ onNavigateTab }) {
         </div>
       </div>
 
-      {/* 2. LAS 4 TARJETAS KPI EJECUTIVAS EN FRANJA HORIZONTAL COMPACTA */}
+      {/* 2. LAS 4 TARJETAS KPI EJECUTIVAS DINÁMICAS (CON COSTO 0$) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         
-        {/* KPI 1: Facturación */}
+        {/* KPI 1: Facturación Real */}
         <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-base shrink-0">
             <i className="fa-solid fa-file-invoice-dollar"></i>
@@ -389,15 +424,15 @@ export function PerformanceView({ onNavigateTab }) {
           <div className="overflow-hidden">
             <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block truncate">Total Facturado</span>
             <div className="text-base sm:text-lg font-black text-white font-mono leading-tight mt-0.5">
-              {formatUSD(kpis.totalRevenue)}
+              {formatUSD(globalKpis.totalRevenue)}
             </div>
             <span className="text-[10px] text-amber-300 font-mono truncate block">
-              ≈ {formatVES(kpis.totalRevenue * binanceRate)}
+              ≈ {formatVES(globalKpis.totalRevenue * binanceRate)}
             </span>
           </div>
         </div>
 
-        {/* KPI 2: Costo de Bodega */}
+        {/* KPI 2: Costo de Bodega (0$ por defecto) */}
         <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-base shrink-0">
             <i className="fa-solid fa-boxes-packing"></i>
@@ -405,13 +440,15 @@ export function PerformanceView({ onNavigateTab }) {
           <div className="overflow-hidden">
             <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block truncate">Costo de Bodega</span>
             <div className="text-base sm:text-lg font-black text-slate-300 font-mono leading-tight mt-0.5">
-              {formatUSD(kpis.totalCost)}
+              {formatUSD(globalKpis.totalCost)}
             </div>
-            <span className="text-[10px] text-slate-400 font-mono truncate block">Inversión en repuestos</span>
+            <span className="text-[10px] text-emerald-400 font-mono truncate block">
+              {globalKpis.totalCost === 0 ? 'Costo $0 (100% libre)' : 'Inversión en repuestos'}
+            </span>
           </div>
         </div>
 
-        {/* KPI 3: Ganancia Neta Limpia (DESTACADA) */}
+        {/* KPI 3: Ganancia Neta Limpia */}
         <div className="bg-gradient-to-br from-emerald-950/70 via-[#1c1d22] to-[#1c1d22] border border-emerald-500/50 rounded-2xl p-2.5 sm:p-3 shadow-xl flex items-center gap-3 relative overflow-hidden">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-base shrink-0 shadow-lg shadow-emerald-700/20">
             <i className="fa-solid fa-sack-dollar"></i>
@@ -422,10 +459,10 @@ export function PerformanceView({ onNavigateTab }) {
               <i className="fa-solid fa-circle-check text-[9px]"></i>
             </span>
             <div className="text-base sm:text-lg font-black text-emerald-300 font-mono leading-tight mt-0.5">
-              +{formatUSD(kpis.totalProfit)}
+              +{formatUSD(globalKpis.netProfit)}
             </div>
             <span className="text-[10px] text-emerald-400 font-mono font-bold truncate block">
-              ≈ {formatVES(kpis.totalProfit * binanceRate)} libres
+              ≈ {formatVES(globalKpis.netProfit * binanceRate)} libres
             </span>
           </div>
         </div>
@@ -438,20 +475,20 @@ export function PerformanceView({ onNavigateTab }) {
           <div className="overflow-hidden">
             <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block truncate">Margen de Ganancia</span>
             <div className="text-base sm:text-lg font-black text-amber-300 font-mono leading-tight mt-0.5">
-              {kpis.avgMargin}%
+              {globalKpis.avgMargin}%
             </div>
             <span className="text-[10px] text-slate-400 font-mono truncate block">
-              {diffDays} días seleccionados
+              {globalKpis.totalOrdersCount} órdenes ({diffDays} días)
             </span>
           </div>
         </div>
 
       </div>
 
-      {/* 3. WORKSPACE PRINCIPAL EN 2 COLUMNAS (COMPACTO, TODO VISIBLE) */}
+      {/* 3. WORKSPACE EN 2 COLUMNAS (ALTO COMPACTO Y ORDENADO) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-start">
         
-        {/* COLUMNA IZQUIERDA (7 COLS): GRÁFICA MULTI-LÍNEA DE ESTACIONALIDAD */}
+        {/* COLUMNA IZQUIERDA (7 COLS): GRÁFICA MULTI-LÍNEA DINÁMICA */}
         <div className="lg:col-span-7 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2">
           
           {/* Header de la Gráfica */}
@@ -461,19 +498,19 @@ export function PerformanceView({ onNavigateTab }) {
                 <i className="fa-solid fa-arrow-trend-up text-[#de2420]"></i>
                 <span>Curva de Demanda & Estacionalidad</span>
               </h2>
-              <p className="text-[10px] text-slate-400">Compara qué repuestos se vendieron más por mes y temporada</p>
+              <p className="text-[10px] text-slate-400">Rotación real mes a mes basada en tus ventas registradas</p>
             </div>
 
             <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Viendo: {chartMetric === 'units' ? 'Unidades vendidas' : 'Ganancia neta ($)'}</span>
+              <span>{chartMetric === 'units' ? 'Unidades vendidas' : 'Ganancia neta ($)'}</span>
             </div>
           </div>
 
-          {/* Chips Interactivos para Activar/Desactivar Curvas */}
+          {/* Chips Dinámicos para Seleccionar Repuestos en la Gráfica */}
           <div>
             <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block mb-1">
-              Filtra repuestos en la gráfica (clic para ocultar/mostrar):
+              Filtra repuestos en la gráfica (clic para activar/desactivar curva):
             </span>
             <div className="flex flex-wrap gap-1">
               {aggregatedProducts.slice(0, 6).map(prod => {
@@ -493,7 +530,10 @@ export function PerformanceView({ onNavigateTab }) {
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: prod.color, opacity: isActive ? 1 : 0.3 }}
                     ></span>
-                    <span className="truncate max-w-[130px]">{prod.name.split(' ')[0]} {prod.name.split(' ')[1]}</span>
+                    <span className="truncate max-w-[130px]">{prod.name.split(' ')[0]} {prod.name.split(' ')[1] || ''}</span>
+                    {prod.hasSales && (
+                      <span className="text-[9px] text-emerald-400 font-mono">({prod.periodUnits}u)</span>
+                    )}
                     <span className="text-[9px]">{isActive ? '●' : '○'}</span>
                   </button>
                 );
@@ -501,7 +541,7 @@ export function PerformanceView({ onNavigateTab }) {
             </div>
           </div>
 
-          {/* Lienzo SVG de la Gráfica */}
+          {/* Lienzo SVG Dinámico */}
           <div className="relative w-full h-56 sm:h-64 select-none pt-1" id="chart-wrapper">
             <svg viewBox="0 0 820 250" className="w-full h-full overflow-visible">
               <defs>
@@ -650,8 +690,8 @@ export function PerformanceView({ onNavigateTab }) {
                 <div className="space-y-1 font-mono text-[11px]">
                   {aggregatedProducts.filter(p => activeCurveIds.includes(p.id)).map(p => {
                     const val = chartMetric === 'units'
-                      ? `${p.unitsMonthly[hoveredMonth.mIdx]} uds`
-                      : `+$${p.unitsMonthly[hoveredMonth.mIdx] * (p.price - p.cost)}.00`;
+                      ? `${p.monthlyUnits[hoveredMonth.mIdx] || 0} uds`
+                      : `+$${p.monthlyProfit[hoveredMonth.mIdx] || 0}.00`;
                     return (
                       <div key={`tip-${p.id}`} className="flex items-center justify-between gap-3 text-slate-200">
                         <div className="flex items-center gap-1.5 truncate max-w-[130px]">
@@ -671,14 +711,14 @@ export function PerformanceView({ onNavigateTab }) {
           <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-[#2d2f35]">
             <span className="flex items-center gap-1">
               <i className="fa-solid fa-circle-info text-sky-400"></i>
-              <span>Pasa el cursor por cada mes para ver la comparativa de rotación.</span>
+              <span>Pasa el cursor por cada mes para auditar la rotación de repuestos.</span>
             </span>
-            <span className="text-slate-500 font-mono">Sincronizado con Supabase</span>
+            <span className="text-slate-500 font-mono">Actualizado con Supabase</span>
           </div>
 
         </div>
 
-        {/* COLUMNA DERECHA (5 COLS): TOP REPUESTOS MÁS RENTABLES CON FOTOS */}
+        {/* COLUMNA DERECHA (5 COLS): TOP REPUESTOS MÁS RENTABLES */}
         <div className="lg:col-span-5 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2.5">
           
           {/* Header del Ranking */}
@@ -698,9 +738,11 @@ export function PerformanceView({ onNavigateTab }) {
 
           {/* Lista de Repuestos Top */}
           <div className="space-y-2">
-            {topProfitableProducts.map((p, idx) => {
-              const maxGain = topProfitableProducts[0]?.periodProfit || 1;
-              const pctBar = Math.max(12, Math.round((p.periodProfit / maxGain) * 100));
+            {topProducts.map((p, idx) => {
+              const maxGain = topProducts[0]?.periodProfit || topProducts[0]?.price || 1;
+              const pctBar = p.periodProfit > 0
+                ? Math.max(12, Math.round((p.periodProfit / maxGain) * 100))
+                : 0;
               const posLabels = ["#1", "#2", "#3", "#4"];
               const posStyles = [
                 "text-amber-400 bg-amber-500/10 border-amber-500/30",
@@ -734,7 +776,7 @@ export function PerformanceView({ onNavigateTab }) {
                           {p.name}
                         </div>
                         <div className="text-[10px] text-slate-400 font-mono truncate">
-                          {p.oem || p.id} • <strong className="text-slate-200">{p.periodUnits} uds</strong>
+                          {p.oem || p.id} • <strong className={p.hasSales ? 'text-emerald-400 font-bold' : 'text-slate-400'}>{p.periodUnits} uds vendidas</strong>
                         </div>
                       </div>
                     </div>
@@ -759,10 +801,10 @@ export function PerformanceView({ onNavigateTab }) {
                     ></div>
                   </div>
 
-                  {/* Desglose Transparente */}
+                  {/* Desglose Transparente (Costo 0$ por defecto) */}
                   <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-0.5">
                     <span>Venta: ${p.price} | Costo: ${p.cost}</span>
-                    <span className="text-emerald-400 font-bold">Ganas +${p.price - p.cost}.00/u</span>
+                    <span className="text-emerald-400 font-bold">Ganas +${p.price - p.cost}.00/u (100% libre)</span>
                   </div>
                 </div>
               );
@@ -770,14 +812,14 @@ export function PerformanceView({ onNavigateTab }) {
           </div>
 
           {/* Tarjeta de Recomendación de Inventario Inteligente */}
-          {topProfitableProducts[0] && (
+          {topProducts[0] && (
             <div className="p-2.5 rounded-xl bg-[#141518] border border-[#2d2f35] text-xs space-y-1">
               <div className="flex items-center gap-1.5 text-amber-400 font-bold text-[11px]">
                 <i className="fa-solid fa-lightbulb"></i>
-                <span>Recomendación para tu Bodega:</span>
+                <span>Diagnóstico de Inventario:</span>
               </div>
               <p className="text-slate-400 text-[11px] leading-relaxed">
-                Tu repuesto más rentable en este periodo es <strong className="text-white">{topProfitableProducts[0].name}</strong> (<strong className="text-emerald-400">{topProfitableProducts[0].marginPct}% de ganancia limpia</strong>). Conviene mantener al menos 6 unidades en inventario.
+                Al tener un costo de adquisición de <strong>$0 USD</strong>, cada venta se traduce en <strong>100% de utilidad líquida</strong>. El repuesto con mayor precio de lista es <strong className="text-white">{topProducts[0].name}</strong> (${topProducts[0].price} USD).
               </p>
             </div>
           )}
@@ -803,11 +845,11 @@ export function PerformanceView({ onNavigateTab }) {
               <h3 className="text-xs font-bold text-white flex items-center gap-2">
                 <span>Matriz Detallada de Rentabilidad por Producto</span>
                 <span className="text-[9px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded-full border border-slate-700">
-                  {aggregatedProducts.length} repuestos en catálogo
+                  {aggregatedProducts.length} repuestos registrados
                 </span>
               </h3>
               <p className="text-[10px] text-slate-400">
-                Compara precio de venta vs. costo de bodega, unidades despachadas y ajusta el costo de compra
+                Ver unidades despachadas, precio de venta, costo de bodega ($0 por defecto) y ganancia unitaria
               </p>
             </div>
           </div>
@@ -831,7 +873,7 @@ export function PerformanceView({ onNavigateTab }) {
                   <tr className="border-b border-[#2d2f35] text-[10px] font-mono uppercase text-slate-400">
                     <th className="py-2.5 px-3">Repuesto & Vehículo</th>
                     <th className="py-2.5 px-2 text-center">Código OEM</th>
-                    <th className="py-2.5 px-2 text-center">Unidades</th>
+                    <th className="py-2.5 px-2 text-center">Unidades Vendidas</th>
                     <th className="py-2.5 px-2 text-right">P. Venta</th>
                     <th className="py-2.5 px-2 text-right">Costo Bodega</th>
                     <th className="py-2.5 px-2 text-right">Ganas / Unidad</th>
@@ -866,9 +908,11 @@ export function PerformanceView({ onNavigateTab }) {
                         {p.oem ? p.oem.split('/')[0] : p.id}
                       </td>
 
-                      {/* Unidades */}
+                      {/* Unidades Vendidas */}
                       <td className="py-2 px-2 text-center font-mono font-bold text-white">
-                        {p.periodUnits}
+                        <span className={p.hasSales ? 'px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400' : 'text-slate-500'}>
+                          {p.periodUnits}
+                        </span>
                       </td>
 
                       {/* Precio Venta */}
@@ -876,7 +920,7 @@ export function PerformanceView({ onNavigateTab }) {
                         ${p.price}.00
                       </td>
 
-                      {/* Costo con editor interactivo */}
+                      {/* Costo con editor interactivo (Costo 0$ por defecto) */}
                       <td className="py-2 px-2 text-right font-mono">
                         <div className="inline-flex items-center gap-1 bg-[#141518] px-1.5 py-0.5 rounded border border-[#2d2f35] hover:border-slate-500">
                           <span className="text-slate-500 text-[10px]">$</span>
@@ -885,7 +929,7 @@ export function PerformanceView({ onNavigateTab }) {
                             value={p.cost}
                             onChange={(e) => handleUpdateCost(p.id, e.target.value)}
                             className="w-10 bg-transparent text-slate-300 text-right focus:outline-none focus:text-white"
-                            title="Puedes editar tu costo de compra para este repuesto"
+                            title="Puedes editar el costo si algún lote tuvo costo de compra"
                           />
                         </div>
                       </td>
@@ -895,7 +939,7 @@ export function PerformanceView({ onNavigateTab }) {
                         +${p.price - p.cost}.00
                       </td>
 
-                      {/* Ganancia Total */}
+                      {/* Ganancia Total en el Periodo */}
                       <td className="py-2 px-3 text-right font-mono font-extrabold text-emerald-300">
                         +{formatUSD(p.periodProfit)}
                       </td>
