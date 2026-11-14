@@ -40,6 +40,7 @@ export function Header({ activeTab, setActiveTab }) {
   const getAdminTabTitle = () => {
     switch (activeTab) {
       case 'sales': return 'Auditoría de Ventas';
+      case 'analytics': return 'Rendimiento & Ganancias';
       case 'database': return 'Base de Datos & Repuestos';
       case 'admin': return 'Configuración IA & Tienda';
       default: return 'Panel Administrador';
@@ -168,6 +169,21 @@ export function Header({ activeTab, setActiveTab }) {
                     </button>
 
                     <button
+                      onClick={() => handleSelectAdminTab('analytics')}
+                      className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition cursor-pointer ${
+                        activeTab === 'analytics'
+                          ? 'bg-[#de2420] text-white font-bold'
+                          : 'hover:bg-[#25272e] text-slate-200 font-medium'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <i className="fa-solid fa-chart-line text-emerald-400 text-xs"></i>
+                        <span>Rendimiento & Ganancias</span>
+                      </span>
+                      {activeTab === 'analytics' && <i className="fa-solid fa-check text-xs"></i>}
+                    </button>
+
+                    <button
                       onClick={() => handleSelectAdminTab('database')}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition cursor-pointer ${
                         activeTab === 'database'
@@ -218,12 +234,55 @@ export function Header({ activeTab, setActiveTab }) {
       {/* Admin Mode Sub-Header Bar (Only visible when logged in AND outside catalog) */}
       {isAdmin && activeTab !== 'catalog' && (
         <div className="bg-[#1c1d22] border-b border-[#de2420]/30 px-4 sm:px-8 py-2 flex items-center justify-between text-xs backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#de2420]/20 text-[#de2420] text-xs font-bold">
-              <i className="fa-solid fa-shield-halved text-[11px]"></i>
-            </span>
-            <span className="text-slate-400 hidden sm:inline">Modo Administrador:</span>
-            <span className="font-bold text-white uppercase tracking-wider">{getAdminTabTitle()}</span>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#de2420]/20 text-[#de2420] text-xs font-bold">
+                <i className="fa-solid fa-shield-halved text-[11px]"></i>
+              </span>
+              <span className="text-slate-400 hidden sm:inline">Modo Administrador:</span>
+              <span className="font-bold text-white uppercase tracking-wider">{getAdminTabTitle()}</span>
+            </div>
+
+            {/* Selector Rápido de Pestañas Administrador */}
+            <div className="flex items-center gap-1 bg-[#141518] p-0.5 rounded-lg border border-[#2d2f35]">
+              <button
+                type="button"
+                onClick={() => handleSelectAdminTab('sales')}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                  activeTab === 'sales' ? 'bg-[#de2420] text-white font-bold' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Ventas
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectAdminTab('analytics')}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 ${
+                  activeTab === 'analytics' ? 'bg-[#de2420] text-white font-bold' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>Rendimiento</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectAdminTab('database')}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                  activeTab === 'database' ? 'bg-[#de2420] text-white font-bold' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Inventario
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectAdminTab('admin')}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                  activeTab === 'admin' ? 'bg-[#de2420] text-white font-bold' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Ajustes IA
+              </button>
+            </div>
           </div>
           <button
             onClick={() => setActiveTab('catalog')}

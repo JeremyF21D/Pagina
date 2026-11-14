@@ -11,6 +11,7 @@ import { OwnerNotificationBanner } from './components/common/OwnerNotificationBa
 
 import { CatalogView } from './components/catalog/CatalogView';
 import { SalesView } from './components/sales/SalesView';
+import { PerformanceView } from './components/analytics/PerformanceView';
 import { DatabaseView } from './components/database/DatabaseView';
 import { AdminConfigView } from './components/admin/AdminConfigView';
 
@@ -90,6 +91,12 @@ function MainApp() {
         {activeTab === 'sales' && (
           <SalesView
             onOpenManualSaleModal={handleOpenManualSale}
+          />
+        )}
+
+        {activeTab === 'analytics' && (
+          <PerformanceView
+            onNavigateTab={setActiveTab}
           />
         )}
 
