@@ -1,21 +1,37 @@
 import { useState, useCallback } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { useAuth } from '../context/AuthContext';
-import { getEngineLabel, formatUSD } from '../utils/formatters';
+import { getEngineLabel, formatUSD, detectProductCategory } from '../utils/formatters';
 import { getCachedExchangeRates, formatVES } from '../services/exchangeRatesService';
 
 // ─── Stop words — ignoring these helps focus on meaningful search terms ──────
 const STOP_WORDS = new Set([
   'hola', 'buenas', 'tardes', 'dias', 'noches', 'tienen', 'tiene', 'tienes',
   'disponible', 'disponibilidad', 'precio', 'cuanto', 'cuesta', 'vale', 'para',
-  'una', 'un', 'el', 'la', 'los', 'las', 'de', 'del', 'por', 'favor', 'bobina',
-  'bobinas', 'encendido', 'motor', 'con', 'en', 'stock', 'hay', 'busco', 'necesito',
+  'una', 'un', 'el', 'la', 'los', 'las', 'de', 'del', 'por', 'favor',
+  'con', 'en', 'stock', 'hay', 'busco', 'necesito',
   'amigo', 'que', 'cual', 'es', 'codigo', 'oem', 'quiero', 'comprar', 'confirmo',
   'compra', 'pague', 'pago', 'movil', 'zelle', 'binance', 'ref', 'comprobante',
-  'transferencia', 'hice', 'tienes', 'nene', 'hermano', 'bro', 'chamo', 'pana',
-  'amig', 'del', 'ese', 'esa', 'mio', 'mia', 'me', 'si', 'no', 'ok', 'dale',
-  'puede', 'ser', 'mi', 'su', 'tu', 'yo', 'el', 'y', 'o', 'a', 'lo', 'le'
+  'transferencia', 'hice', 'nene', 'hermano', 'bro', 'chamo', 'pana',
+  'amig', 'ese', 'esa', 'mio', 'mia', 'me', 'si', 'no', 'ok', 'dale',
+  'puede', 'ser', 'mi', 'su', 'tu', 'yo', 'y', 'o', 'a', 'lo', 'le'
 ]);
+
+/**
+ * Detect explicit category intent in user query (e.g., "bobina", "conector", "sensor", "inyector", "estopera", etc.)
+ */
+function detectQueryCategory(rawText) {
+  const t = String(rawText || '').toLowerCase();
+  if (/\b(bobina|bobinas|cop)\b/i.test(t)) return 'bobina';
+  if (/\b(conector|conectores|enchufe|enchufes|ramal|ramales|arnes|arneses|pigtail)\b/i.test(t)) return 'conector';
+  if (/\b(inyector|inyectores|inyeccion)\b/i.test(t)) return 'inyector';
+  if (/\b(sensor|sensores|maf|map|ckp|cmp|oxigeno|tps|presostato|valvula)\b/i.test(t)) return 'sensor';
+  if (/\b(estopera|estoperas|reten|retenes)\b/i.test(t)) return 'estopera';
+  if (/\b(bujia|bujias)\b/i.test(t)) return 'bujia';
+  if (/\b(bomba|bombas|pila|pilas)\b/i.test(t)) return 'bomba';
+  if (/\b(empacadura|empacaduras|junta|juntas)\b/i.test(t)) return 'empacadura';
+  return null;
+}
 
 // ─── Alias / abbreviation dictionary ─────────────────────────────────────────
 // Maps common typos, abbreviations and Venezuelan slang to canonical search terms
@@ -112,16 +128,22 @@ const ALIASES = {
  */
 function normalizeQuery(rawText) {
   // 1. Lowercase + remove accents (é→e, á→a, etc.)
-  let text = rawText
+  let text = String(rawText || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')  // strip diacritics
-    .replace(/[¿?¡!.,;:#()\-_\/\\]/g, ' ')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  // Preserve engine sizes with dots/decimals (1.8, 1.6, 2.0, 2.4, 3.2, etc.)
+  text = text.replace(/(\d+)[.,](\d+)/g, '$1_$2');
+
+  // Strip punctuation except underscores
+  text = text
+    .replace(/[¿?¡!.,;:#()\-_\/\\]/g, (m) => m === '_' ? '_' : ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // 2. Apply alias substitutions word by word
-  const words = text.split(' ');
+  // 2. Apply alias substitutions word by word and restore engine numbers
+  const words = text.split(' ').map(w => w.replace('_', '.').trim()).filter(Boolean);
   const expanded = words.map(w => ALIASES[w] || w);
   text = expanded.join(' ');
 
@@ -164,70 +186,106 @@ function levenshtein(a, b) {
 }
 
 /**
- * Score a single product against a list of search tokens.
- * Returns a numeric score — higher = better match.
- * Scoring rules:
- *   +6  exact substring match on a long token (≥4 chars) in a high-priority field
- *   +3  exact substring match on a short token or in a secondary field
- *   +2  fuzzy match within Levenshtein distance 1
- *   +1  fuzzy match within Levenshtein distance 2
- *    0  no match
+ * Score a single product against search tokens and category intent.
+ * Highly discriminative:
+ *   - High weight for product.name matches (user searches what it is)
+ *   - Massive category alignment bonus (+40) / severe penalty (-35) for category clash
+ *   - Differentiated weights for name, OEM/id, engine, brand, carModel
+ *   - Bonus when ALL query tokens match the product
  */
-function scoreProduct(product, tokens) {
-  if (!tokens.length) return 0;
+function scoreProduct(product, tokens, queryCategory) {
+  if (!tokens || !tokens.length) return 0;
 
-  // Build searchable field groups with different weights (normalized without diacritics)
-  const highPriorityHaystack = [
-    product.name,
-    product.brand,
-    product.carModel,
-    product.engine,
-    product.oem,
-    product.id,
-  ].join(' ')
-   .toLowerCase()
-   .normalize('NFD')
-   .replace(/[\u0300-\u036f]/g, '');
+  const productCat = detectProductCategory(product);
 
-  const lowPriorityHaystack = [
-    product.type,
-    product.connector,
-    product.badge,
-  ].join(' ')
-   .toLowerCase()
-   .normalize('NFD')
-   .replace(/[\u0300-\u036f]/g, '');
+  const nameNorm = (product.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const modelNorm = (product.carModel || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const brandNorm = (product.brand || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const oemNorm = (product.oem || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const idNorm = (product.id || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const engineNorm = (product.engine || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const typeNorm = (product.type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const connectorNorm = (product.connector || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  // Pre-tokenize the product's own fields for fuzzy comparison
+  const highPriorityHaystack = `${nameNorm} ${brandNorm} ${modelNorm} ${engineNorm} ${oemNorm} ${idNorm}`;
+  const lowPriorityHaystack = `${typeNorm} ${connectorNorm}`;
+
+  // Pre-tokenize product words for fuzzy fallback
   const productWords = highPriorityHaystack
     .replace(/[^a-z0-9\s\.]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length >= 2);
 
   let totalScore = 0;
+  let matchedTokensCount = 0;
 
   for (const token of tokens) {
     let tokenScore = 0;
 
-    // 1. Exact substring in high-priority fields
-    if (highPriorityHaystack.includes(token)) {
-      tokenScore = token.length >= 4 ? 6 : 3;
+    // 1. Direct match in Name (highest priority indicator of what the part actually is)
+    if (nameNorm.includes(token)) {
+      tokenScore = Math.max(tokenScore, token.length >= 4 ? 14 : 9);
     }
-    // 2. Exact substring in low-priority fields
-    else if (lowPriorityHaystack.includes(token)) {
-      tokenScore = 1;
+
+    // 2. Exact match in OEM code or product ID
+    if (oemNorm.includes(token) || idNorm.includes(token)) {
+      tokenScore = Math.max(tokenScore, token.length >= 4 ? 16 : 10);
     }
-    // 3. Fuzzy match against product word tokens (only for tokens ≥ 3 chars)
-    else if (token.length >= 3) {
+
+    // 3. Exact match in Engine displacement
+    if (engineNorm.includes(token)) {
+      tokenScore = Math.max(tokenScore, 10);
+    }
+
+    // 4. Exact match in Car Model compatibility
+    if (modelNorm.includes(token)) {
+      tokenScore = Math.max(tokenScore, token.length >= 4 ? 7 : 4);
+    }
+
+    // 5. Match in Brand
+    if (brandNorm.includes(token)) {
+      tokenScore = Math.max(tokenScore, 5);
+    }
+
+    // 6. Secondary / low priority fields
+    if (tokenScore === 0 && lowPriorityHaystack.includes(token)) {
+      tokenScore = 2;
+    }
+
+    // 7. Fuzzy match against words in high priority haystack (for slight typos)
+    if (tokenScore === 0 && token.length >= 3) {
       for (const pw of productWords) {
         if (Math.abs(pw.length - token.length) > 3) continue;
         const dist = levenshtein(token, pw);
-        if (dist === 1) { tokenScore = Math.max(tokenScore, 2); break; }
+        if (dist === 1) { tokenScore = Math.max(tokenScore, 3); break; }
         if (dist === 2 && token.length >= 5) { tokenScore = Math.max(tokenScore, 1); }
       }
     }
 
+    if (tokenScore > 0) {
+      matchedTokensCount++;
+    }
     totalScore += tokenScore;
+  }
+
+  // Bonus if all search tokens were found in the product
+  if (matchedTokensCount === tokens.length && tokens.length > 1) {
+    totalScore += 16;
+  }
+
+  // Category matching logic:
+  // If user explicitly asks for "bobina" or "conector" or "sensor", heavily weight items of that category
+  if (queryCategory) {
+    if (productCat === queryCategory) {
+      totalScore += 40; // Decisive boost
+    } else {
+      totalScore -= 35; // Severe penalty so conflicting categories never override
+    }
+  }
+
+  // Stock tie-breaker (prefer in-stock products if otherwise tied)
+  if (product.stock > 0) {
+    totalScore += 1;
   }
 
   return totalScore;
@@ -273,6 +331,7 @@ export function useAIAgent() {
       cleanText.includes('voy a llevar');
 
     // ── Score every product against query ────────────────────────────────────
+    const queryCategory = detectQueryCategory(rawPrompt);
     let bestMatch = explicitProduct || null;
     let highestScore = explicitProduct ? 99 : 0;
     let secondMatch = null;
@@ -280,7 +339,7 @@ export function useAIAgent() {
 
     if (!explicitProduct) {
       for (const item of coils) {
-        const score = scoreProduct(item, tokens);
+        const score = scoreProduct(item, tokens, queryCategory);
         if (score > highestScore) {
           secondMatch = bestMatch;
           secondScore = highestScore;
@@ -294,7 +353,7 @@ export function useAIAgent() {
     }
 
     // Minimum score threshold to count as a real match (avoids random matches)
-    const MIN_SCORE = 2;
+    const MIN_SCORE = 6;
     const targetProduct =
       (bestMatch && highestScore >= MIN_SCORE) ? bestMatch : lastInteractedProduct;
 

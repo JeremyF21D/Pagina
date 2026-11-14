@@ -143,7 +143,9 @@ function MainApp() {
       <OwnerNotificationBanner />
 
       {/* Floating AI Chat Bubble — bottom-right corner */}
-      <FloatingAIChat onTriggerSaleModal={() => setManualSaleModalOpen(true)} />
+      {activeTab === 'catalog' && (
+        <FloatingAIChat onTriggerSaleModal={() => setManualSaleModalOpen(true)} />
+      )}
     </div>
   );
 }
