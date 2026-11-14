@@ -1,3 +1,4 @@
+import { getCachedExchangeRates, formatVES } from '../services/exchangeRatesService';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useInventory } from './InventoryContext';
@@ -58,7 +59,7 @@ export function CartProvider({ children }) {
     });
   }, []);
 
-  const addToCart = useCallback((productId, requestedQty = 1) => {
+  const addToCart = useCallback((productId, requestedQty = 1, sourceElement = null) => {
     const product = coils.find(b => b.id === productId);
     if (!product) return;
 
@@ -66,6 +67,8 @@ export function CartProvider({ children }) {
       showToast(`La ${product.name} no tiene stock disponible en este momento`);
       return;
     }
+
+
 
     setCart(prev => {
       const existing = prev.find(item => item.id === productId);
@@ -144,22 +147,36 @@ export function CartProvider({ children }) {
       return;
     }
 
-    // Execute transaction for each item to deduct stock & record sale
-    const orderIds = [];
-    cart.forEach(item => {
-      const res = processSaleTransaction({
+    const totalVal = Number(cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0).toFixed(2));
+    const cachedRates = getCachedExchangeRates() || {};
+    const rateBinance = cachedRates.binance || 0;
+    const rateBCV = cachedRates.bcv || 0;
+    const totalVES = rateBinance > 0 ? formatVES(totalVal * rateBinance) : (rateBCV > 0 ? formatVES(totalVal * rateBCV) : null);
+
+    // 1 Venta Unificada por toda la compra con Snapshot Histórico de Tasa
+    const orderResult = processSaleTransaction({
+      items: cart.map(item => ({
         coilId: item.id,
+        name: item.name,
+        oem: item.oem || item.id,
         qty: item.qty,
-        customerName: buyerDraft.name.trim(),
-        customerPhone: buyerDraft.phone.trim(),
-        paymentRef: buyerDraft.payRef.trim() || 'A coordinar por WhatsApp',
-        userId: deviceId
-      });
-      if (res) orderIds.push(res.orderId);
+        unitPrice: item.price,
+        subtotal: Number((item.price * item.qty).toFixed(2)),
+        image: item.image || null,
+        brand: item.brand || 'JF'
+      })),
+      totalUSD: totalVal,
+      customerName: buyerDraft.name.trim(),
+      customerPhone: buyerDraft.phone.trim(),
+      customerCar: buyerDraft.car.trim(),
+      paymentRef: buyerDraft.payRef.trim() || 'A coordinar por WhatsApp',
+      userId: deviceId,
+      exchangeRateBinance: rateBinance,
+      exchangeRateBCV: rateBCV,
+      totalVES: totalVES
     });
 
-    const totalVal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-    const orderTag = orderIds.join(', ') || 'ORD-WA';
+    const orderTag = orderResult?.orderId || 'ORD-WA';
 
     const url = buildCartCheckoutUrl({
       targetPhone: ownerSettings.ownerPhone,

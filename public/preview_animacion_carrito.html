@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microinteracción: Add to Cart Animation | JF AUTO PARTS</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #07080a;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    /* HEADER */
+    .demo-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .demo-header h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+    .demo-header h1 span {
+      color: #de2420;
+    }
+    .demo-header p {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    /* SPOTLIGHT SHOWCASE CONTAINER (Like TikTok Video) */
+    .spotlight-card {
+      background: #141518;
+      border: 1px solid #23252a;
+      border-radius: 20px;
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(222, 36, 32, 0.15);
+      margin-bottom: 40px;
+    }
+
+    .spotlight-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* =========================================================================
+       THE BUTTON MICRO-INTERACTION STYLES (MATCHING TIKTOK VIDEO)
+       ========================================================================= */
+    .btn-add-cart-anim {
+      position: relative;
+      overflow: hidden;
+      background-color: #de2420;
+      color: #ffffff;
+      border-radius: 14px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 16px 36px;
+      width: 100%;
+      max-width: 320px;
+      min-height: 54px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(222, 36, 32, 0.4);
+      transition: background-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-add-cart-anim:hover:not(:disabled) {
+      background-color: #c81e1a;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(222, 36, 32, 0.55);
+    }
+
+    .btn-add-cart-anim:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .btn-add-cart-anim.is-animating {
+      background-color: #b91c18;
+      cursor: default;
+    }
+
+    .btn-add-cart-anim.is-done {
+      background-color: #15803d; /* Confirm green */
+      box-shadow: 0 8px 24px rgba(21, 128, 61, 0.45);
+    }
+
+    /* 1. Default Label & Icon */
+    .btn-label-default {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-transform: uppercase;
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    }
+
+    .btn-add-cart-anim.is-animating .btn-label-default,
+    .btn-add-cart-anim.is-done .btn-label-default {
+      transform: translateY(28px);
+      opacity: 0;
+    }
+
+    /* 2. Micro-Interaction Track */
+    .btn-cart-track {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .btn-add-cart-anim.is-animating .btn-cart-track {
+      opacity: 1;
+    }
+
+    /* Moving Cart Unit */
+    .btn-moving-cart {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 34px;
+      color: #ffffff;
+    }
+
+    .svg-cart-icon {
+      width: 36px;
+      height: 28px;
+      overflow: visible;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+    }
+
+    /* 3D Package Box that drops into the cart */
+    .btn-drop-box {
+      position: absolute;
+      top: -6px;
+      left: 13px;
+      width: 15px;
+      height: 13px;
+      background: linear-gradient(135deg, #e2a868 0%, #ba8043 100%);
+      border: 1.5px solid #7c4d1d;
+      border-radius: 3px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      opacity: 0;
+    }
+
+    /* Red Security Brand Tape across box */
+    .btn-drop-box-tape {
+      width: 3.5px;
+      height: 100%;
+      background: #de2420;
+    }
+
+    /* Keyframes: Cart sliding in, catching the box, and rolling out */
+    .btn-add-cart-anim.is-animating .btn-moving-cart {
+      animation: cartDriveThrough 1.2s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+    }
+
+    @keyframes cartDriveThrough {
+      0% {
+        transform: translateX(-110px) scale(0.85);
+        opacity: 0;
+      }
+      22% {
+        /* Reaches center and pauses to catch box */
+        transform: translateX(0px) scale(1);
+        opacity: 1;
+      }
+      32% {
+        /* Box lands! Suspension dips slightly down */
+        transform: translateX(0px) translateY(2.5px) rotate(-4deg);
+        opacity: 1;
+      }
+      42% {
+        /* Spring rebound */
+        transform: translateX(0px) translateY(-1.5px) rotate(2.5deg);
+        opacity: 1;
+      }
+      52% {
+        /* Settles */
+        transform: translateX(0px) translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      68% {
+        /* Prepares to dash */
+        transform: translateX(3px) scale(1.03);
+        opacity: 1;
+      }
+      100% {
+        /* Accelerates and drives off to the right */
+        transform: translateX(130px) scale(0.95);
+        opacity: 0;
+      }
+    }
+
+    /* Keyframes: Box dropping into cart */
+    .btn-add-cart-anim.is-animating .btn-drop-box {
+      animation: boxDropIntoCart 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes boxDropIntoCart {
+      0%, 16% {
+        transform: translateY(-40px) scale(0.3) rotate(-25deg);
+        opacity: 0;
+      }
+      22% {
+        transform: translateY(-20px) scale(0.85) rotate(-10deg);
+        opacity: 1;
+      }
+      32% {
+        /* Impact with basket bottom */
+        transform: translateY(3px) scale(1.1) rotate(0deg);
+        opacity: 1;
+      }
+      40% {
+        /* Small bounce */
+        transform: translateY(-2px) scale(0.96);
+        opacity: 1;
+      }
+      50%, 100% {
+        /* Resting inside basket as cart zooms away */
+        transform: translateY(1.5px) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* 3. Success Label: Checkmark + "¡Añadido!" */
+    .btn-label-success {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 800;
+      color: #ffffff;
+      opacity: 0;
+      transform: translateY(-18px) scale(0.85);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .btn-add-cart-anim.is-done .btn-label-success {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* COUNTER BELOW BUTTON (Like video: "0 in your cart") */
+    .cart-counter-text {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .cart-counter-text strong {
+      color: #ffffff;
+      font-size: 16px;
+    }
+
+    .action-links {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    .action-links a, .action-links button {
+      background: #20222a;
+      border: 1px solid #323542;
+      color: #cbd5e1;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-links a:hover, .action-links button:hover {
+      background: #2b2e3a;
+      color: #ffffff;
+      border-color: #de2420;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="demo-header">
+    <h1>JF <span>AUTO PARTS</span></h1>
+    <p>Microinteracción interactiva dentro del botón de compra (basada en el video)</p>
+  </div>
+
+  <div class="spotlight-card">
+    <div class="spotlight-title">
+      <i class="fa-solid fa-sparkles text-[#de2420]"></i> Prueba el botón aquí:
+    </div>
+
+    <!-- The Interactive Animated Button -->
+    <button class="btn-add-cart-anim" id="demo-btn" onclick="triggerBtnAnim()">
+      <span class="btn-label-default">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span>Add to Cart</span>
+      </span>
+
+      <div class="btn-cart-track" aria-hidden="true">
+        <div class="btn-moving-cart">
+          <svg class="svg-cart-icon" viewBox="0 0 34 26" fill="none">
+            <path
+              d="M1.5 2.5h4.2l3.4 13.5h14.8l3.2-10H8.2"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="11" cy="21.5" r="2.2" fill="currentColor" />
+            <circle cx="22.5" cy="21.5" r="2.2" fill="currentColor" />
+          </svg>
+          <div class="btn-drop-box">
+            <div class="btn-drop-box-tape"></div>
+          </div>
+        </div>
+      </div>
+
+      <span class="btn-label-success">
+        <i class="fa-solid fa-check text-emerald-300"></i>
+        <span>¡Añadido!</span>
+      </span>
+    </button>
+
+    <!-- Counter below button (exact match to video) -->
+    <div class="cart-counter-text">
+      <strong id="cart-counter">0</strong> en tu carrito
+    </div>
+
+    <div class="action-links">
+      <button onclick="resetCounter()"><i class="fa-solid fa-rotate-right"></i> Reiniciar</button>
+      <a href="http://localhost:3000/" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver en Catálogo</a>
+    </div>
+  </div>
+
+  <script>
+    let count = 0;
+    let isBusy = false;
+
+    function triggerBtnAnim() {
+      if (isBusy) return;
+      isBusy = true;
+
+      const btn = document.getElementById('demo-btn');
+      const counterEl = document.getElementById('cart-counter');
+
+      btn.classList.add('is-animating');
+
+      // Count updates when cart drives away
+      setTimeout(() => {
+        count++;
+        counterEl.innerText = count;
+      }, 850);
+
+      // Show success checkmark
+      setTimeout(() => {
+        btn.classList.remove('is-animating');
+        btn.classList.add('is-done');
+      }, 1150);
+
+      // Reset button to idle
+      setTimeout(() => {
+        btn.classList.remove('is-done');
+        isBusy = false;
+      }, 1800);
+    }
+
+    function resetCounter() {
+      count = 0;
+      document.getElementById('cart-counter').innerText = '0';
+    }
+  </script>
+
+</body>
+</html>

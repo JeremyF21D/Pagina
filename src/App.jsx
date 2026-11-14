@@ -131,6 +131,7 @@ function MainApp() {
         onClose={() => setManualSaleModalOpen(false)}
       />
 
+
       {/* Floating Transaction Notification Alert */}
       <OwnerNotificationBanner />
 

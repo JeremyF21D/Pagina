@@ -1,3 +1,4 @@
+import { WarrantyModal } from '../modals/WarrantyModal';
 import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { buildOwnerAlertUrl } from '../../utils/whatsapp';
@@ -8,7 +9,8 @@ import { EditSaleModal } from '../modals/EditSaleModal';
 import { ReceiptModal } from '../modals/ReceiptModal';
 
 export function SalesTable() {
-  const { salesHistory, confirmSale, revertSale, deleteSale, updateSaleTransaction, ownerSettings, coils } = useInventory();
+  const { salesHistory, confirmSale, revertSale, deleteSale, updateSaleTransaction, processWarrantyReplacement, processWarrantyRefund, ownerSettings, coils } = useInventory();
+  const [orderForWarranty, setOrderForWarranty] = useState(null);
   const [filter, setFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState('ALL'); // 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'
   const [search, setSearch] = useState('');
@@ -199,7 +201,21 @@ export function SalesTable() {
                     {ord.qty}
                   </td>
                   <td className="py-3 px-4 font-mono font-bold text-emerald-400 whitespace-nowrap">
-                    {formatUSD(ord.totalPrice)}
+                    <div>{formatUSD(ord.totalPrice || ord.totalUSD)}</div>
+                    {ord.totalVES ? (
+                      <div className="text-[10px] text-slate-400 font-normal">
+                        ≈ {ord.totalVES}
+                      </div>
+                    ) : ord.exchangeRateBinance ? (
+                      <div className="text-[10px] text-slate-400 font-normal">
+                        ≈ Bs. {Number(ord.totalPrice * ord.exchangeRateBinance).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    ) : null}
+                    {ord.exchangeRateBinance > 0 && (
+                      <span className="inline-block mt-0.5 text-[9px] font-sans px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold" title={`Tasa congelada al registrar la venta (${ord.rateSnapshotDate ? new Date(ord.rateSnapshotDate).toLocaleDateString('es-VE') : 'Fecha de compra'})`}>
+                        Tasa: {ord.exchangeRateBinance} Bs
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 px-4 font-mono text-[11px] whitespace-nowrap">
                     {ord.status === 'PENDING_APPROVAL' ? (
@@ -327,6 +343,14 @@ export function SalesTable() {
                         PENDIENTE
                       </span>
                     )}
+                    {ord.warrantyEvents && ord.warrantyEvents.length > 0 && (
+                      <div className="mt-1">
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1 w-max">
+                          <i className="fa-solid fa-shield-halved text-[8px]"></i>
+                          <span>{ord.hasRefundApplied ? 'REEMBOLSADO' : 'GARANTÍA'}</span>
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-right whitespace-nowrap">
                     <div className="inline-flex items-center justify-end gap-1.5">
@@ -359,6 +383,17 @@ export function SalesTable() {
                         >
                           <i className="fa-solid fa-rotate-left"></i>
                           <span>Regresar</span>
+                        </button>
+                      )}
+
+                      {/* Botón Garantía / Devolución */}
+                      {ord.status === 'CONFIRMED' && (
+                        <button 
+                          onClick={() => setOrderForWarranty(ord)}
+                          className="p-1.5 bg-purple-500/15 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 rounded-lg text-xs transition cursor-pointer active:scale-95"
+                          title="Tramitar garantía por defecto o devolución de dinero"
+                        >
+                          <i className="fa-solid fa-shield-halved"></i>
                         </button>
                       )}
 
@@ -424,6 +459,16 @@ export function SalesTable() {
         isOpen={Boolean(orderForReceipt)}
         order={orderForReceipt}
         onClose={() => setOrderForReceipt(null)}
+      />
+
+      {/* Modal de Gestión de Garantías & Devoluciones */}
+      <WarrantyModal
+        isOpen={Boolean(orderForWarranty)}
+        order={orderForWarranty}
+        coils={coils}
+        onClose={() => setOrderForWarranty(null)}
+        onProcessReplacement={processWarrantyReplacement}
+        onProcessRefund={processWarrantyRefund}
       />
 
       {/* Modal de Edición de Venta & Cambio de Repuesto */}

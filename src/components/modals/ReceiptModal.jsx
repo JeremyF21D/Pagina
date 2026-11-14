@@ -5,6 +5,16 @@ import logoImg from '../../assets/logo.png';
 export function ReceiptModal({ isOpen, order, onClose }) {
   if (!isOpen || !order) return null;
 
+  const items = (order.items && Array.isArray(order.items) && order.items.length > 0)
+    ? order.items
+    : [{
+        name: order.coilName || 'Repuesto Automotriz',
+        oem: order.oem || 'N/A',
+        qty: order.qty || 1,
+        unitPrice: (order.totalPrice || 0) / (order.qty || 1),
+        subtotal: order.totalPrice || 0
+      }];
+
   const handlePrint = () => {
     window.print();
   };
@@ -12,6 +22,14 @@ export function ReceiptModal({ isOpen, order, onClose }) {
   const handleSendToWhatsApp = () => {
     const phone = (order.customerPhone || '').replace(/\D/g, '');
     const cleanPhone = phone.startsWith('58') ? phone : (phone.startsWith('0') ? `58${phone.slice(1)}` : `58${phone}`);
+
+    const itemsSummary = items.map((it, idx) => 
+      `${idx + 1}. *${it.name}* (Cant: ${it.qty}) → ${formatUSD(it.subtotal || it.unitPrice)}`
+    ).join('\n');
+
+    const rateText = order.exchangeRateBinance 
+      ? `\n💱 *Tasa de Cambio:* ${order.exchangeRateBinance} Bs/USD (${order.totalVES || ''})`
+      : '';
 
     const message = 
 `🧾 *COMPROBANTE DE COMPRA • JF AUTO PARTS*
@@ -21,10 +39,11 @@ export function ReceiptModal({ isOpen, order, onClose }) {
 👤 *Cliente:* ${order.customerName}
 📞 *Teléfono:* ${order.customerPhone || 'N/A'}
 ━━━━━━━━━━━━━━━━━━━━
-⚙️ *Repuesto:* ${order.coilName}
-🔢 *Cantidad:* ${order.qty} unidad(es)
-💵 *Total USD:* ${formatUSD(order.totalPrice)} USD
-💳 *Método de Pago / Ref:* ${order.paymentRef || 'Acordado'}
+📦 *Detalle de Repuestos:*
+${itemsSummary}
+━━━━━━━━━━━━━━━━━━━━
+💵 *Total USD:* ${formatUSD(order.totalPrice || order.totalUSD)} USD${rateText}
+💳 *Pago / Ref:* ${order.paymentRef || 'Acordado'}
 🛡️ *Garantía:* 12 meses por defecto de fábrica
 ━━━━━━━━━━━━━━━━━━━━
 ¡Gracias por confiar en JF Auto Parts! Para soporte comunícate al 0412-6497478.`;
@@ -112,33 +131,53 @@ export function ReceiptModal({ isOpen, order, onClose }) {
             </div>
           </div>
 
-          {/* Detalle del Repuesto */}
+          {/* Detalle de los Repuestos */}
           <div className="border border-slate-800 rounded-xl overflow-hidden print:border-gray-300">
             <div className="bg-slate-950 p-2 text-[10px] font-mono uppercase text-slate-400 flex justify-between print:bg-gray-200 print:text-gray-700">
-              <span>Descripción</span>
+              <span>Descripción ({items.length} {items.length === 1 ? 'repuesto' : 'repuestos'})</span>
               <span>Subtotal</span>
             </div>
-            <div className="p-3 bg-slate-900/50 flex items-center justify-between text-xs print:bg-white">
-              <div>
-                <p className="font-bold text-white print:text-black">{order.coilName}</p>
-                <p className="text-[10px] text-slate-400 font-mono print:text-gray-600">
-                  Cant: {order.qty} x {formatUSD((order.totalPrice || 0) / (order.qty || 1))}
-                </p>
-              </div>
-              <span className="font-mono font-bold text-white text-sm print:text-black">
-                {formatUSD(order.totalPrice)}
-              </span>
+            <div className="divide-y divide-slate-850 bg-slate-900/50 print:bg-white print:divide-gray-200">
+              {items.map((it, idx) => (
+                <div key={idx} className="p-2.5 flex items-center justify-between text-xs">
+                  <div>
+                    <p className="font-bold text-white print:text-black">{it.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono print:text-gray-600">
+                      Cant: {it.qty} x {formatUSD(it.unitPrice)} · OEM: {it.oem || 'N/A'}
+                    </p>
+                  </div>
+                  <span className="font-mono font-bold text-white text-xs print:text-black">
+                    {formatUSD(it.subtotal || (it.unitPrice * it.qty))}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Totales y Forma de Pago */}
           <div className="space-y-1.5 pt-2 border-t border-slate-800 print:border-gray-300 text-xs">
             <div className="flex justify-between items-center text-slate-300 print:text-gray-700">
-              <span className="font-bold">Total a Pagar:</span>
+              <span className="font-bold">Total USD:</span>
               <span className="font-mono font-extrabold text-base text-emerald-400 print:text-black">
-                {formatUSD(order.totalPrice)} USD
+                {formatUSD(order.totalPrice || order.totalUSD)} USD
               </span>
             </div>
+
+            {/* Tasa Histórica Congelada si está disponible */}
+            {order.exchangeRateBinance > 0 && (
+              <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1 border-t border-slate-800/60 font-mono">
+                <span>Tasa de Cambio Histórica:</span>
+                <span className="text-amber-300 font-bold">{order.exchangeRateBinance} Bs/USD</span>
+              </div>
+            )}
+
+            {order.totalVES && (
+              <div className="flex justify-between items-center text-[11px] text-slate-400 font-mono">
+                <span>Total Calculado en Bolívares:</span>
+                <span className="text-slate-200 font-bold">{order.totalVES}</span>
+              </div>
+            )}
+
             <div className="flex justify-between items-center text-[11px] text-slate-300 print:text-gray-800 pt-1 border-t border-slate-800/60">
               <span>Método y Referencia:</span>
               <span className="font-mono font-semibold text-amber-300 print:text-black">{order.paymentRef || 'Acordado en tienda'}</span>
@@ -149,7 +188,7 @@ export function ReceiptModal({ isOpen, order, onClose }) {
           <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[10px] text-slate-400 space-y-1 print:bg-gray-100 print:border-gray-300 print:text-gray-700">
             <div className="flex items-center gap-1.5 text-white font-bold print:text-black">
               <i className="fa-solid fa-shield-halved text-rose-400"></i>
-              <span>Póliza de Garantía Oficial</span>
+              <span>Póliza de Garantía Oficial JF Auto Parts</span>
             </div>
             <p>
               Garantía de 12 meses continuos contra defecto de fábrica. Conserve este comprobante digital o físico para cualquier cambio o revisión técnica.

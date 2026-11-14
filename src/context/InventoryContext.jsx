@@ -1,3 +1,4 @@
+import { getCachedExchangeRates, formatVES } from '../services/exchangeRatesService';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { DEFAULT_BOBINAS_SEED, INITIAL_SALES_SEED } from '../data/seedData';
 import { normalizeCoilRecord } from '../utils/formatters';
@@ -823,26 +824,73 @@ Directrices de conversación:
    * Los pedidos creados por clientes entran por defecto en estado 'PENDING_APPROVAL' (Pendiente)
    * sin descontar stock hasta que el dueño/administrador los confirme.
    */
-  const processSaleTransaction = useCallback(({ coilId, qty, customerName, customerPhone, paymentRef, userId, status = null }) => {
+    const processSaleTransaction = useCallback(({ 
+    coilId, 
+    qty, 
+    items = null,
+    totalUSD = null,
+    customerName, 
+    customerPhone, 
+    customerCar,
+    paymentRef, 
+    userId, 
+    status = null,
+    exchangeRateBinance = null,
+    exchangeRateBCV = null,
+    totalVES = null
+  }) => {
     let orderResult = null;
 
     setCoils(currentCoils => {
-      const coil = currentCoils.find(b => b.id.toLowerCase() === String(coilId || '').toLowerCase());
-      if (!coil) return currentCoils;
+      // 1. Resolver lista de items (sea orden multi-artículo de carrito o venta manual directa)
+      let resolvedItems = [];
+      let totalAmountUSD = 0;
 
-      const requestedQty = Math.max(1, parseInt(qty, 10) || 1);
-      const stockBefore = coil.stock;
+      if (items && Array.isArray(items) && items.length > 0) {
+        resolvedItems = items.map(it => ({
+          coilId: it.coilId || it.id,
+          name: it.name || 'Repuesto Automotriz',
+          oem: (it.oem || '').split('/')[0].trim(),
+          qty: Math.max(1, parseInt(it.qty, 10) || 1),
+          unitPrice: Number(it.unitPrice || it.price || 0),
+          subtotal: Number(it.subtotal || ((it.unitPrice || it.price || 0) * (it.qty || 1)).toFixed(2)),
+          image: it.image || null,
+          brand: it.brand || 'JF'
+        }));
+        totalAmountUSD = totalUSD !== null ? Number(totalUSD) : resolvedItems.reduce((acc, it) => acc + it.subtotal, 0);
+      } else {
+        const targetId = String(coilId || '').toLowerCase();
+        const coil = currentCoils.find(b => b.id.toLowerCase() === targetId);
+        if (!coil) return currentCoils;
 
-      if (stockBefore < requestedQty) {
-        showToast(`Stock insuficiente (${stockBefore} disponibles)`);
-        return currentCoils;
+        const requestedQty = Math.max(1, parseInt(qty, 10) || 1);
+        resolvedItems = [{
+          coilId: coil.id,
+          name: coil.name,
+          oem: (coil.oem || '').split('/')[0].trim(),
+          qty: requestedQty,
+          unitPrice: coil.price,
+          subtotal: Number((coil.price * requestedQty).toFixed(2)),
+          image: coil.image || null,
+          brand: coil.brand || 'JF'
+        }];
+        totalAmountUSD = Number((coil.price * requestedQty).toFixed(2));
       }
 
-      // Toda venta nueva ingresa SIEMPRE en estado PENDIENTE de verificación manual por WhatsApp/Almacén
-      // para evitar descuadre por productos defectuosos o devoluciones antes de la confirmación definitiva.
-      const effectiveStatus = 'PENDING_APPROVAL';
-      const isConfirmed = false;
-      const stockAfter = stockBefore;
+      // Stock de referencia para historial inicial
+      const firstItem = resolvedItems[0];
+      const coilRef = currentCoils.find(b => b.id.toLowerCase() === String(firstItem?.coilId || '').toLowerCase());
+      const stockBefore = coilRef ? coilRef.stock : 0;
+
+      // 2. Snapshot de Tasa Histórica Inalterable (Congelada en el momento exacto)
+      const cachedRates = getCachedExchangeRates() || {};
+      const rateBinance = exchangeRateBinance || cachedRates.binance || 0;
+      const rateBCV = exchangeRateBCV || cachedRates.bcv || 0;
+      const calculatedVES = totalVES || (rateBinance > 0 ? formatVES(totalAmountUSD * rateBinance) : null);
+
+      const effectiveStatus = status || 'PENDING_APPROVAL';
+      const isConfirmed = effectiveStatus === 'CONFIRMED';
+      const stockAfter = isConfirmed ? Math.max(0, stockBefore - (firstItem?.qty || 1)) : stockBefore;
 
       const newOrder = {
         orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -850,12 +898,24 @@ Directrices de conversación:
         userId: userId || 'CLI-GUEST',
         customerName: customerName || 'Cliente WhatsApp Directo',
         customerPhone: customerPhone || 'No especificado',
-        coilId: coil.id,
-        coilName: coil.name,
-        oem: (coil.oem || '').split('/')[0].trim(),
-        qty: requestedQty,
-        unitPrice: coil.price,
-        totalPrice: Number((coil.price * requestedQty).toFixed(2)),
+        customerCar: customerCar || '',
+        // Modelo unificado multi-artículo
+        items: resolvedItems,
+        // Compatibilidad hacia atrás con vistas individuales
+        coilId: resolvedItems[0]?.coilId || '',
+        coilName: resolvedItems.length === 1 ? resolvedItems[0]?.name : `${resolvedItems.length} repuestos: ${resolvedItems.map(i => i.name).join(', ')}`,
+        oem: resolvedItems.map(i => i.oem).filter(Boolean).join(', '),
+        qty: resolvedItems.reduce((acc, it) => acc + it.qty, 0),
+        unitPrice: resolvedItems[0]?.unitPrice || 0,
+        totalPrice: Number(totalAmountUSD.toFixed(2)),
+        totalUSD: Number(totalAmountUSD.toFixed(2)),
+        // Snapshot de Tasa de Cambio Inalterable
+        exchangeRateBinance: rateBinance,
+        exchangeRateBCV: rateBCV,
+        totalVES: calculatedVES,
+        rateSnapshotDate: new Date().toISOString(),
+        // Historial de garantías
+        warrantyEvents: [],
         stockBefore,
         stockAfter,
         paymentRef: paymentRef || 'A coordinar por WhatsApp',
@@ -866,48 +926,34 @@ Directrices de conversación:
       setSalesHistory(prev => [newOrder, ...prev]);
       setPendingOwnerAlert(newOrder);
 
-      // Guardar de inmediato en la tabla 'ventas' de Supabase
-      saveSaleToSupabase(newOrder, coil);
+      // Guardar de inmediato en Supabase
+      saveSaleToSupabase(newOrder, coilRef);
 
       if (ownerSettings.soundAlert) {
         playCashRegisterSound();
       }
 
-      // Si no está confirmada (está pendiente), no descontamos stock del inventario
       if (!isConfirmed) {
-        showToast(`🟡 Pedido #${newOrder.orderId} registrado en Supabase (Pendiente de confirmación)`);
+        showToast(`🟡 Pedido #${newOrder.orderId} registrado (${resolvedItems.length} ${resolvedItems.length === 1 ? 'repuesto' : 'repuestos'}) - Pendiente`);
         return currentCoils;
       }
 
-      // Si fue confirmada directamente (ej. venta manual en almacén)
-      const updated = currentCoils.map(item => {
-        if (item.id.toLowerCase() === coil.id.toLowerCase()) {
-          return {
-            ...item,
-            stock: stockAfter,
-            inStock: stockAfter > 0
-          };
-        }
-        return item;
+      // Si fue confirmada directamente, descontar stock de CADA repuesto
+      let updatedCoils = [...currentCoils];
+      resolvedItems.forEach(it => {
+        updatedCoils = updatedCoils.map(c => {
+          if (c.id.toLowerCase() === it.coilId.toLowerCase()) {
+            const nextStock = Math.max(0, c.stock - it.qty);
+            return { ...c, stock: nextStock, inStock: nextStock > 0 };
+          }
+          return c;
+        });
       });
 
-      broadcastSync(updated);
-      pushToApi(updated);
-
-      // Si Supabase está conectado, actualizar la columna stock en bobinas_inventario
-      if (dbEngine === 'supabase') {
-        const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
-        if (baseUrl && anonKey) {
-          fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(coil.id)}`, {
-            method: 'PATCH',
-            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
-            body: JSON.stringify({ stock: stockAfter })
-          }).catch(e => console.warn('Error al descontar stock en Supabase:', e));
-        }
-      }
-
-      showToast(`🟢 Venta #${newOrder.orderId} registrada: Stock descontado y guardada en Supabase`);
-      return updated;
+      broadcastSync(updatedCoils);
+      pushToApi(updatedCoils);
+      showToast(`🟢 Venta #${newOrder.orderId} registrada: Stock descontado`);
+      return updatedCoils;
     });
 
     return orderResult;
@@ -916,6 +962,10 @@ Directrices de conversación:
   /**
    * Confirmar pedido pendiente:
    * Cambia el estado a CONFIRMED y descuenta el stock tanto localmente como en Supabase.
+   */
+    /**
+   * Confirmar pedido pendiente:
+   * Cambia el estado a CONFIRMED y descuenta el stock de CADA repuesto incluido en la orden.
    */
   const confirmSale = useCallback(async (orderId, paymentData = null) => {
     const ord = salesHistory.find(s => s.orderId === orderId);
@@ -926,41 +976,43 @@ Directrices de conversación:
       return;
     }
 
-    let calculatedNewStock = null;
-    const targetCoilId = ord.coilId;
-    let targetCoil = null;
+    const orderItems = (ord.items && Array.isArray(ord.items) && ord.items.length > 0)
+      ? ord.items
+      : [{ coilId: ord.coilId, qty: ord.qty || 1, name: ord.coilName }];
+
+    let updatedCoilList = [];
 
     setCoils(currentCoils => {
-      const coil = currentCoils.find(b => b.id.toLowerCase() === String(targetCoilId || '').toLowerCase());
-      targetCoil = coil;
-      const currentStock = coil ? coil.stock : ord.stockBefore;
-      const newStock = Math.max(0, currentStock - ord.qty);
-      calculatedNewStock = newStock;
+      let nextCoils = [...currentCoils];
 
-      const updated = currentCoils.map(item => {
-        if (item.id.toLowerCase() === String(targetCoilId || '').toLowerCase()) {
-          return {
-            ...item,
-            stock: newStock,
-            inStock: newStock > 0
-          };
-        }
-        return item;
+      orderItems.forEach(item => {
+        const tId = String(item.coilId || '').toLowerCase();
+        nextCoils = nextCoils.map(c => {
+          if (c.id.toLowerCase() === tId) {
+            const newStock = Math.max(0, c.stock - (item.qty || 1));
+            return {
+              ...c,
+              stock: newStock,
+              inStock: newStock > 0
+            };
+          }
+          return c;
+        });
       });
 
+      updatedCoilList = nextCoils;
       try {
-        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(updated));
+        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(nextCoils));
       } catch (e) {}
 
-      broadcastSync(updated);
-      pushToApi(updated);
-      return updated;
+      broadcastSync(nextCoils);
+      pushToApi(nextCoils);
+      return nextCoils;
     });
 
     const updatedOrder = {
       ...ord,
       status: 'CONFIRMED',
-      stockAfter: calculatedNewStock !== null ? calculatedNewStock : Math.max(0, ord.stockBefore - ord.qty),
       paymentRef: paymentData?.paymentRef ? String(paymentData.paymentRef).trim() : (ord.paymentRef || 'PAGO CONFIRMADO'),
       paymentMethod: paymentData?.paymentMethod || ord.paymentMethod || 'OTRO',
       paymentDetails: paymentData?.paymentDetails || ord.paymentDetails || null
@@ -974,38 +1026,40 @@ Directrices de conversación:
       return next;
     });
 
-    // Guardar / Actualizar en Supabase orden y stock
-    await saveSaleToSupabase(updatedOrder, targetCoil);
+    // Guardar en Supabase orden
+    await saveSaleToSupabase(updatedOrder);
 
     if (ownerSettings.soundAlert) {
       playCashRegisterSound();
     }
 
-    // Descontar en Supabase si está activo
-    if (dbEngine === 'supabase' && targetCoilId && calculatedNewStock !== null) {
+    // Descontar cada ítem en Supabase si está activo
+    if (dbEngine === 'supabase') {
       const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
       if (baseUrl && anonKey) {
-        try {
-          const res = await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(targetCoilId)}`, {
-            method: 'PATCH',
-            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
-            body: JSON.stringify({ stock: calculatedNewStock })
-          });
-          if (res.ok) {
-            console.log(`Stock actualizado en Supabase para ${targetCoilId}: ${calculatedNewStock}`);
+        orderItems.forEach(async (it) => {
+          const finalCoil = updatedCoilList.find(c => c.id.toLowerCase() === String(it.coilId).toLowerCase());
+          if (finalCoil) {
+            try {
+              await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(it.coilId)}`, {
+                method: 'PATCH',
+                headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+                body: JSON.stringify({ stock: finalCoil.stock })
+              });
+            } catch (err) {
+              console.warn('Error al actualizar stock en Supabase:', err);
+            }
           }
-        } catch (err) {
-          console.warn('Error de red al actualizar stock en Supabase:', err);
-        }
+        });
       }
     }
 
-    showToast(`✅ Pedido #${orderId} confirmado: Stock actualizado y registrado en Supabase.`);
+    showToast(`✅ Pedido #${orderId} confirmado: Stock actualizado para ${orderItems.length} ${orderItems.length === 1 ? 'repuesto' : 'repuestos'}.`);
   }, [salesHistory, ownerSettings.soundAlert, playCashRegisterSound, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
 
   /**
    * Revertir o Cancelar orden:
-   * - Si estaba CONFIRMED: regresa el stock tanto en memoria como en Supabase.
+   * - Si estaba CONFIRMED: regresa el stock de CADA ítem tanto en memoria como en Supabase.
    * - Si estaba PENDING_APPROVAL: simplemente se cancela sin alterar stock.
    */
   const revertSale = useCallback(async (orderId) => {
@@ -1018,53 +1072,63 @@ Directrices de conversación:
     }
 
     const wasConfirmed = ord.status === 'CONFIRMED';
-    const targetCoilId = ord.coilId;
-    let calculatedRestoredStock = null;
+    const orderItems = (ord.items && Array.isArray(ord.items) && ord.items.length > 0)
+      ? ord.items
+      : [{ coilId: ord.coilId, qty: ord.qty || 1, name: ord.coilName }];
+
+    let updatedCoilList = [];
 
     if (wasConfirmed) {
       setCoils(currentCoils => {
-        const coil = currentCoils.find(b => b.id.toLowerCase() === String(targetCoilId || '').toLowerCase());
-        const currentStock = coil ? coil.stock : (ord.stockAfter || 0);
-        const restoredStock = currentStock + ord.qty;
-        calculatedRestoredStock = restoredStock;
+        let nextCoils = [...currentCoils];
 
-        const updated = currentCoils.map(item => {
-          if (item.id.toLowerCase() === String(targetCoilId || '').toLowerCase()) {
-            return {
-              ...item,
-              stock: restoredStock,
-              inStock: restoredStock > 0
-            };
-          }
-          return item;
+        orderItems.forEach(item => {
+          const tId = String(item.coilId || '').toLowerCase();
+          nextCoils = nextCoils.map(c => {
+            if (c.id.toLowerCase() === tId) {
+              const restoredStock = c.stock + (item.qty || 1);
+              return {
+                ...c,
+                stock: restoredStock,
+                inStock: restoredStock > 0
+              };
+            }
+            return c;
+          });
         });
 
+        updatedCoilList = nextCoils;
         try {
-          localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(updated));
+          localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(nextCoils));
         } catch (e) {}
 
-        broadcastSync(updated);
-        pushToApi(updated);
-        return updated;
+        broadcastSync(nextCoils);
+        pushToApi(nextCoils);
+        return nextCoils;
       });
 
-      // Si Supabase está conectado, devolver el stock en la base de datos remota
-      if (dbEngine === 'supabase' && targetCoilId && calculatedRestoredStock !== null) {
+      // Actualizar en Supabase si está activo
+      if (dbEngine === 'supabase') {
         const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
         if (baseUrl && anonKey) {
-          try {
-            await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(targetCoilId)}`, {
-              method: 'PATCH',
-              headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
-              body: JSON.stringify({ stock: calculatedRestoredStock })
-            });
-          } catch (err) {
-            console.warn('Error de red al reintegrar stock en Supabase:', err);
-          }
+          orderItems.forEach(async (it) => {
+            const finalCoil = updatedCoilList.find(c => c.id.toLowerCase() === String(it.coilId).toLowerCase());
+            if (finalCoil) {
+              try {
+                await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(it.coilId)}`, {
+                  method: 'PATCH',
+                  headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+                  body: JSON.stringify({ stock: finalCoil.stock })
+                });
+              } catch (err) {
+                console.warn('Error al restaurar stock en Supabase:', err);
+              }
+            }
+          });
         }
       }
 
-      showToast(`↩️ Venta #${orderId} revertida (+${ord.qty} unidades devueltas al stock)`);
+      showToast(`↩️ Venta #${orderId} revertida: Piezas devueltas al inventario`);
     } else {
       showToast(`❌ Orden #${orderId} cancelada (no modificó el stock)`);
     }
@@ -1078,9 +1142,139 @@ Directrices de conversación:
       return next;
     });
 
-    // Actualizar estado en Supabase
     saveSaleToSupabase(updatedOrder);
   }, [salesHistory, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
+
+  /**
+   * Gestión de Garantía: Opción 1 - Cambio por Reemplazo Físico
+   * - Descuenta 1 unidad de stock del repuesto nuevo entregado.
+   * - La pieza dañada NO regresa al stock disponible (queda en mermas).
+   * - Anota el evento de garantía en la orden.
+   */
+  const processWarrantyReplacement = useCallback(async ({
+    orderId,
+    defectiveCoilId,
+    defectiveItemName,
+    replacementCoilId,
+    replacementCoilName,
+    reason
+  }) => {
+    const ord = salesHistory.find(s => s.orderId === orderId);
+    if (!ord) return;
+
+    let updatedNewStock = 0;
+
+    // Descontar 1 unidad del repuesto nuevo de reemplazo
+    setCoils(currentCoils => {
+      const updated = currentCoils.map(c => {
+        if (c.id.toLowerCase() === String(replacementCoilId).toLowerCase()) {
+          const nextStock = Math.max(0, c.stock - 1);
+          updatedNewStock = nextStock;
+          return { ...c, stock: nextStock, inStock: nextStock > 0 };
+        }
+        return c;
+      });
+
+      try {
+        localStorage.setItem(STORAGE_KEY_INVENTORY, JSON.stringify(updated));
+      } catch (e) {}
+
+      broadcastSync(updated);
+      pushToApi(updated);
+      return updated;
+    });
+
+    // Actualizar en Supabase stock del reemplazo
+    if (dbEngine === 'supabase') {
+      const { baseUrl, anonKey, table } = getActiveSupabaseConfig(null, dbCredentials);
+      if (baseUrl && anonKey) {
+        try {
+          await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${encodeURIComponent(replacementCoilId)}`, {
+            method: 'PATCH',
+            headers: getSupabaseHeaders(anonKey, { 'Prefer': 'return=minimal' }),
+            body: JSON.stringify({ stock: updatedNewStock })
+          });
+        } catch (err) {}
+      }
+    }
+
+    const newWarrantyEvent = {
+      id: `WAR-${Date.now()}`,
+      type: 'REPLACEMENT',
+      date: new Date().toISOString(),
+      defectiveCoilId,
+      defectiveItemName: defectiveItemName || 'Repuesto',
+      replacementCoilId,
+      replacementCoilName: replacementCoilName || 'Reemplazo',
+      reason: reason || 'Defecto de fábrica'
+    };
+
+    const existingEvents = ord.warrantyEvents || [];
+    const updatedOrder = {
+      ...ord,
+      warrantyEvents: [...existingEvents, newWarrantyEvent],
+      hasWarrantyApplied: true,
+      notes: `${ord.notes ? ord.notes + ' | ' : ''}[CAMBIO GARANTÍA: ${replacementCoilName} entregado por ${defectiveItemName} (${new Date().toLocaleDateString('es-VE')})]`
+    };
+
+    setSalesHistory(prev => {
+      const next = prev.map(s => s.orderId === orderId ? updatedOrder : s);
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    await saveSaleToSupabase(updatedOrder);
+    showToast(`🛡️ Garantía procesada: 1x ${replacementCoilName} entregado y descontado de stock.`);
+  }, [salesHistory, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
+
+  /**
+   * Gestión de Garantía: Opción 2 - Devolución de Dinero (Reembolso)
+   * - La pieza defectuosa NO regresa al inventario vendible.
+   * - Se anota el reembolso en la orden y en el libro de caja.
+   */
+  const processWarrantyRefund = useCallback(async ({
+    orderId,
+    defectiveCoilId,
+    defectiveItemName,
+    refundAmountUSD,
+    refundRef,
+    reason
+  }) => {
+    const ord = salesHistory.find(s => s.orderId === orderId);
+    if (!ord) return;
+
+    const newWarrantyEvent = {
+      id: `WAR-${Date.now()}`,
+      type: 'REFUND',
+      date: new Date().toISOString(),
+      defectiveCoilId,
+      defectiveItemName: defectiveItemName || 'Repuesto',
+      refundAmountUSD: Number(refundAmountUSD),
+      refundRef: refundRef || 'Reembolso acordado',
+      reason: reason || 'Pieza defectuosa'
+    };
+
+    const existingEvents = ord.warrantyEvents || [];
+    const updatedOrder = {
+      ...ord,
+      warrantyEvents: [...existingEvents, newWarrantyEvent],
+      hasRefundApplied: true,
+      notes: `${ord.notes ? ord.notes + ' | ' : ''}[REEMBOLSO GARANTÍA: -$${Number(refundAmountUSD).toFixed(2)} USD | Ref: ${refundRef} (${new Date().toLocaleDateString('es-VE')})]`
+    };
+
+    setSalesHistory(prev => {
+      const next = prev.map(s => s.orderId === orderId ? updatedOrder : s);
+      try {
+        localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    await saveSaleToSupabase(updatedOrder);
+    showToast(`🛡️ Reembolso por garantía registrado: $${Number(refundAmountUSD).toFixed(2)} USD devueltos al cliente.`);
+  }, [salesHistory, saveSaleToSupabase, showToast]);
 
   /**
    * Eliminar definitivamente una venta de la lista y de Supabase
@@ -1556,6 +1750,8 @@ Directrices de conversación:
       processSaleTransaction,
       confirmSale,
       revertSale,
+      processWarrantyReplacement,
+      processWarrantyRefund,
       deleteSale,
       clearAllSales,
       updateSaleTransaction,

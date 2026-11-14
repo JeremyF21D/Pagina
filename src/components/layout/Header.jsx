@@ -79,6 +79,7 @@ export function Header({ activeTab, setActiveTab }) {
               type="button"
               onClick={toggleCart}
               className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white/[0.04] hover:bg-white/[0.08] text-white rounded-lg border border-white/10 hover:border-[#de2420]/50 transition flex items-center justify-center cursor-pointer active:scale-95"
+              id="header-cart-btn"
               title="Ver mi carrito de compra"
               aria-label="Carrito de compra"
             >

@@ -1,3 +1,4 @@
+import { AddToCartButton } from '../common/AddToCartButton';
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -159,19 +160,7 @@ export function CoilCard({ coil, onEditProduct }) {
 
         {/* Acciones principales: Comprar (Rojo) y WhatsApp (Verde/Oscuro) */}
         <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
-          <button 
-            type="button"
-            onClick={(e) => { e.stopPropagation(); addToCart(coil.id); }} 
-            disabled={coil.stock <= 0}
-            className={`py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 shadow-md transition ${
-              coil.stock > 0 
-                ? 'bg-[#de2420] hover:bg-[#c81e1a] text-white shadow-[#de2420]/20 active:scale-95 cursor-pointer' 
-                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-            }`}
-          >
-            <i className={`fa-solid ${coil.stock > 0 ? 'fa-cart-plus' : 'fa-ban'} text-[10px]`}></i>
-            <span>{coil.stock > 0 ? 'Comprar' : 'Agotado'}</span>
-          </button>
+<AddToCartButton productId={coil.id} stock={coil.stock} />
 
           <button 
             type="button"

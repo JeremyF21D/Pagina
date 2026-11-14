@@ -278,6 +278,26 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
                     if (!cachedRates || !orderTotal) return null;
                     return (
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        {order.exchangeRateBinance > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setPagoMovilMonto(order.totalVES || formatVES(orderTotal * order.exchangeRateBinance))}
+                            className="text-[10px] bg-purple-500/20 hover:bg-purple-500/35 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded cursor-pointer transition font-mono font-bold"
+                            title="Usar la tasa congelada al momento del pedido"
+                          >
+                            🔒 Tasa Congelada ({order.exchangeRateBinance} Bs): {order.totalVES || formatVES(orderTotal * order.exchangeRateBinance)}
+                          </button>
+                        )}
+                        {order.exchangeRateBinance > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setPagoMovilMonto(order.totalVES || formatVES(orderTotal * order.exchangeRateBinance))}
+                            className="text-[10px] bg-purple-500/20 hover:bg-purple-500/35 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded cursor-pointer transition font-mono font-bold"
+                            title="Usar la tasa congelada al momento del pedido"
+                          >
+                            🔒 Tasa Congelada ({order.exchangeRateBinance} Bs): {order.totalVES || formatVES(orderTotal * order.exchangeRateBinance)}
+                          </button>
+                        )}
                         {cachedRates.binance > 0 && (
                           <button
                             type="button"

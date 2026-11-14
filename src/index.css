@@ -149,3 +149,285 @@
 .glow-whatsapp {
   animation: softGlowWhatsApp 3s infinite ease-in-out;
 }
+
+/* ==========================================================================
+   MICRO-INTERACCIÓN "ADD TO CART" (AARON IKER / TIKTOK STYLE)
+   Animación integrada directamente dentro del botón de compra:
+   - El texto se oculta
+   - El carrito entra rodando al centro
+   - Una caja cae desde arriba directamente dentro del carrito con rebote
+   - El carrito acelera y sale rodando por la derecha
+   - Aparece confirmación "¡Añadido!"
+   ========================================================================== */
+
+.btn-add-cart-anim {
+  position: relative;
+  overflow: hidden;
+  background-color: #de2420;
+  color: #ffffff;
+  border-radius: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(222, 36, 32, 0.3);
+  transition: background-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 640px) {
+  .btn-add-cart-anim {
+    font-size: 12px;
+    min-height: 34px;
+    border-radius: 10px;
+    padding: 7px 12px;
+  }
+}
+
+.btn-add-cart-anim:hover:not(:disabled) {
+  background-color: #c81e1a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(222, 36, 32, 0.45);
+}
+
+.btn-add-cart-anim:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-add-cart-anim.is-animating {
+  background-color: #b91c18;
+  cursor: default;
+}
+
+.btn-add-cart-anim.is-done {
+  background-color: #15803d; /* Confirm green */
+  box-shadow: 0 4px 14px rgba(21, 128, 61, 0.45);
+}
+
+/* 1. Default Label & Icon */
+.btn-label-default {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+
+.btn-add-cart-anim.is-animating .btn-label-default {
+  transform: translateY(22px);
+  opacity: 0;
+}
+
+.btn-add-cart-anim.is-done .btn-label-default {
+  transform: translateY(22px);
+  opacity: 0;
+}
+
+/* 2. Micro-Interaction Track */
+.btn-cart-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.btn-add-cart-anim.is-animating .btn-cart-track {
+  opacity: 1;
+}
+
+/* Moving Cart Unit */
+.btn-moving-cart {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 26px;
+  color: #ffffff;
+}
+
+.svg-cart-icon {
+  width: 26px;
+  height: 22px;
+  overflow: visible;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* 3D Package Box that drops into the cart */
+.btn-drop-box {
+  position: absolute;
+  top: -4px;
+  left: 10px;
+  width: 12px;
+  height: 10px;
+  background: linear-gradient(135deg, #e2a868 0%, #ba8043 100%);
+  border: 1px solid #7c4d1d;
+  border-radius: 2px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  opacity: 0;
+}
+
+/* Red Security Brand Tape across box */
+.btn-drop-box-tape {
+  width: 3px;
+  height: 100%;
+  background: #de2420;
+}
+
+/* Keyframes: Cart sliding in, catching the box, and rolling out */
+.btn-add-cart-anim.is-animating .btn-moving-cart {
+  animation: cartDriveThrough 1.15s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes cartDriveThrough {
+  0% {
+    transform: translateX(-70px) scale(0.85);
+    opacity: 0;
+  }
+  22% {
+    /* Reaches center and pauses to catch box */
+    transform: translateX(0px) scale(1);
+    opacity: 1;
+  }
+  32% {
+    /* Box lands! Suspension dips slightly down */
+    transform: translateX(0px) translateY(2px) rotate(-3deg);
+    opacity: 1;
+  }
+  42% {
+    /* Spring rebound */
+    transform: translateX(0px) translateY(-1px) rotate(2deg);
+    opacity: 1;
+  }
+  52% {
+    /* Settles */
+    transform: translateX(0px) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    /* Prepares to dash */
+    transform: translateX(2px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    /* Accelerates and drives off to the right */
+    transform: translateX(85px) scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Keyframes: Box dropping into cart */
+.btn-add-cart-anim.is-animating .btn-drop-box {
+  animation: boxDropIntoCart 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes boxDropIntoCart {
+  0%, 16% {
+    transform: translateY(-30px) scale(0.4) rotate(-25deg);
+    opacity: 0;
+  }
+  22% {
+    transform: translateY(-16px) scale(0.85) rotate(-10deg);
+    opacity: 1;
+  }
+  32% {
+    /* Impact with basket bottom */
+    transform: translateY(2px) scale(1.08) rotate(0deg);
+    opacity: 1;
+  }
+  40% {
+    /* Small bounce */
+    transform: translateY(-2px) scale(0.98);
+    opacity: 1;
+  }
+  50%, 100% {
+    /* Resting inside basket as cart zooms away */
+    transform: translateY(1px) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 3. Success Label: Checkmark + "¡Añadido!" */
+.btn-label-success {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 800;
+  color: #ffffff;
+  opacity: 0;
+  transform: translateY(-16px) scale(0.85);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.btn-add-cart-anim.is-done .btn-label-success {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Shopping Cart Button Impact Reaction */
+@keyframes cartBumpWobble {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3) rotate(-8deg); }
+  50% { transform: scale(1.2) rotate(6deg); }
+  75% { transform: scale(1.08) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.cart-bump-active {
+  animation: cartBumpWobble 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  border-color: #de2420 !important;
+  box-shadow: 0 0 20px rgba(222, 36, 32, 0.6) !important;
+}
+
+/* Floating +1 Pop Badge */
+.fly-cart-plus-one {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #de2420;
+  color: #ffffff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(222, 36, 32, 0.6);
+  pointer-events: none;
+  z-index: 50;
+  animation: plusOneFloat 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes plusOneFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.5);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -24px) scale(0.9);
+  }
+}
+

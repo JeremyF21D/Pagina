@@ -23,3 +23,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Video / Large Media downloads
+*.mp4
+*.mov
+demostracion_*.gif
