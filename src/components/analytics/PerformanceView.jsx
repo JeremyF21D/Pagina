@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { formatUSD, parseOrderDate } from '../../utils/formatters';
@@ -7,7 +7,7 @@ import jfEmblem from '../../assets/jf_emblem_clean.png';
 
 const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-// Paleta de colores distintivos para las curvas de la gráfica
+// Paleta de colores distintivos y contrastantes para las curvas de la gráfica
 const CURVE_COLORS = [
   "#de2420", // Rojo JF Racing
   "#10b981", // Esmeralda
@@ -15,8 +15,10 @@ const CURVE_COLORS = [
   "#f97316", // Naranja
   "#a855f7", // Púrpura
   "#eab308", // Ámbar
-  "#3b82f6", // Azul
-  "#ec4899"  // Rosa
+  "#3b82f6", // Azul eléctrico
+  "#ec4899", // Rosa vibrante
+  "#14b8a6", // Teal
+  "#8b5cf6"  // Violeta
 ];
 
 export function PerformanceView({ onNavigateTab }) {
@@ -39,6 +41,22 @@ export function PerformanceView({ onNavigateTab }) {
 
   // Estado del drawer de tabla detallada
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Estado del buscador flotante para agregar cualquier repuesto a la gráfica
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const dropdownRef = useRef(null);
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setSearchDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Costos personalizados guardados por el usuario en localStorage
   const [customCosts, setCustomCosts] = useState(() => {
@@ -70,8 +88,7 @@ export function PerformanceView({ onNavigateTab }) {
     if (coil.cost !== undefined && coil.cost !== null && !isNaN(Number(coil.cost))) {
       return Number(coil.cost);
     }
-    // Todos los repuestos registrados costaron 0$ según requerimiento
-    return 0;
+    return 0; // 0$ por defecto
   };
 
   // 3. Ventas confirmadas dentro del rango seleccionado (100% DINÁMICO)
@@ -80,11 +97,9 @@ export function PerformanceView({ onNavigateTab }) {
     const dTo = new Date(dateTo + 'T23:59:59');
 
     return (salesHistory || []).filter(sale => {
-      // Filtrar órdenes confirmadas
       const status = (sale.status || sale.estado || sale.estado_orden || '').toUpperCase();
       if (status !== 'CONFIRMED') return false;
 
-      // Parsear fecha real con parseOrderDate
       const rawDate = sale.timestamp || sale.fecha_hora || sale.created_at || sale.fecha;
       const parsedDate = parseOrderDate(rawDate);
       if (!parsedDate) return false;
@@ -126,13 +141,11 @@ export function PerformanceView({ onNavigateTab }) {
     let totalRevenue = 0;
     let totalCost = 0;
 
-    // Procesar cada orden confirmada del periodo
     confirmedPeriodSales.forEach(order => {
       const rawDate = order.timestamp || order.fecha_hora || order.created_at || order.fecha;
       const parsedDate = parseOrderDate(rawDate) || new Date();
       const mIdx = parsedDate.getMonth();
 
-      // Desglosar artículos de la orden
       const items = (order.items && Array.isArray(order.items) && order.items.length > 0)
         ? order.items
         : [{
@@ -153,7 +166,7 @@ export function PerformanceView({ onNavigateTab }) {
         const unitCost = getProductCost(matchedCoil);
 
         const rev = qty * unitPrice;
-        const cst = qty * unitCost; // Será 0 si el costo es 0$
+        const cst = qty * unitCost; // 0$ si costo es 0
         const profit = rev - cst;
 
         totalRevenue += rev;
@@ -182,7 +195,6 @@ export function PerformanceView({ onNavigateTab }) {
     const netProfit = totalRevenue - totalCost;
     const avgMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 100;
 
-    // Mapear el catálogo completo con sus ventas reales
     const productList = (coils || []).map((coil, idx) => {
       const cId = String(coil.id).trim();
       const stats = productStatsMap[cId] || {
@@ -194,7 +206,7 @@ export function PerformanceView({ onNavigateTab }) {
         monthlyProfit: Array(12).fill(0)
       };
 
-      const cost = getProductCost(coil); // 0$ por defecto
+      const cost = getProductCost(coil);
       const price = Number(coil.price) || 0;
       const unitProfit = price - cost;
       const marginPct = price > 0 ? Math.round(((price - cost) / price) * 100) : 100;
@@ -236,34 +248,81 @@ export function PerformanceView({ onNavigateTab }) {
     };
   }, [coils, confirmedPeriodSales, customCosts]);
 
-  // Selección de curvas para la gráfica
+  // 6. SELECCIÓN DE PRODUCTOS EN LA GRÁFICA (AUTOMÁTICO TOP VENDIDOS + SELECCIÓN MANUAL DEL USUARIO)
   const [activeCurveIds, setActiveCurveIds] = useState([]);
 
+  // Función para seleccionar automáticamente los que más se han vendido
+  const selectTopSellingCurves = () => {
+    const prodsWithSales = aggregatedProducts.filter(p => p.hasSales);
+    if (prodsWithSales.length > 0) {
+      // Coloca automáticamente los que más se han vendido en el periodo
+      setActiveCurveIds(prodsWithSales.slice(0, 5).map(p => p.id));
+    } else {
+      // Si aún no hay ventas en este rango de fecha, coloca los primeros repuestos del catálogo
+      setActiveCurveIds(aggregatedProducts.slice(0, 3).map(p => p.id));
+    }
+  };
+
+  // Inicializar o auto-colocar los más vendidos cuando cargan los datos
   useEffect(() => {
     if (aggregatedProducts.length > 0 && activeCurveIds.length === 0) {
-      // Activar los primeros repuestos con ventas, o los primeros del catálogo
-      const prodsWithSales = aggregatedProducts.filter(p => p.hasSales);
-      const defaults = prodsWithSales.length > 0
-        ? prodsWithSales.slice(0, 5).map(p => p.id)
-        : aggregatedProducts.slice(0, 4).map(p => p.id);
-      setActiveCurveIds(defaults);
+      selectTopSellingCurves();
     }
   }, [aggregatedProducts]);
 
+  // Alternar o quitar un repuesto de la gráfica
   const toggleCurve = (id) => {
     setActiveCurveIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
 
+  // Agregar un repuesto específico a la gráfica
+  const addCurveToChart = (id) => {
+    if (!activeCurveIds.includes(id)) {
+      setActiveCurveIds(prev => [...prev, id]);
+    }
+    setSearchDropdownOpen(false);
+    setSearchQuery('');
+  };
+
+  // Quitar un repuesto
+  const removeCurveFromChart = (id, e) => {
+    e.stopPropagation();
+    setActiveCurveIds(prev => prev.filter(x => x !== id));
+  };
+
+  // Lista filtrada para el buscador de repuestos
+  const searchResults = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return aggregatedProducts.slice(0, 20);
+    return aggregatedProducts.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.oem && p.oem.toLowerCase().includes(q)) ||
+      (p.carModel && p.carModel.toLowerCase().includes(q)) ||
+      (p.brand && p.brand.toLowerCase().includes(q))
+    ).slice(0, 30);
+  }, [aggregatedProducts, searchQuery]);
+
   // Top Repuestos Más Rentables (Columna Derecha)
   const topProducts = useMemo(() => {
     return aggregatedProducts.slice(0, 4);
   }, [aggregatedProducts]);
 
-  // 6. Gráfica SVG Multi-línea 100% Dinámica
+  // 7. Gráfica SVG Multi-línea Dinámica
   const chartData = useMemo(() => {
-    const activeProds = aggregatedProducts.filter(p => activeCurveIds.includes(p.id));
+    // Mapear cada repuesto activo con un color único garantizado
+    const activeProds = activeCurveIds
+      .map((id, idx) => {
+        const p = aggregatedProducts.find(item => item.id === id);
+        if (!p) return null;
+        return {
+          ...p,
+          curveColor: CURVE_COLORS[idx % CURVE_COLORS.length]
+        };
+      })
+      .filter(Boolean);
+
     let maxVal = 4; // Mínimo de escala para visualización limpia
 
     activeProds.forEach(p => {
@@ -311,7 +370,7 @@ export function PerformanceView({ onNavigateTab }) {
       return { product: p, points, path, areaPath };
     });
 
-    return { maxVal, startX, endX, startY, zeroY, chartHeight, stepX, curves };
+    return { maxVal, startX, endX, startY, zeroY, chartHeight, stepX, curves, activeProds };
   }, [aggregatedProducts, activeCurveIds, activeMonths, chartMetric]);
 
   const [hoveredMonth, setHoveredMonth] = useState(null);
@@ -343,7 +402,7 @@ export function PerformanceView({ onNavigateTab }) {
               <span>Rendimiento Financiero & Estacionalidad</span>
             </h1>
             <p className="text-[11px] text-slate-400">
-              Datos 100% dinámicos en vivo desde Supabase. Costo base aplicado: <strong>0$ USD</strong> por repuesto.
+              Datos dinámicos en vivo. Costo base de adquisición: <strong>0$ USD</strong> por repuesto.
             </p>
           </div>
 
@@ -489,7 +548,7 @@ export function PerformanceView({ onNavigateTab }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-start">
         
         {/* COLUMNA IZQUIERDA (7 COLS): GRÁFICA MULTI-LÍNEA DINÁMICA */}
-        <div className="lg:col-span-7 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2">
+        <div className="lg:col-span-7 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2.5">
           
           {/* Header de la Gráfica */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-[#2d2f35]">
@@ -507,48 +566,220 @@ export function PerformanceView({ onNavigateTab }) {
             </div>
           </div>
 
-          {/* Chips Dinámicos para Seleccionar Repuestos en la Gráfica */}
-          <div>
-            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block mb-1">
-              Filtra repuestos en la gráfica (clic para activar/desactivar curva):
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {aggregatedProducts.slice(0, 6).map(prod => {
-                const isActive = activeCurveIds.includes(prod.id);
-                return (
+          {/* BARRA DE CONTROL DE REPUESTOS EN LA GRÁFICA */}
+          <div className="space-y-2">
+            
+            {/* Fila de Acciones: Botón Auto Más Vendidos + Botón Agregar Repuesto + Limpiar */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">
+                Repuestos en la gráfica ({chartData.activeProds.length}):
+              </span>
+
+              <div className="flex items-center gap-1.5 relative" ref={dropdownRef}>
+                
+                {/* Botón: Auto Colocar los Más Vendidos */}
+                <button
+                  type="button"
+                  onClick={selectTopSellingCurves}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                  title="Colocar automáticamente los repuestos que más se han vendido en este periodo"
+                >
+                  <i className="fa-solid fa-bolt text-amber-400 text-[10px]"></i>
+                  <span>Top Más Vendidos</span>
+                </button>
+
+                {/* Botón: Agregar Repuesto a la Gráfica */}
+                <button
+                  type="button"
+                  onClick={() => setSearchDropdownOpen(prev => !prev)}
+                  className="px-2.5 py-1 rounded-lg bg-[#de2420] hover:bg-[#c81e1a] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                >
+                  <i className="fa-solid fa-plus text-[10px]"></i>
+                  <span>Agregar Repuesto</span>
+                  <i className={`fa-solid fa-chevron-down text-[9px] transition-transform ${searchDropdownOpen ? 'rotate-180' : ''}`}></i>
+                </button>
+
+                {/* Botón Limpiar */}
+                {activeCurveIds.length > 0 && (
                   <button
-                    key={prod.id}
                     type="button"
-                    onClick={() => toggleCurve(prod.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
-                      isActive
-                        ? 'bg-[#141518] text-white border-[#3a3c44] shadow-xs'
-                        : 'bg-black/50 text-slate-500 border-[#2d2f35] opacity-50 hover:opacity-80'
-                    }`}
+                    onClick={() => setActiveCurveIds([])}
+                    className="px-2 py-1 rounded-lg bg-[#141518] hover:bg-slate-800 border border-[#2d2f35] text-slate-400 hover:text-white text-[10px] font-semibold transition cursor-pointer"
+                    title="Quitar todos los repuestos de la gráfica"
                   >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: prod.color, opacity: isActive ? 1 : 0.3 }}
-                    ></span>
-                    <span className="truncate max-w-[130px]">{prod.name.split(' ')[0]} {prod.name.split(' ')[1] || ''}</span>
-                    {prod.hasSales && (
-                      <span className="text-[9px] text-emerald-400 font-mono">({prod.periodUnits}u)</span>
-                    )}
-                    <span className="text-[9px]">{isActive ? '●' : '○'}</span>
+                    Limpiar
                   </button>
-                );
-              })}
+                )}
+
+                {/* BUSCADOR FLOTANTE PARA AGREGAR CUALQUIER REPUESTO DEL CATÁLOGO */}
+                {searchDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-[#1c1d22] border border-[#3a3c44] rounded-2xl shadow-2xl p-2.5 z-50 backdrop-blur-xl animate-fade-in text-slate-100">
+                    <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#2d2f35]">
+                      <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                        <i className="fa-solid fa-magnifying-glass text-[#de2420]"></i>
+                        <span>Elige un repuesto para graficar:</span>
+                      </span>
+                      <span className="text-[9px] text-slate-400 font-mono">{aggregatedProducts.length} disponibles</span>
+                    </div>
+
+                    {/* Input de Búsqueda */}
+                    <div className="relative mb-2">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Buscar por nombre, modelo o OEM..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-[#141518] border border-[#2d2f35] focus:border-[#de2420] rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none font-sans"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-2 top-2 text-slate-400 hover:text-white text-xs"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Lista Scrolleable de Repuestos */}
+                    <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                      {searchResults.length === 0 ? (
+                        <div className="py-4 text-center text-xs text-slate-500">
+                          No se encontraron repuestos con "{searchQuery}"
+                        </div>
+                      ) : (
+                        searchResults.map(prod => {
+                          const isAlreadyIn = activeCurveIds.includes(prod.id);
+                          return (
+                            <div
+                              key={`search-item-${prod.id}`}
+                              onClick={() => {
+                                if (isAlreadyIn) {
+                                  toggleCurve(prod.id);
+                                } else {
+                                  addCurveToChart(prod.id);
+                                }
+                              }}
+                              className={`p-1.5 rounded-xl flex items-center justify-between gap-2 transition cursor-pointer text-xs ${
+                                isAlreadyIn
+                                  ? 'bg-emerald-950/40 border border-emerald-500/30 text-white'
+                                  : 'hover:bg-[#25272e] text-slate-200'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-7 h-7 rounded-lg bg-white border border-[#2d2f35] p-0.5 flex items-center justify-center shrink-0">
+                                  <img
+                                    src={prod.image || defaultCoilImage}
+                                    alt={prod.name}
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => { e.target.src = jfEmblem; }}
+                                  />
+                                </div>
+                                <div className="truncate">
+                                  <div className="font-bold text-white text-[11px] truncate">
+                                    {prod.name}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 font-mono truncate">
+                                    {prod.oem || prod.id} • ${prod.price}
+                                    {prod.hasSales && (
+                                      <span className="text-emerald-400 font-bold ml-1">({prod.periodUnits}u vendidas)</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                isAlreadyIn
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-slate-800 text-slate-300 hover:bg-[#de2420] hover:text-white'
+                              }`}>
+                                {isAlreadyIn ? '✓ Activo' : '+ Graficar'}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
+
+            {/* Chips de Repuestos Activos en la Gráfica con Nombre Legible y Botón de Quitar */}
+            <div className="flex flex-wrap gap-1.5 min-h-[30px] items-center">
+              {chartData.activeProds.length === 0 ? (
+                <div className="text-xs text-slate-500 flex items-center gap-2 py-1">
+                  <span>Sin repuestos en la gráfica.</span>
+                  <button
+                    type="button"
+                    onClick={selectTopSellingCurves}
+                    className="text-[#de2420] hover:underline font-bold"
+                  >
+                    Mostrar los más vendidos
+                  </button>
+                  <span>o</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchDropdownOpen(true)}
+                    className="text-emerald-400 hover:underline font-bold"
+                  >
+                    buscar repuesto
+                  </button>
+                </div>
+              ) : (
+                chartData.activeProds.map(prod => (
+                  <div
+                    key={`chip-active-${prod.id}`}
+                    className="px-2.5 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-2 transition bg-[#141518] text-white border border-[#3a3c44] shadow-xs group"
+                  >
+                    {/* Punto de Color de la Curva */}
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                      style={{ backgroundColor: prod.curveColor }}
+                    ></span>
+
+                    {/* Nombre Completo y Legible */}
+                    <span
+                      className="truncate max-w-[160px] sm:max-w-[220px]"
+                      title={`${prod.name} (${prod.oem || prod.id})`}
+                    >
+                      {prod.name}
+                    </span>
+
+                    {/* Unidades vendidas */}
+                    {prod.hasSales && (
+                      <span className="text-[9px] text-emerald-400 font-mono font-bold bg-emerald-500/15 px-1 rounded border border-emerald-500/30">
+                        {prod.periodUnits}u
+                      </span>
+                    )}
+
+                    {/* Botón de Quitar de la Gráfica */}
+                    <button
+                      type="button"
+                      onClick={(e) => removeCurveFromChart(prod.id, e)}
+                      className="text-slate-500 hover:text-rose-400 transition ml-0.5 text-xs font-bold leading-none"
+                      title="Quitar esta curva de la gráfica"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
           </div>
 
-          {/* Lienzo SVG Dinámico */}
+          {/* Lienzo SVG de la Gráfica */}
           <div className="relative w-full h-56 sm:h-64 select-none pt-1" id="chart-wrapper">
             <svg viewBox="0 0 820 250" className="w-full h-full overflow-visible">
               <defs>
-                {aggregatedProducts.slice(0, 7).map((p) => (
+                {chartData.activeProds.map((p) => (
                   <linearGradient key={`grad-${p.id}`} id={`grad-${p.id}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={p.color} stopOpacity="0.25" />
-                    <stop offset="100%" stopColor={p.color} stopOpacity="0.0" />
+                    <stop offset="0%" stopColor={p.curveColor} stopOpacity="0.25" />
+                    <stop offset="100%" stopColor={p.curveColor} stopOpacity="0.0" />
                   </linearGradient>
                 ))}
               </defs>
@@ -591,7 +822,7 @@ export function PerformanceView({ onNavigateTab }) {
                   key={`line-${c.product.id}`}
                   d={c.path}
                   fill="none"
-                  stroke={c.product.color}
+                  stroke={c.product.curveColor}
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -608,7 +839,7 @@ export function PerformanceView({ onNavigateTab }) {
                     cx={pt.x}
                     cy={pt.y}
                     r="3.5"
-                    fill={c.product.color}
+                    fill={c.product.curveColor}
                     stroke="#141518"
                     strokeWidth="1.5"
                     className="pointer-events-none"
@@ -688,14 +919,14 @@ export function PerformanceView({ onNavigateTab }) {
                 </div>
 
                 <div className="space-y-1 font-mono text-[11px]">
-                  {aggregatedProducts.filter(p => activeCurveIds.includes(p.id)).map(p => {
+                  {chartData.activeProds.map(p => {
                     const val = chartMetric === 'units'
                       ? `${p.monthlyUnits[hoveredMonth.mIdx] || 0} uds`
                       : `+$${p.monthlyProfit[hoveredMonth.mIdx] || 0}.00`;
                     return (
                       <div key={`tip-${p.id}`} className="flex items-center justify-between gap-3 text-slate-200">
                         <div className="flex items-center gap-1.5 truncate max-w-[130px]">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }}></span>
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.curveColor }}></span>
                           <span className="truncate text-[10px]">{p.name}</span>
                         </div>
                         <strong className="font-bold text-white shrink-0">{val}</strong>
@@ -713,7 +944,7 @@ export function PerformanceView({ onNavigateTab }) {
               <i className="fa-solid fa-circle-info text-sky-400"></i>
               <span>Pasa el cursor por cada mes para auditar la rotación de repuestos.</span>
             </span>
-            <span className="text-slate-500 font-mono">Actualizado con Supabase</span>
+            <span className="text-slate-500 font-mono">Sincronizado con Supabase</span>
           </div>
 
         </div>
