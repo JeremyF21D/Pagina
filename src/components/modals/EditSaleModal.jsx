@@ -34,8 +34,19 @@ export function parsePaymentReference(rawText, defaultPrice = 0, defaultCustomer
     const montoMatch = text.match(/Monto:\s*([^|]+)/i);
     const bancoMatch = text.match(/Banco:\s*([^|]+)/i);
     if (refMatch) result.pagoMovilRef = refMatch[1].trim();
-    if (montoMatch) result.pagoMovilMonto = montoMatch[1].trim();
     if (bancoMatch) result.pagoMovilBanco = bancoMatch[1].trim();
+    if (montoMatch) {
+      const rawMonto = montoMatch[1].trim();
+      result.pagoMovilMonto = rawMonto;
+      const bsMatch = rawMonto.match(/Bs\.?\s*([0-9.,]+)/i);
+      const usdMatch = rawMonto.match(/~\$([0-9.,]+)/i) || rawMonto.match(/\$([0-9.,]+)/i);
+      if (bsMatch) result.pagoMovilMontoVES = bsMatch[1].trim();
+      if (usdMatch) result.pagoMovilMontoUSD = usdMatch[1].trim();
+      if (!bsMatch && !usdMatch) {
+        const numOnly = rawMonto.replace(/[^0-9.]/g, '');
+        if (numOnly) result.pagoMovilMontoVES = numOnly;
+      }
+    }
     return result;
   }
 
@@ -122,6 +133,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
   const [paymentMethod, setPaymentMethod] = useState('PAGO_MOVIL'); // 'PAGO_MOVIL' | 'BINANCE' | 'ZELLE' | 'EFECTIVO'
   const [pagoMovilRef, setPagoMovilRef] = useState('');
   const [pagoMovilMonto, setPagoMovilMonto] = useState('');
+  const [pagoMovilMontoVES, setPagoMovilMontoVES] = useState('');
+  const [pagoMovilMontoUSD, setPagoMovilMontoUSD] = useState('');
   const [pagoMovilBanco, setPagoMovilBanco] = useState('Banesco');
 
   const [binanceRef, setBinanceRef] = useState('');
@@ -181,10 +194,30 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
         order.customerPhone
       );
 
+      const cachedRates = getCachedExchangeRates();
+      const rate = Number(order.exchangeRateBinance) || Number(cachedRates?.binance) || 1;
+      const totalOrderUSD = Number(order.totalPrice || order.unitPrice || 0);
+
+      let initialVES = parsedPay.pagoMovilMontoVES || '';
+      let initialUSD = parsedPay.pagoMovilMontoUSD || '';
+
+      if (!initialVES && !initialUSD) {
+        initialUSD = totalOrderUSD > 0 ? totalOrderUSD.toFixed(2) : '';
+        initialVES = totalOrderUSD > 0 && rate > 0 ? (totalOrderUSD * rate).toFixed(2) : '';
+      } else if (initialVES && !initialUSD && rate > 0) {
+        const numVES = parseFloat(initialVES.replace(/\./g, '').replace(',', '.'));
+        if (!isNaN(numVES) && numVES > 0) initialUSD = (numVES / rate).toFixed(2);
+      } else if (!initialVES && initialUSD && rate > 0) {
+        const numUSD = parseFloat(initialUSD);
+        if (!isNaN(numUSD) && numUSD > 0) initialVES = (numUSD * rate).toFixed(2);
+      }
+
       setPaymentMethod(parsedPay.method);
       setPagoMovilRef(parsedPay.pagoMovilRef);
-      setPagoMovilMonto(parsedPay.pagoMovilMonto);
-      setPagoMovilBanco(parsedPay.pagoMovilBanco);
+      setPagoMovilMonto(parsedPay.pagoMovilMonto || (initialVES ? `Bs. ${initialVES} (~$${initialUSD} USD)` : ''));
+      setPagoMovilMontoVES(initialVES);
+      setPagoMovilMontoUSD(initialUSD);
+      setPagoMovilBanco(parsedPay.pagoMovilBanco || 'Banesco');
 
       setBinanceRef(parsedPay.binanceRef);
       setBinanceMonto(parsedPay.binanceMonto);
@@ -262,6 +295,35 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     currentActiveItem.coilId && 
     String(selectedCoilId).toLowerCase() !== String(currentActiveItem.coilId).toLowerCase()
   );
+
+  const cachedRates = getCachedExchangeRates();
+  const effectiveRate = Number(order?.exchangeRateBinance) || Number(cachedRates?.binance) || 1;
+
+  const handleVESChange = (e) => {
+    const val = e.target.value;
+    setPagoMovilMontoVES(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0 && effectiveRate > 0) {
+      const usd = (num / effectiveRate).toFixed(2);
+      setPagoMovilMontoUSD(usd);
+      setPagoMovilMonto(`Bs. ${val} (~$${usd} USD)`);
+    } else {
+      setPagoMovilMonto(val ? `Bs. ${val}` : '');
+    }
+  };
+
+  const handleUSDChange = (e) => {
+    const val = e.target.value;
+    setPagoMovilMontoUSD(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0 && effectiveRate > 0) {
+      const ves = (num * effectiveRate).toFixed(2);
+      setPagoMovilMontoVES(ves);
+      setPagoMovilMonto(`Bs. ${ves} (~$${val} USD)`);
+    } else {
+      setPagoMovilMonto(val ? `$${val}` : '');
+    }
+  };
 
   const calculatedTotal = itemsList.length > 1
     ? itemsList.reduce((acc, it, idx) => {
@@ -362,7 +424,10 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
 
     switch (paymentMethod) {
       case 'PAGO_MOVIL':
-        return `[PAGO MÓVIL] Ref: ${pagoMovilRef.trim() || 'S/R'} | Monto: ${pagoMovilMonto.trim() || totalCalc} | Banco: ${pagoMovilBanco}`;
+        const displayMonto = pagoMovilMontoVES 
+          ? `Bs. ${pagoMovilMontoVES}${pagoMovilMontoUSD ? ` (~$${pagoMovilMontoUSD} USD)` : ''}`
+          : (pagoMovilMonto.trim() || totalCalc);
+        return `[PAGO MÓVIL] Ref: ${pagoMovilRef.trim() || 'S/R'} | Monto: ${displayMonto} | Banco: ${pagoMovilBanco}`;
       case 'BINANCE':
         return `[BINANCE PAY] Ref/ID: ${binanceRef.trim() || 'S/R'} | Monto: ${binanceMonto.trim() || totalNum} USDT${binanceUser.trim() ? ` | Usuario: ${binanceUser.trim()}` : ''}`;
       case 'ZELLE':
@@ -1034,75 +1099,82 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
                       />
                     </div>
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] font-bold text-slate-300">
-                          Monto Cobrado
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setPagoMovilMonto(formatUSD(calculatedTotal))}
-                          className="text-[10px] text-emerald-400 hover:underline cursor-pointer"
-                        >
-                          Usar {formatUSD(calculatedTotal)}
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={pagoMovilMonto}
-                        onChange={e => setPagoMovilMonto(e.target.value)}
-                        placeholder="Ej: Bs 3,250 o $15.00"
-                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                      />
-                      {/* Botones de conversión rápida a tasa Binance y BCV */}
-                      {(() => {
-                        const cachedRates = getCachedExchangeRates();
-                        if (!cachedRates) return null;
-                        return (
-                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                            {cachedRates.binance > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setPagoMovilMonto(formatVES(calculatedTotal * cachedRates.binance))}
-                                className="text-[10px] bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded cursor-pointer transition font-mono"
-                                title="Calcular automáticamente en Bolívares a tasa Binance P2P"
-                              >
-                                ⚡ Binance: {formatVES(calculatedTotal * cachedRates.binance)}
-                              </button>
-                            )}
-                            {cachedRates.bcv > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setPagoMovilMonto(formatVES(calculatedTotal * cachedRates.bcv))}
-                                className="text-[10px] bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded cursor-pointer transition font-mono"
-                                title="Calcular automáticamente en Bolívares a tasa oficial BCV"
-                              >
-                                🏛️ BCV: {formatVES(calculatedTotal * cachedRates.bcv)}
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })()}
+                      <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                        Banco Emisor / Receptor
+                      </label>
+                      <select
+                        value={pagoMovilBanco}
+                        onChange={e => setPagoMovilBanco(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                      >
+                        <option value="Banesco">Banesco</option>
+                        <option value="Mercantil">Banco Mercantil</option>
+                        <option value="Banco de Venezuela">Banco de Venezuela (BDV)</option>
+                        <option value="Bancaribe">Bancaribe</option>
+                        <option value="BBVA Provincial">BBVA Provincial</option>
+                        <option value="BNC">Banco Nacional de Crédito (BNC)</option>
+                        <option value="BAM">Banco Activo</option>
+                        <option value="Otro Banco">Otro Banco Nacional</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      Banco Emisor / Receptor
-                    </label>
-                    <select
-                      value={pagoMovilBanco}
-                      onChange={e => setPagoMovilBanco(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
-                    >
-                      <option value="Banesco">Banesco</option>
-                      <option value="Mercantil">Banco Mercantil</option>
-                      <option value="Banco de Venezuela">Banco de Venezuela (BDV)</option>
-                      <option value="Bancaribe">Bancaribe</option>
-                      <option value="BBVA Provincial">BBVA Provincial</option>
-                      <option value="BNC">Banco Nacional de Crédito (BNC)</option>
-                      <option value="BAM">Banco Activo</option>
-                      <option value="Otro Banco">Otro Banco Nacional</option>
-                    </select>
+                  {/* Conversor Dual Limpio: Bolívares <-> Dólares */}
+                  <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1 flex items-center justify-between">
+                          <span>Monto en Bolívares (Bs.) <span className="text-emerald-400">*</span></span>
+                          <span className="text-[10px] text-emerald-400 font-mono">Transferido</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-slate-500 text-xs font-mono font-bold">Bs.</span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={pagoMovilMontoVES}
+                            onChange={handleVESChange}
+                            placeholder="Ej: 38000"
+                            className="w-full pl-10 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-mono font-bold placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1 flex items-center justify-between">
+                          <span>Equivalente en Dólares ($ USD)</span>
+                          <span className="text-[10px] text-amber-400 font-mono">Conversión</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-slate-500 text-xs font-mono font-bold">$</span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={pagoMovilMontoUSD}
+                            onChange={handleUSDChange}
+                            placeholder="Ej: 35.60"
+                            className="w-full pl-7 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-mono font-bold placeholder-slate-600 focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tasa aplicada sutil y clara */}
+                    <div className="flex items-center justify-between pt-1 text-[11px] font-mono text-slate-400 border-t border-slate-800/80">
+                      <span className="flex items-center gap-1.5 text-slate-300">
+                        <i className="fa-solid fa-calculator text-amber-400"></i>
+                        <span>Tasa aplicada: <strong>1 USD = {effectiveRate} Bs.</strong></span>
+                      </span>
+                      {order.exchangeRateBinance > 0 ? (
+                        <span className="text-[10px] bg-purple-500/15 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">
+                          🔒 Tasa congelada de la orden
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+                          ⚡ Tasa Binance en vivo
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

@@ -217,20 +217,49 @@ export function SalesTable() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 font-mono text-[11px] whitespace-nowrap">
-                    {ord.status === 'PENDING_APPROVAL' ? (
-                      <span className="text-amber-300 font-semibold inline-flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                  <td className="py-3 px-4 font-mono text-[11px]">
+                    {ord.items && ord.items.length > 1 ? (
+                      <div className="space-y-1">
+                        {ord.items.map((it, itIdx) => {
+                          const itCoil = coils.find(c => {
+                            const tid = it.coilId || it.id;
+                            return tid && c.id && String(c.id).toLowerCase() === String(tid).toLowerCase();
+                          });
+                          const curStock = itCoil ? itCoil.stock : null;
+
+                          return (
+                            <div key={itIdx} className="flex items-center justify-between gap-2 text-[10px] bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800">
+                              <span className="truncate max-w-[120px] text-slate-300 font-medium" title={it.name}>
+                                {it.qty}x {it.name}
+                              </span>
+                              {ord.status === 'PENDING_APPROVAL' ? (
+                                <span className="text-amber-300 font-semibold shrink-0">-{it.qty} uds</span>
+                              ) : ord.status === 'REVERTED' ? (
+                                <span className="text-rose-400 shrink-0">(Revertido)</span>
+                              ) : (
+                                <span className="text-emerald-400 font-bold shrink-0">
+                                  {it.stockBefore !== undefined 
+                                    ? `${it.stockBefore}➔${it.stockAfter}` 
+                                    : (curStock !== null ? `${curStock + it.qty}➔${curStock}` : `-${it.qty}`)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : ord.status === 'PENDING_APPROVAL' ? (
+                      <span className="text-amber-300 font-semibold inline-flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20 whitespace-nowrap">
                         <i className="fa-solid fa-clock text-[10px]"></i>
                         <span>{ord.stockBefore} uds</span>
                         <span className="text-[10px] text-slate-400 font-normal">(-{ord.qty} al confirmar)</span>
                       </span>
                     ) : ord.status === 'REVERTED' ? (
-                      <span className="text-slate-400 inline-flex items-center gap-1">
+                      <span className="text-slate-400 inline-flex items-center gap-1 whitespace-nowrap">
                         <span>{ord.stockBefore} uds</span>
                         <span className="text-[10px] text-rose-400">(Revertida)</span>
                       </span>
                     ) : (
-                      <div className="inline-flex items-center">
+                      <div className="inline-flex items-center whitespace-nowrap">
                         <span className="text-rose-400">{ord.stockBefore}</span>
                         <span className="text-slate-500 mx-1">➔</span>
                         <span className="text-emerald-400 font-bold">{ord.stockAfter} uds</span>
@@ -313,6 +342,7 @@ export function SalesTable() {
                                 note: ajusteText,
                                 total: ord.totalPrice,
                                 coilName: ord.coilName,
+                                items: ord.items,
                                 timestamp: ord.timestamp
                               })}
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/20 hover:border-amber-500/40 text-[10px] max-w-full font-sans cursor-pointer active:scale-95 transition text-left group"
@@ -522,27 +552,64 @@ export function SalesTable() {
             </div>
 
             {/* Ficha Resumen de la Orden */}
-            <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-              <div>
-                <span className="text-slate-500 block text-[10px]">Cliente:</span>
-                <span className="text-white font-semibold truncate block">{selectedNoteModal.customerName}</span>
-                {selectedNoteModal.customerPhone && (
-                  <span className="text-slate-400 text-[10px] font-mono block">{selectedNoteModal.customerPhone}</span>
+            <div className="space-y-3 text-[11px] bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Cliente</span>
+                  <span className="text-white font-semibold truncate block">{selectedNoteModal.customerName}</span>
+                  {selectedNoteModal.customerPhone && (
+                    <span className="text-slate-400 text-[10px] font-mono block">{selectedNoteModal.customerPhone}</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Total de la Orden</span>
+                  <span className="text-emerald-400 font-mono font-bold text-sm block">
+                    {formatUSD(selectedNoteModal.total)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Repuestos Entregados: Lista de todos los artículos */}
+              <div className="pt-2 border-t border-slate-800/80">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1.5 flex items-center gap-1.5">
+                  <i className="fa-solid fa-box-open text-sky-400"></i>
+                  <span>
+                    {selectedNoteModal.items && selectedNoteModal.items.length > 1
+                      ? `Repuestos Entregados (${selectedNoteModal.items.length} artículos):`
+                      : 'Repuesto Entregado:'}
+                  </span>
+                </span>
+                {selectedNoteModal.items && selectedNoteModal.items.length > 1 ? (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {selectedNoteModal.items.map((it, itIdx) => (
+                      <div key={itIdx} className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
+                        <div className="min-w-0 pr-2">
+                          <p className="font-bold text-white truncate text-[11px]">{it.name}</p>
+                          <span className="text-[10px] text-slate-400 font-mono">OEM: {it.oem || 'N/A'}</span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="font-mono font-bold text-emerald-400">{formatUSD(it.subtotal || (it.unitPrice * it.qty))}</span>
+                          <span className="text-[10px] text-slate-400 block">{it.qty} ud(s)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 font-medium">
+                    {selectedNoteModal.coilName}
+                  </div>
                 )}
               </div>
-              <div>
-                <span className="text-slate-500 block text-[10px]">Total de la Orden:</span>
-                <span className="text-emerald-400 font-mono font-bold text-sm block">
-                  {formatUSD(selectedNoteModal.total)}
+
+              {/* Información Completa de Pago (Sin truncar) */}
+              <div className="pt-2 border-t border-slate-800/80">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1 flex items-center gap-1.5">
+                  <i className="fa-solid fa-money-bill-transfer text-emerald-400"></i>
+                  <span>Detalle Completo del Pago & Referencia:</span>
                 </span>
-              </div>
-              <div className="col-span-2 pt-2 border-t border-slate-800/60">
-                <span className="text-slate-500 block text-[10px]">Repuesto Entregado:</span>
-                <span className="text-slate-200 font-medium truncate block">{selectedNoteModal.coilName}</span>
-              </div>
-              <div className="col-span-2 pt-1">
-                <span className="text-slate-500 block text-[10px]">Método / Pago:</span>
-                <span className="text-slate-300 font-medium truncate block">{selectedNoteModal.paymentRef}</span>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-emerald-500/20 text-emerald-300 font-mono text-[11px] leading-relaxed break-words whitespace-normal select-all">
+                  {selectedNoteModal.paymentRef}
+                </div>
               </div>
             </div>
 
