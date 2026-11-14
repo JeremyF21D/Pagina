@@ -194,6 +194,88 @@ export function CartProvider({ children }) {
     window.open(url, '_blank');
   }, [buyerDraft, cart, clearCart, deviceId, ownerSettings.ownerPhone, processSaleTransaction, showToast]);
 
+  const createOrderFromCart = useCallback(() => {
+    if (cart.length === 0) {
+      showToast('Tu carrito está vacío');
+      return null;
+    }
+
+    if (!buyerDraft.name.trim() || !buyerDraft.phone.trim()) {
+      showToast('⚠️ Por favor ingresa tu Nombre y Teléfono WhatsApp');
+      return null;
+    }
+
+    const totalVal = Number(cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0).toFixed(2));
+    const cachedRates = getCachedExchangeRates() || {};
+    const rateBinance = cachedRates.binance || 0;
+    const rateBCV = cachedRates.bcv || 0;
+    const totalVES = rateBinance > 0 ? formatVES(totalVal * rateBinance) : (rateBCV > 0 ? formatVES(totalVal * rateBCV) : null);
+
+    const itemsSnapshot = cart.map(item => ({
+      coilId: item.id,
+      name: item.name,
+      oem: item.oem || item.id,
+      qty: item.qty,
+      unitPrice: item.price,
+      subtotal: Number((item.price * item.qty).toFixed(2)),
+      image: item.image || null,
+      brand: item.brand || 'JF'
+    }));
+
+    // 1 Venta Unificada por toda la compra con Snapshot Histórico de Tasa
+    const orderResult = processSaleTransaction({
+      items: itemsSnapshot,
+      totalUSD: totalVal,
+      customerName: buyerDraft.name.trim(),
+      customerPhone: buyerDraft.phone.trim(),
+      customerCar: buyerDraft.car.trim(),
+      paymentRef: buyerDraft.payRef.trim() || 'A coordinar por WhatsApp',
+      userId: deviceId,
+      exchangeRateBinance: rateBinance,
+      exchangeRateBCV: rateBCV,
+      totalVES: totalVES
+    });
+
+    const orderTag = orderResult?.orderId || ('ORD-' + Math.floor(10000 + Math.random() * 90000));
+
+    const whatsappUrl = buildCartCheckoutUrl({
+      targetPhone: ownerSettings.ownerPhone,
+      clientName: buyerDraft.name.trim(),
+      clientPhone: buyerDraft.phone.trim(),
+      clientCar: buyerDraft.car.trim(),
+      clientPayRef: buyerDraft.payRef.trim(),
+      cartItems: cart,
+      totalVal,
+      orderTag
+    });
+
+    const completedOrder = {
+      ...(orderResult || {}),
+      orderId: orderTag,
+      items: itemsSnapshot,
+      totalPrice: totalVal,
+      totalUSD: totalVal,
+      totalVES: totalVES,
+      exchangeRateBinance: rateBinance,
+      exchangeRateBCV: rateBCV,
+      customerName: buyerDraft.name.trim(),
+      customerPhone: buyerDraft.phone.trim(),
+      customerCar: buyerDraft.car.trim(),
+      paymentRef: buyerDraft.payRef.trim() || 'A coordinar por WhatsApp',
+      timestamp: new Date().toISOString()
+    };
+
+    clearCart();
+
+    return {
+      order: completedOrder,
+      whatsappUrl,
+      totalVal,
+      totalVES
+    };
+  }, [buyerDraft, cart, clearCart, deviceId, ownerSettings.ownerPhone, processSaleTransaction, showToast]);
+
+
   const cartCount = cart.reduce((acc, curr) => acc + curr.qty, 0);
   const cartSubtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
 
@@ -212,7 +294,8 @@ export function CartProvider({ children }) {
       clearCart,
       buyerDraft,
       updateBuyerDraft,
-      checkoutViaWhatsApp
+      checkoutViaWhatsApp,
+      createOrderFromCart
     }}>
       {children}
     </CartContext.Provider>
