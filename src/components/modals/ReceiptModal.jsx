@@ -87,11 +87,6 @@ export function ReceiptModal({ isOpen, order, onClose }) {
           .totals-table tr.total-final td { border-top: 2px solid #0f172a; font-size: 15px; font-weight: 900; color: #0f172a; padding-top: 8px; }
           .rate-note { font-size: 10px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 3px 6px; border-radius: 4px; margin-top: 4px; font-weight: bold; display: inline-block; }
 
-          /* Términos de Garantía */
-          .warranty-terms { border: 1px dashed #de2420; background: #fff5f5; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; }
-          .warranty-title { font-size: 11px; font-weight: 800; color: #b91c1c; text-transform: uppercase; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
-          .warranty-text { font-size: 10px; color: #7f1d1d; line-height: 1.4; }
-
           /* Pie de Página */
           .footer { text-align: center; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #64748b; }
           .footer p:first-child { font-weight: 700; color: #334155; margin-bottom: 2px; }
@@ -104,10 +99,10 @@ export function ReceiptModal({ isOpen, order, onClose }) {
             <div>
               <div class="brand-title">JF <span>AUTO PARTS</span>, C.A.</div>
               <div class="brand-sub">RIF: J-50000000-0 • Especialistas en Encendido & Inyección Automotriz</div>
-              <div class="brand-contact">Valencia, Edo. Carabobo • Atención & Garantías: 0412-6497478</div>
+              <div class="brand-contact">Maracaibo, Edo. Zulia • Atención al Cliente: 0412-6497478</div>
             </div>
             <div class="invoice-box">
-              <div class="invoice-tag">Comprobante Oficial</div>
+              <div class="invoice-tag">Comprobante de Venta</div>
               <div class="invoice-num">#${order.orderId}</div>
               <div class="invoice-date">${formattedDate}</div>
             </div>
@@ -122,7 +117,7 @@ export function ReceiptModal({ isOpen, order, onClose }) {
             </div>
             <div class="info-block">
               <p>Estado del Despacho</p>
-              <span style="color: #059669;">ENTREGADO / CON GARANTÍA</span>
+              <span style="color: #059669;">DESPACHADO / ENTREGADO</span>
               <div style="font-size: 11px; color: #475569; margin-top: 2px;">${items.length} ${items.length === 1 ? 'repuesto entregado' : 'repuestos entregados'}</div>
             </div>
           </div>
@@ -151,7 +146,7 @@ export function ReceiptModal({ isOpen, order, onClose }) {
               <p>${order.paymentRef || 'Pago verificado'}</p>
               ${binanceRate ? `
                 <div style="margin-top: 6px;">
-                  <span class="rate-note">Tasa de Cambio Oficial / Binance: ${binanceRate} Bs/USD</span>
+                  <span class="rate-note">Tasa de Cambio: ${binanceRate} Bs/USD</span>
                 </div>
               ` : ''}
             </div>
@@ -174,20 +169,10 @@ export function ReceiptModal({ isOpen, order, onClose }) {
             </table>
           </div>
 
-          <!-- Garantía -->
-          <div class="warranty-terms">
-            <div class="warranty-title">
-              🛡️ Póliza de Garantía Oficial — 12 Meses Continuos
-            </div>
-            <div class="warranty-text">
-              Garantía formal de 12 meses continuos contra defectos de fábrica en bobinas, sensores e inyectores. No cubre fallas causadas por bujías defectuosas, cables dañados o sobretensión del alternador. Para cualquier trámite conserve este documento digital o impreso.
-            </div>
-          </div>
-
           <!-- Pie de Página -->
           <div class="footer">
             <p>¡Gracias por su compra en JF Auto Parts!</p>
-            <p>Documento de control interno y garantía para el cliente • Sistema Administrativo JF Auto Parts</p>
+            <p>Documento de control interno y comprobante para el cliente • Sistema Administrativo JF Auto Parts</p>
           </div>
         </div>
 
@@ -232,7 +217,6 @@ ${itemsSummary}
 ━━━━━━━━━━━━━━━━━━━━
 💵 *Total USD:* ${formatUSD(totalUSD)} USD${rateText}
 💳 *Pago / Ref:* ${order.paymentRef || 'Acordado'}
-🛡️ *Garantía:* 12 meses por defecto de fábrica
 ━━━━━━━━━━━━━━━━━━━━
 ¡Gracias por confiar en JF Auto Parts! Para soporte comunícate al 0412-6497478.`;
 
@@ -299,7 +283,7 @@ ${itemsSummary}
               RIF: J-50000000-0 • Repuestos & Encendido Automotriz
             </p>
             <p className="text-[10px] text-slate-400">
-              Valencia, Edo. Carabobo • WhatsApp: 0412-6497478
+              Maracaibo, Edo. Zulia • WhatsApp: 0412-6497478
             </p>
           </div>
 
@@ -356,7 +340,7 @@ ${itemsSummary}
 
             {binanceRate > 0 && (
               <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1 border-t border-slate-800/60 font-mono">
-                <span>Tasa de Cambio Histórica:</span>
+                <span>Tasa de Cambio:</span>
                 <span className="text-amber-300 font-bold">{binanceRate} Bs/USD</span>
               </div>
             )}
@@ -372,17 +356,6 @@ ${itemsSummary}
               <span className="shrink-0 text-slate-400">Método y Referencia:</span>
               <span className="font-mono font-semibold text-amber-300 text-right break-words">{order.paymentRef || 'Acordado en tienda'}</span>
             </div>
-          </div>
-
-          {/* Garantía y Pie de Página */}
-          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[10px] text-slate-400 space-y-1">
-            <div className="flex items-center gap-1.5 text-white font-bold">
-              <i className="fa-solid fa-shield-halved text-rose-400"></i>
-              <span>Póliza de Garantía Oficial JF Auto Parts</span>
-            </div>
-            <p>
-              Garantía de 12 meses continuos contra defecto de fábrica. Conserve este comprobante digital o físico para cualquier cambio o revisión técnica.
-            </p>
           </div>
         </div>
 
