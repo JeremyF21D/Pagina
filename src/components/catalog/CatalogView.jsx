@@ -10,7 +10,7 @@ import { FigmaPaymentMethods } from './FigmaPaymentMethods';
 import { detectProductCategory, normalizeSearchText, matchesSearchTerms } from '../../utils/formatters';
 
 export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
-  const { coils, isDbLoading, dbEngine, checkAndSyncDatabase, apiConnectionStatus } = useInventory();
+  const { coils, isDbLoading } = useInventory();
   const { toggleCart } = useCart();
   const { isAdmin } = useAuth();
 
@@ -274,24 +274,6 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
                     className="text-[#de2420] hover:underline font-bold text-[11px] ml-1"
                   >
                     Limpiar todo
-                  </button>
-                )}
-              </div>
-
-              {/* Sincronización DB Status */}
-              <div className="flex items-center gap-2 text-slate-500 text-[11px] font-mono">
-                {apiConnectionStatus === 'CONNECTED' ? (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    Sincronizado
-                  </span>
-                ) : (
-                  <button
-                    onClick={checkAndSyncDatabase}
-                    className="hover:text-slate-300 transition flex items-center gap-1"
-                    title="Actualizar catálogo"
-                  >
-                    <i className="fa-solid fa-rotate text-[10px]"></i> Sincronizar
                   </button>
                 )}
               </div>
