@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { CoilCard } from './CoilCard';
 import { FigmaHeroBanner } from './FigmaHeroBanner';
+import { CarBrandsLogoLoop } from './CarBrandsLogoLoop';
 import { FigmaCatalogSidebar } from './FigmaCatalogSidebar';
 import { FigmaAdviceBanner } from './FigmaAdviceBanner';
 import { FigmaPaymentMethods } from './FigmaPaymentMethods';
@@ -139,7 +140,14 @@ export function CatalogView({ onNavigateTab, onAskAIAboutCoil, onEditCoil }) {
       {/* 1. Hero Banner Principal (Figma Design) */}
       <FigmaHeroBanner onScrollToCatalog={handleScrollToCatalog} />
 
-      {/* 2. Anchor Ref para Navegación Directa al Catálogo */}
+      {/* 2. Marcas de Autos - Logo Loop Animado (React Bits) */}
+      <CarBrandsLogoLoop
+        selectedBrand={selectedBrand}
+        onSelectBrand={setSelectedBrand}
+        onScrollToCatalog={handleScrollToCatalog}
+      />
+
+      {/* 3. Anchor Ref para Navegación Directa al Catálogo */}
       <div ref={catalogTopRef} className="pt-1"></div>
 
       {/* 3. Mobile Header: Buscador + Filtros lado a lado (Figma Mobile Layout) */}
