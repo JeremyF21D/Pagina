@@ -24,6 +24,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
 
   const [efectivoMonto, setEfectivoMonto] = useState('');
   const [efectivoDetalle, setEfectivoDetalle] = useState('');
+  const [generateInvoiceNow, setGenerateInvoiceNow] = useState(true);
 
   // Precargar datos cuando se abre el modal con una orden
   useEffect(() => {
@@ -148,6 +149,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
     const paymentData = {
       paymentMethod: method,
       paymentRef: finalRef,
+      openReceipt: generateInvoiceNow,
       paymentDetails: {
         method,
         confirmedAt: new Date().toISOString(),
@@ -546,6 +548,24 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
             {getBuiltPaymentReference()}
           </div>
         </div>
+
+        {/* Opción para generar factura formal inmediatamente */}
+        <label className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl cursor-pointer select-none hover:bg-amber-500/15 transition">
+          <input
+            type="checkbox"
+            checked={generateInvoiceNow}
+            onChange={e => setGenerateInvoiceNow(e.target.checked)}
+            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-700 cursor-pointer"
+          />
+          <div className="text-xs">
+            <span className="font-bold text-amber-300 flex items-center gap-1.5">
+              <i className="fa-solid fa-file-invoice text-amber-400"></i> Generar e imprimir factura oficial inmediatamente
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              Abre el comprobante digital con RIF y desglose listo para imprimir en PDF o enviar por WhatsApp.
+            </span>
+          </div>
+        </label>
 
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">

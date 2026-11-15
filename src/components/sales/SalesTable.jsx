@@ -436,15 +436,23 @@ export function SalesTable() {
                         <i className="fa-solid fa-pen-to-square"></i>
                       </button>
 
-                      {/* Botón Comprobante / Recibo Digital de Garantía */}
-                      {ord.status === 'CONFIRMED' && (
+                      {/* Generar e Imprimir Factura Formal Oficial (Exclusivo Registro de Ventas) */}
+                      {ord.status === 'CONFIRMED' ? (
                         <button 
                           onClick={() => setOrderForReceipt(ord)}
-                          className="p-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 rounded-lg text-xs transition cursor-pointer active:scale-95"
-                          title="Generar e imprimir recibo formal de venta"
+                          className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 rounded-lg text-xs font-semibold transition cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-xs"
+                          title="Generar e imprimir factura / comprobante formal oficial"
                         >
-                          <i className="fa-solid fa-receipt"></i>
+                          <i className="fa-solid fa-file-invoice text-xs"></i>
+                          <span>Factura</span>
                         </button>
+                      ) : (
+                        <span 
+                          className="text-[10px] text-slate-500 italic px-1 cursor-default select-none"
+                          title="Confirma el pago de la orden para habilitar la factura oficial"
+                        >
+                          Sin factura
+                        </span>
                       )}
 
                       <button 
@@ -481,7 +489,12 @@ export function SalesTable() {
         order={orderToConfirm}
         coils={coils}
         onClose={() => setOrderToConfirm(null)}
-        onConfirm={(orderId, paymentData) => confirmSale(orderId, paymentData)}
+        onConfirm={async (orderId, paymentData) => {
+          const updated = await confirmSale(orderId, paymentData);
+          if (paymentData?.openReceipt && updated) {
+            setOrderForReceipt(updated);
+          }
+        }}
       />
 
       {/* Modal de Recibo Formal / Ticket Imprimible */}

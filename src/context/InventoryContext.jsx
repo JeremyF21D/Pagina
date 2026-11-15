@@ -1159,6 +1159,7 @@ Directrices de conversación:
     }
 
     showToast(`✅ Pedido #${orderId} confirmado: Stock actualizado para ${orderItems.length} ${orderItems.length === 1 ? 'repuesto' : 'repuestos'}.`);
+    return updatedOrder;
   }, [salesHistory, ownerSettings.soundAlert, playCashRegisterSound, dbEngine, dbCredentials, saveSaleToSupabase, showToast]);
 
   /**

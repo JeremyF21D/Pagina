@@ -3,7 +3,7 @@ import './SparkOrderOverlay.css';
 import jfEmblem from '../../../assets/jf_emblem_clean.png';
 import { formatUSD } from '../../../utils/formatters';
 
-export function SparkOrderOverlay({ isOpen, orderData, onClose, onOpenReceipt }) {
+export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
   const [phase, setPhase] = useState('SPARKING'); // 'SPARKING' | 'CONFIRMED'
   const [progressWidth, setProgressWidth] = useState(0);
   const [statusText, setStatusText] = useState('Generando orden de despacho...');
@@ -223,20 +223,11 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose, onOpenReceipt })
                 <span>Contactar por WhatsApp para la compra</span>
               </a>
 
-              {/* Botón secundario para ver comprobante formal */}
-              {onOpenReceipt && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenReceipt(order);
-                  }}
-                  className="w-full py-2 px-3 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition border border-slate-700/80 flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <i className="fa-solid fa-file-invoice text-xs text-[#de2420]"></i>
-                  <span>Ver Comprobante / Factura</span>
-                </button>
-              )}
+              {/* Aviso de seguridad: Factura oficial solo emitida por la tienda tras verificar pago */}
+              <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] text-slate-400">
+                <i className="fa-solid fa-shield-halved text-emerald-400 text-xs"></i>
+                <span>Factura oficial emitida tras verificación del pago</span>
+              </div>
 
               {/* Botón para seguir comprando */}
               <button

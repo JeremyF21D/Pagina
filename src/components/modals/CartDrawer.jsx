@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
 import { formatUSD } from '../../utils/formatters';
 import { SparkOrderOverlay } from '../animations/SparkOrderOverlay/SparkOrderOverlay';
-import { ReceiptModal } from './ReceiptModal';
 
 export function CartDrawer() {
   const {
@@ -26,11 +25,10 @@ export function CartDrawer() {
   const [paymentMethod, setPaymentMethod] = useState('PAGO_MOVIL');
   const [paymentNote, setPaymentNote] = useState('');
 
-  // Modales de Animación de Bujía de Alto Voltaje y Recibo Formal
+  // Modal de Animación de Bujía de Alto Voltaje y Confirmación de Pedido
   const [sparkModal, setSparkModal] = useState({ open: false, orderData: null });
-  const [receiptModal, setReceiptModal] = useState({ open: false, order: null });
 
-  if (!isCartOpen && !sparkModal.open && !receiptModal.open) return null;
+  if (!isCartOpen && !sparkModal.open) return null;
 
   const handleBuy = () => {
     const methodTags = {
@@ -307,19 +305,6 @@ export function CartDrawer() {
         orderData={sparkModal.orderData}
         onClose={() => {
           setSparkModal({ open: false, orderData: null });
-          closeCart();
-        }}
-        onOpenReceipt={(order) => {
-          setReceiptModal({ open: true, order });
-        }}
-      />
-
-      {/* Modal de Comprobante / Factura Oficial */}
-      <ReceiptModal
-        isOpen={receiptModal.open}
-        order={receiptModal.order}
-        onClose={() => {
-          setReceiptModal({ open: false, order: null });
           closeCart();
         }}
       />

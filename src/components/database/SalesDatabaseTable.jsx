@@ -3,6 +3,7 @@ import { useInventory } from '../../context/InventoryContext';
 import { formatUSD } from '../../utils/formatters';
 import { ProductHoverPreview } from '../sales/ProductHoverPreview';
 import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
+import { ReceiptModal } from '../modals/ReceiptModal';
 
 export function SalesDatabaseTable() {
   const { salesHistory, refreshSalesHistory, coils, dbEngine, confirmSale } = useInventory();
@@ -10,6 +11,7 @@ export function SalesDatabaseTable() {
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [orderToConfirm, setOrderToConfirm] = useState(null);
+  const [orderForReceipt, setOrderForReceipt] = useState(null);
 
   const confirmedCount = salesHistory.filter(s => s.status === 'CONFIRMED').length;
   const pendingCount = salesHistory.filter(s => s.status === 'PENDING_APPROVAL').length;
@@ -212,16 +214,28 @@ export function SalesDatabaseTable() {
                     )}
                   </td>
                   <td className="py-3 px-4 text-right whitespace-nowrap">
-                    {ord.status === 'PENDING_APPROVAL' && (
-                      <button
-                        onClick={() => setOrderToConfirm(ord)}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-sm inline-flex items-center gap-1 cursor-pointer active:scale-95"
-                        title="Verificar pago y confirmar en Supabase"
-                      >
-                        <i className="fa-solid fa-check"></i>
-                        <span>Confirmar</span>
-                      </button>
-                    )}
+                    <div className="inline-flex items-center justify-end gap-1.5">
+                      {ord.status === 'PENDING_APPROVAL' && (
+                        <button
+                          onClick={() => setOrderToConfirm(ord)}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-sm inline-flex items-center gap-1 cursor-pointer active:scale-95"
+                          title="Verificar pago y confirmar en Supabase"
+                        >
+                          <i className="fa-solid fa-check"></i>
+                          <span>Confirmar</span>
+                        </button>
+                      )}
+                      {ord.status === 'CONFIRMED' && (
+                        <button
+                          onClick={() => setOrderForReceipt(ord)}
+                          className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 rounded-lg text-xs font-semibold transition cursor-pointer active:scale-95 inline-flex items-center gap-1 shadow-xs"
+                          title="Generar e imprimir factura oficial"
+                        >
+                          <i className="fa-solid fa-file-invoice text-xs"></i>
+                          <span>Factura</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -236,7 +250,19 @@ export function SalesDatabaseTable() {
         order={orderToConfirm}
         coils={coils}
         onClose={() => setOrderToConfirm(null)}
-        onConfirm={(orderId, paymentData) => confirmSale(orderId, paymentData)}
+        onConfirm={async (orderId, paymentData) => {
+          const updated = await confirmSale(orderId, paymentData);
+          if (paymentData?.openReceipt && updated) {
+            setOrderForReceipt(updated);
+          }
+        }}
+      />
+
+      {/* Modal de Recibo Formal / Ticket Imprimible */}
+      <ReceiptModal
+        isOpen={Boolean(orderForReceipt)}
+        order={orderForReceipt}
+        onClose={() => setOrderForReceipt(null)}
       />
     </div>
   );
