@@ -285,9 +285,14 @@ export function normalizeCoilRecord(raw, existingCoils = []) {
   if (!raw || typeof raw !== 'object') return null;
 
   // Price / Precio
-  const rawPrice = raw.price ?? raw.precio ?? raw.costo ?? raw.valor ?? raw.precio_usd ?? 25;
+  const rawPrice = raw.price ?? raw.precio ?? raw.valor ?? raw.precio_usd ?? 25;
   const priceVal = parseFloat(rawPrice);
   const safePrice = !isNaN(priceVal) && priceVal >= 0 ? priceVal : 25.00;
+
+  // Cost / Costo de Adquisición / Bodega ($0 por defecto)
+  const rawCost = raw.cost ?? raw.costo ?? raw.cost_price ?? raw.costo_bodega ?? raw.costo_unitario ?? 0;
+  const costVal = parseFloat(rawCost);
+  const safeCost = !isNaN(costVal) && costVal >= 0 ? costVal : 0;
 
   // Old Price / Precio Anterior (solo si es un número válido > 0; de lo contrario igual al precio normal)
   const rawOldPrice = raw.oldPrice ?? raw.old_price ?? raw.precio_anterior ?? raw.precio_lista ?? raw.precio_viejo;
@@ -375,6 +380,7 @@ export function normalizeCoilRecord(raw, existingCoils = []) {
     type: typeVal,
     connector: connectorVal,
     price: safePrice,
+    cost: safeCost,
     oldPrice: safeOldPrice,
     stock: safeStock,
     inStock: safeStock > 0,

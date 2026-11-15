@@ -81,13 +81,13 @@ export function PerformanceView({ onNavigateTab }) {
     }
   };
 
-  // 2. Costo del producto: POR DEFECTO TODOS LOS REPUESTOS REGISTRADOS COSTARON 0$
+  // 2. Costo del producto: Viene del registro del artículo en base de datos (0$ por defecto)
   const getProductCost = (coil) => {
     if (!coil) return 0;
-    if (customCosts[coil.id] !== undefined) return Number(customCosts[coil.id]);
     if (coil.cost !== undefined && coil.cost !== null && !isNaN(Number(coil.cost))) {
       return Number(coil.cost);
     }
+    if (customCosts[coil.id] !== undefined) return Number(customCosts[coil.id]);
     return 0; // 0$ por defecto
   };
 
@@ -1080,7 +1080,7 @@ export function PerformanceView({ onNavigateTab }) {
                 </span>
               </h3>
               <p className="text-[10px] text-slate-400">
-                Ver unidades despachadas, precio de venta, costo de bodega ($0 por defecto) y ganancia unitaria
+                Unidades despachadas, precio de venta, costo registrado en el artículo y ganancia neta
               </p>
             </div>
           </div>
@@ -1151,18 +1151,9 @@ export function PerformanceView({ onNavigateTab }) {
                         ${p.price}.00
                       </td>
 
-                      {/* Costo con editor interactivo (Costo 0$ por defecto) */}
-                      <td className="py-2 px-2 text-right font-mono">
-                        <div className="inline-flex items-center gap-1 bg-[#141518] px-1.5 py-0.5 rounded border border-[#2d2f35] hover:border-slate-500">
-                          <span className="text-slate-500 text-[10px]">$</span>
-                          <input
-                            type="number"
-                            value={p.cost}
-                            onChange={(e) => handleUpdateCost(p.id, e.target.value)}
-                            className="w-10 bg-transparent text-slate-300 text-right focus:outline-none focus:text-white"
-                            title="Puedes editar el costo si algún lote tuvo costo de compra"
-                          />
-                        </div>
+                      {/* Costo de Bodega Registrado */}
+                      <td className="py-2 px-2 text-right font-mono text-slate-300">
+                        ${Number(p.cost || 0).toFixed(2)}
                       </td>
 
                       {/* Ganancia Unitaria */}

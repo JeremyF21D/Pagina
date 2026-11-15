@@ -193,8 +193,9 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
                     <td className="py-3 px-4 font-mono text-[11px] text-slate-300 whitespace-nowrap">
                       {coil.oem}
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold text-brand-400 whitespace-nowrap">
-                      {formatUSD(coil.price)}
+                    <td className="py-3 px-4 font-mono whitespace-nowrap">
+                      <span className="font-bold text-brand-400 block">{formatUSD(coil.price)}</span>
+                      <span className="text-[10px] text-slate-500 block">Costo: {formatUSD(coil.cost || 0)}</span>
                     </td>
 
                     {/* Ajuste Rápido de Stock en Línea con Semáforo */}

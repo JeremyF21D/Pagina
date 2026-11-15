@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.bobinas_inventario (
   type TEXT DEFAULT 'Tipo Lápiz Individual',
   connector TEXT DEFAULT '4 Pines',
   price NUMERIC(10,2) NOT NULL DEFAULT 25.00,
+  cost NUMERIC(10,2) DEFAULT 0.00,
   old_price NUMERIC(10,2) DEFAULT 32.00,
   stock INTEGER NOT NULL DEFAULT 0,
   warranty TEXT DEFAULT '12 meses',
@@ -39,7 +40,8 @@ CREATE TABLE IF NOT EXISTS public.bobinas_inventario (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Si tu tabla ya existe en Supabase, ejecuta esta línea para habilitar las fotos para todos:
+-- Si tu tabla ya existe en Supabase, ejecuta estas líneas para agregar costo e imagen:
+ALTER TABLE public.bobinas_inventario ADD COLUMN IF NOT EXISTS cost NUMERIC(10,2) DEFAULT 0.00;
 ALTER TABLE public.bobinas_inventario ADD COLUMN IF NOT EXISTS image TEXT;
 
 -- Tabla para registrar cada venta cerrada por WhatsApp IA
@@ -118,6 +120,7 @@ CREATE TABLE IF NOT EXISTS bobinas_inventario (
   type VARCHAR(100) DEFAULT 'Tipo Lápiz Individual',
   connector VARCHAR(80) DEFAULT 'Conector 4 Pines',
   price DECIMAL(10,2) NOT NULL DEFAULT 25.00,
+  cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   old_price DECIMAL(10,2) DEFAULT 32.00,
   stock INT NOT NULL DEFAULT 0,
   warranty VARCHAR(40) DEFAULT '12 meses',

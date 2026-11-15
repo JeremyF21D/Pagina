@@ -53,9 +53,9 @@ export function BulkImportModal({ isOpen, onClose }) {
   const handleLoadSample = (type) => {
     if (type === 'csv') {
       setRawText(
-`id,name,brand,carModel,engine,oem,price,oldPrice,stock,warranty,badge
-BOB-HILUX27,Bobina Toyota Hilux 2.7 VVT-i,Toyota,"Hilux, Kavak, Fortuner (2006 - 2016)",2.7L 2TR-FE,90919-02248,33.50,40.00,20,18 meses,Más Vendido
-BOB-EXPLORER40,Bobina Ford Explorer 4.0 V6,Ford,"Explorer, Ranger (2001 - 2010)",4.0L V6 SOHC,1L2U-12029-AA,42.00,50.00,12,12 meses,Oferta`
+`id,name,brand,carModel,engine,oem,price,cost,oldPrice,stock,warranty,badge
+BOB-HILUX27,Bobina Toyota Hilux 2.7 VVT-i,Toyota,"Hilux, Kavak, Fortuner (2006 - 2016)",2.7L 2TR-FE,90919-02248,33.50,0.00,40.00,20,18 meses,Más Vendido
+BOB-EXPLORER40,Bobina Ford Explorer 4.0 V6,Ford,"Explorer, Ranger (2001 - 2010)",4.0L V6 SOHC,1L2U-12029-AA,42.00,0.00,50.00,12,12 meses,Oferta`
       );
     } else {
       setRawText(

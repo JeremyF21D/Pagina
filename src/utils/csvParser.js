@@ -67,7 +67,7 @@ export function parseCSV(csvText) {
  * Exports database items to CSV string format
  */
 export function exportToCSV(items) {
-  const headers = ['id', 'name', 'brand', 'carModel', 'engine', 'oem', 'type', 'connector', 'price', 'oldPrice', 'stock', 'warranty', 'badge'];
+  const headers = ['id', 'name', 'brand', 'carModel', 'engine', 'oem', 'type', 'connector', 'price', 'cost', 'oldPrice', 'stock', 'warranty', 'badge'];
   
   const escapeField = val => {
     const str = String(val ?? '');
@@ -89,7 +89,7 @@ export function exportToCSV(items) {
 export function exportToSQL(items) {
   const safe = str => String(str ?? '').replace(/'/g, "''");
   const inserts = items.map(b => 
-    `INSERT INTO bobinas_inventario (id, name, brand, car_model, engine, oem, type, connector, price, old_price, stock, warranty, badge) VALUES ('${safe(b.id)}', '${safe(b.name)}', '${safe(b.brand)}', '${safe(b.carModel)}', '${safe(b.engine)}', '${safe(b.oem)}', '${safe(b.type)}', '${safe(b.connector)}', ${Number(b.price).toFixed(2)}, ${Number(b.oldPrice || b.price * 1.2).toFixed(2)}, ${b.stock}, '${safe(b.warranty)}', '${safe(b.badge)}');`
+    `INSERT INTO bobinas_inventario (id, name, brand, car_model, engine, oem, type, connector, price, cost, old_price, stock, warranty, badge) VALUES ('${safe(b.id)}', '${safe(b.name)}', '${safe(b.brand)}', '${safe(b.carModel)}', '${safe(b.engine)}', '${safe(b.oem)}', '${safe(b.type)}', '${safe(b.connector)}', ${Number(b.price).toFixed(2)}, ${Number(b.cost || 0).toFixed(2)}, ${Number(b.oldPrice || b.price * 1.2).toFixed(2)}, ${b.stock}, '${safe(b.warranty)}', '${safe(b.badge)}');`
   ).join('\n');
 
   return `-- ========================================================\n-- DUMP SQL GENERADO POR BOBINAS EXPRESS\n-- Fecha: ${new Date().toISOString()}\n-- Total bobinas: ${items.length}\n-- ========================================================\n\n${inserts}`;
@@ -224,6 +224,7 @@ CREATE TABLE IF NOT EXISTS public.bobinas_inventario (
   type TEXT DEFAULT 'Tipo Lápiz Individual',
   connector TEXT DEFAULT '4 Pines',
   price NUMERIC(10,2) NOT NULL DEFAULT 25.00,
+  cost NUMERIC(10,2) DEFAULT 0.00,
   old_price NUMERIC(10,2) DEFAULT 32.00,
   stock INTEGER NOT NULL DEFAULT 0,
   warranty TEXT DEFAULT '12 meses',

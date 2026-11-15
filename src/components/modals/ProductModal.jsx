@@ -25,6 +25,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
     type: 'Tipo Lápiz Individual (COP)',
     connector: 'Conector 4 Pines',
     price: '29.50',
+    cost: '0',
     oldPrice: '',
     stock: '15',
     warranty: '12 meses',
@@ -59,6 +60,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             type: String(initialProduct.type || ''),
             connector: String(initialProduct.connector || ''),
             price: String(initialProduct.price ?? '29.50'),
+            cost: String(initialProduct.cost ?? '0'),
             oldPrice: String(initialProduct.oldPrice || ''),
             stock: String(initialProduct.stock ?? '15'),
             warranty: String(initialProduct.warranty || '12 meses'),
@@ -91,6 +93,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             type: cfg.defaultType,
             connector: cfg.defaultConnector,
             price: '29.50',
+            cost: '0',
             oldPrice: '',
             stock: '10',
             warranty: '12 meses',
@@ -545,50 +548,78 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             </div>
           </div>
 
-          {/* Pricing & Stock */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                Precio USD ($) *
-              </label>
-              <input 
-                type="number" 
-                step="0.01"
-                value={form.price}
-                onChange={(e) => handleChange('price', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                Precio Tachado
-              </label>
-              <input 
-                type="number" 
-                step="0.01"
-                value={form.oldPrice}
-                onChange={(e) => handleChange('oldPrice', e.target.value)}
-                placeholder="Opcional"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
-              />
-              <span className="text-[10px] text-slate-500 block mt-1">
-                Solo se tacha si es mayor al precio normal.
+          {/* Pricing, Cost & Stock */}
+          <div className="p-3 bg-slate-850/80 border border-slate-700/80 rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i className="fa-solid fa-dollar-sign text-emerald-400"></i> Precios, Costo & Stock
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
+                Utilidad: +${Math.max(0, (parseFloat(form.price) || 0) - (parseFloat(form.cost) || 0)).toFixed(2)} USD / unidad
               </span>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                Stock Almacén *
-              </label>
-              <input 
-                type="number" 
-                value={form.stock}
-                onChange={(e) => handleChange('stock', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
-                required
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Precio Venta ($) *
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={form.price}
+                  onChange={(e) => handleChange('price', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Costo Compra ($)
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={form.cost}
+                  onChange={(e) => handleChange('cost', e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-500"
+                />
+                <span className="text-[9px] text-slate-500 block mt-0.5 font-mono">
+                  $0 si costó 0$
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Precio Tachado
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={form.oldPrice}
+                  onChange={(e) => handleChange('oldPrice', e.target.value)}
+                  placeholder="Opcional"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                />
+                <span className="text-[9px] text-slate-500 block mt-0.5">
+                  Para ofertas
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Stock Almacén *
+                </label>
+                <input 
+                  type="number" 
+                  value={form.stock}
+                  onChange={(e) => handleChange('stock', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  required
+                />
+              </div>
             </div>
           </div>
 
