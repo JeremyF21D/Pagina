@@ -231,54 +231,54 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
       <ExchangeRateLiveBanner />
 
       {/* 3. Tarjetas KPI de Ventas con Estilo Sabrina */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         
-        <div className="sabrina-card p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="sabrina-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Total Facturado
           </span>
-          <div className="text-2xl font-black text-slate-900 font-mono">
-            ${totalUSD.toFixed(2)} <span className="text-xs text-slate-400">USD</span>
+          <div className="text-lg sm:text-2xl font-black text-slate-900 font-mono">
+            ${totalUSD.toFixed(2)} <span className="text-[10px] sm:text-xs text-slate-400">USD</span>
           </div>
-          <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-            <CheckCircle className="w-3.5 h-3.5" />
-            <span>{confirmedSales.length} órdenes confirmadas</span>
+          <span className="text-[10px] sm:text-xs text-emerald-600 font-bold flex items-center gap-1">
+            <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>{confirmedSales.length} confirmadas</span>
           </span>
         </div>
 
-        <div className="sabrina-card p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.08s' }}>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Total en Bolívares (BCV)
+        <div className="sabrina-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.08s' }}>
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            Total Bolívares (BCV)
           </span>
-          <div className="text-2xl font-black text-red-600 font-mono">
+          <div className="text-lg sm:text-2xl font-black text-red-600 font-mono truncate">
             Bs. {totalVES.toLocaleString('es-VE', { maximumFractionDigits: 0 })}
           </div>
-          <span className="text-xs text-slate-400 font-mono">
-            Tasa Oficial: Bs. {bcvRate?.toFixed(2)}
+          <span className="text-[10px] sm:text-xs text-slate-400 font-mono">
+            Tasa: Bs. {bcvRate?.toFixed(2)}
           </span>
         </div>
 
-        <div className="sabrina-card p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.16s' }}>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="sabrina-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.16s' }}>
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Unidades Despachadas
           </span>
-          <div className="text-2xl font-black text-slate-900 font-mono">
-            {totalUnits} <span className="text-xs text-slate-400">uds</span>
+          <div className="text-lg sm:text-2xl font-black text-slate-900 font-mono">
+            {totalUnits} <span className="text-[10px] sm:text-xs text-slate-400">uds</span>
           </div>
-          <span className="text-xs text-slate-400">
-            Piezas salidas de bodega
+          <span className="text-[10px] sm:text-xs text-slate-400">
+            Salidas de bodega
           </span>
         </div>
 
-        <div className="sabrina-card p-4 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.24s' }}>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="sabrina-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.24s' }}>
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Pedidos Pendientes
           </span>
-          <div className="text-2xl font-black text-amber-600 font-mono">
+          <div className="text-lg sm:text-2xl font-black text-amber-600 font-mono">
             {pendingSales.length}
           </div>
-          <span className="text-xs text-amber-600 font-semibold">
-            {pendingSales.length === 1 ? '1 orden por confirmar' : `${pendingSales.length} órdenes por confirmar`}
+          <span className="text-[10px] sm:text-xs text-amber-600 font-semibold truncate">
+            {pendingSales.length === 1 ? '1 por confirmar' : `${pendingSales.length} por confirmar`}
           </span>
         </div>
 
@@ -446,7 +446,143 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
 
       {/* 5. Tabla de Órdenes con Todos los Botones (Editar, Garantía, Factura, Confirmar, Revertir) */}
       <div className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Vista Móvil: Tarjetas Ordenadas 100% Responsive (Sin Scroll Horizontal) */}
+        <div className="block lg:hidden space-y-3 p-3">
+          {filteredSales.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              No se registran órdenes que coincidan con los filtros aplicados.
+            </div>
+          ) : (
+            filteredSales.map(order => {
+              const orderId = order.orderId || order.order_id || order.id || 'ORD-000';
+              const custName = order.customerName || order.customer_name || 'Cliente';
+              const custPhone = (order.customerPhone || order.customer_phone || '04126497478').replace(/[^0-9]/g, '');
+              const partName = order.coilName || order.coil_name || 'Bobina OEM';
+              const qty = Number(order.qty) || 1;
+              const total = Number(order.totalPrice || order.total_price || order.unit_price || 0);
+              const isConfirmed = order.status === 'CONFIRMED' || !order.status;
+              const isPending = order.status === 'PENDING_APPROVAL';
+              const isReverted = order.status === 'REVERTED';
+              const hasWarranty = order.warrantyEvents && order.warrantyEvents.length > 0;
+
+              const waMessage = encodeURIComponent(
+                `¡Hola ${custName}! 🚗 Te escribimos de *JF Auto Parts Maracaibo* respecto a tu orden *${orderId}*:\n\n` +
+                `📦 Repuesto: ${qty}x ${partName}\n` +
+                `💵 Total: $${total.toFixed(2)} USD (~Bs. ${(total * bcvRate).toLocaleString('es-VE', { maximumFractionDigits: 0 })})\n\n` +
+                `¿Deseas entrega personal en tienda o delivery directo a tu taller?`
+              );
+
+              return (
+                <div key={`mob-${orderId}`} className="bg-slate-50/70 border border-slate-200 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                  {/* Cabecera Móvil: ID, Fecha y Estado */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <span className="font-mono font-black text-red-600 text-xs">{orderId}</span>
+                      <span className="text-[10px] text-slate-400 block font-sans">
+                        {order.timestamp ? formatOrderDate(order.timestamp, false) : 'Reciente'}
+                      </span>
+                    </div>
+                    <div>
+                      {isConfirmed && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          CONFIRMADA
+                        </span>
+                      )}
+                      {isPending && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                          PENDIENTE
+                        </span>
+                      )}
+                      {isReverted && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          REVERTIDA
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Cliente & Repuesto */}
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900">{custName}</span>
+                      <span className="font-mono text-[10px] text-slate-500">{order.customerPhone || order.customer_phone || ''}</span>
+                    </div>
+                    <div className="text-slate-700 text-[11px] bg-white p-2 rounded-xl border border-slate-200/80">
+                      <div className="font-semibold line-clamp-1">{partName}</div>
+                      <div className="text-[10px] text-slate-400">Cantidad: {qty} unidad{qty > 1 ? 'es' : ''}</div>
+                    </div>
+                  </div>
+
+                  {/* Montos y Referencia */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
+                    <div>
+                      <div className="font-black text-slate-900 font-mono text-sm">${total.toFixed(2)} <span className="text-[9px] text-slate-400 font-normal">USD</span></div>
+                      <div className="text-[10px] text-red-600 font-mono font-bold">
+                        Bs. {(total * activeRate).toLocaleString('es-VE', { maximumFractionDigits: 0 })}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-200/70 text-slate-700 inline-block truncate max-w-[140px]">
+                        {String(order.paymentRef || order.referencia_pago || 'Pago Acordado')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Acciones Móviles */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/60">
+                    {isPending && (
+                      <button
+                        onClick={() => setOrderToConfirm(order)}
+                        className="px-2.5 py-1 bg-emerald-600 text-white font-extrabold rounded-lg text-[10px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>Confirmar</span>
+                      </button>
+                    )}
+                    {isConfirmed && (
+                      <button
+                        onClick={() => setOrderForReceipt(order)}
+                        className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <FileText className="w-3 h-3" />
+                        <span>Factura</span>
+                      </button>
+                    )}
+                    {isConfirmed && (
+                      <button
+                        onClick={() => setOrderForWarranty(order)}
+                        className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Shield className="w-3 h-3" />
+                        <span>Garantía</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setOrderToEdit(order)}
+                      className="px-2 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Editar</span>
+                    </button>
+                    <a
+                      href={`https://wa.me/${custPhone.startsWith('58') ? custPhone : '58' + custPhone.replace(/^0/, '')}?text=${waMessage}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Vista Escritorio: Tabla Completa con 7 Columnas */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px]">

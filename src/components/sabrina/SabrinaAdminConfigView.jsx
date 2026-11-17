@@ -72,7 +72,7 @@ export function SabrinaAdminConfigView() {
         <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center gap-2 text-red-400">
             <PhoneCall className="w-5 h-5 text-red-400" />
-            <h3 className="font-extrabold text-sm sm:text-base text-slate-100">
+            <h3 className="font-extrabold text-sm sm:text-base text-slate-900">
               Línea Oficial de WhatsApp Maracaibo
             </h3>
           </div>

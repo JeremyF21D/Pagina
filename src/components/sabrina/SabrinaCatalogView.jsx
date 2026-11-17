@@ -9,6 +9,7 @@ import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useAuth } from '../../context/AuthContext';
 import { CarBrandsLogoLoop } from '../catalog/CarBrandsLogoLoop';
+import { AddToCartButton } from '../common/AddToCartButton';
 import { normalizeWaPhone } from '../../utils/whatsapp';
 import { detectProductCategory, normalizeSearchText, matchesSearchTerms, formatUSD } from '../../utils/formatters';
 import defaultCoilImage from '../../assets/bobina_tiida_studio.jpg';
@@ -303,20 +304,21 @@ export function SabrinaCatalogView({
             </p>
 
             {/* 3 Promesas de Confianza Comercial */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-center">
-                <Shield className="w-4 h-4 text-emerald-600 mb-1" />
-                <strong className="text-slate-900 block font-bold">Repuestos Probados</strong>
-                <span className="text-slate-500 text-[11px]">Testeo en banco de prueba</span>
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-3 pt-2 text-[9px] sm:text-xs">
+              <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-center">
+                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 mb-1" />
+                <strong className="text-slate-900 block font-bold leading-tight">Probados</strong>
+                <span className="text-slate-500 text-[9px] sm:text-[11px] hidden sm:block">En banco de prueba</span>
               </div>
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-center">
-                <Clock className="w-4 h-4 text-red-600 mb-1" />
-                <strong className="text-slate-900 block font-bold">Entrega Inmediata</strong>
+              <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-center">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 mb-1" />
+                <strong className="text-slate-900 block font-bold leading-tight">Inmediato</strong>
+                <span className="text-slate-500 text-[9px] sm:text-[11px] hidden sm:block">Despacho en Mcbo</span>
               </div>
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
-                <Check className="w-4 h-4 text-rose-400 mb-1" />
-                <strong className="text-slate-900 block font-bold">Compatibilidad</strong>
-                <span className="text-slate-500 text-[11px]">Verificada por código OEM</span>
+              <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-center">
+                <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 mb-1" />
+                <strong className="text-slate-900 block font-bold leading-tight">Garantizado</strong>
+                <span className="text-slate-500 text-[9px] sm:text-[11px] hidden sm:block">Por código OEM</span>
               </div>
             </div>
 
@@ -477,15 +479,15 @@ export function SabrinaCatalogView({
       {/* 4. PARRILLA DE PRODUCTOS DE SABRINA (CONEXIÓN BACKEND REAL)         */}
       {/* ==================================================================== */}
       {isDbLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="rounded-3xl bg-white border border-slate-200 text-slate-800 shadow-xs p-6 h-72 animate-pulse flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="h-4 bg-slate-200 rounded-md w-1/3"></div>
-                <div className="h-6 bg-slate-200 rounded-md w-3/4"></div>
-                <div className="h-16 bg-slate-200 rounded-2xl"></div>
+            <div key={i} className="rounded-2xl sm:rounded-3xl bg-white border border-slate-200 text-slate-800 shadow-xs p-3 sm:p-6 h-56 sm:h-72 animate-pulse flex flex-col justify-between">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="h-3 sm:h-4 bg-slate-200 rounded-md w-1/3"></div>
+                <div className="h-4 sm:h-6 bg-slate-200 rounded-md w-3/4"></div>
+                <div className="h-12 sm:h-16 bg-slate-200 rounded-xl sm:rounded-2xl"></div>
               </div>
-              <div className="h-8 bg-slate-200 rounded-xl w-1/2"></div>
+              <div className="h-6 sm:h-8 bg-slate-200 rounded-lg sm:rounded-xl w-1/2"></div>
             </div>
           ))}
         </div>
@@ -510,7 +512,7 @@ export function SabrinaCatalogView({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
           {paginatedCoils.map((item, idx) => {
             const priceUSD = Number(item.price) || 0;
             const priceVES = priceUSD * activeRate;
@@ -525,32 +527,32 @@ export function SabrinaCatalogView({
             return (
               <div
                 key={item.id}
-                className="sabrina-card rounded-3xl bg-white border border-slate-200 hover:border-red-500 shadow-sm hover:shadow-xl transition-all duration-300 p-5 flex flex-col justify-between shadow-md shadow-black/20 group cursor-default"
+                className="sabrina-card rounded-2xl sm:rounded-3xl bg-white border border-slate-200 hover:border-red-500 shadow-sm hover:shadow-xl transition-all duration-300 p-2.5 sm:p-5 flex flex-col justify-between shadow-md shadow-black/20 group cursor-default"
                 style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <div>
                   
                   {/* Badges Superiores: Marca y Disponibilidad */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                  <div className="flex items-center justify-between gap-1 sm:gap-2 mb-2 sm:mb-3">
+                    <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[75px] sm:max-w-none">
                       {item.brand || 'OEM'}
                     </span>
 
-                    <span className="text-[11px] font-bold flex items-center gap-1.5">
+                    <span className="text-[9px] sm:text-[11px] font-bold flex items-center gap-1">
                       {isOutOfStock ? (
                         <span className="text-rose-400 flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-500"></span>
                           <span>Agotado</span>
                         </span>
                       ) : isCriticalStock ? (
-                        <span className="text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-600/40 flex items-center gap-1 animate-pulse">
-                          <Flame className="w-3 h-3 text-amber-400" />
-                          <span>{item.stock === 1 ? 'Último disponible' : `${item.stock} disponibles`}</span>
+                        <span className="text-amber-500 bg-amber-50 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1 animate-pulse">
+                          <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500" />
+                          <span>{item.stock === 1 ? '1 disp.' : `${item.stock} disp.`}</span>
                         </span>
                       ) : (
                         <span className="text-emerald-600 flex items-center gap-1 font-bold">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                          <span>En stock ({item.stock} disp.)</span>
+                          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500"></span>
+                          <span>En stock ({item.stock})</span>
                         </span>
                       )}
                     </span>
@@ -568,25 +570,25 @@ export function SabrinaCatalogView({
                         {/* Foto del Repuesto en Vitrina de Estudio */}
                         <div 
                           onClick={() => onOpenProductDetail(item)}
-                          className="rounded-2xl bg-white border border-slate-200 hover:border-red-500 relative overflow-hidden transition-all duration-300 flex items-center justify-center p-3 mb-3 select-none h-44 group-hover:scale-[1.02] cursor-pointer shadow-sm"
+                          className="rounded-xl sm:rounded-2xl bg-white border border-slate-200 hover:border-red-500 relative overflow-hidden transition-all duration-300 flex items-center justify-center p-1.5 sm:p-3 mb-2 sm:mb-3 select-none h-28 sm:h-44 group-hover:scale-[1.02] cursor-pointer shadow-sm"
                           title={`Ver foto ampliada y ficha técnica de ${item.name}`}
                         >
                           <img 
                             src={item.image || defaultCoilImage} 
                             alt={item.name} 
-                            className="h-full w-auto object-contain max-h-36 drop-shadow-sm select-none transition-transform duration-300 group-hover:scale-110 mix-blend-multiply"
+                            className="h-full w-auto object-contain max-h-24 sm:max-h-36 drop-shadow-sm select-none transition-transform duration-300 group-hover:scale-110 mix-blend-multiply"
                             onError={(e) => { e.target.onerror = null; e.target.src = defaultCoilImage; }}
                           />
 
                           {/* Opción 3: Badge OEM flotante en la esquina de la foto */}
                           {cardDesignMode === 'badge' && (
-                            <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-lg bg-white/95 backdrop-blur-xs border border-slate-200 text-[10px] font-mono font-bold text-red-600 shadow-xs">
+                            <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white/95 backdrop-blur-xs border border-slate-200 text-[8px] sm:text-[10px] font-mono font-bold text-red-600 shadow-xs truncate max-w-[120px]">
                               OEM: {primaryOem}
                             </div>
                           )}
 
-                          <div className="absolute top-2 right-2 px-2 py-1 rounded-xl bg-slate-900/80 backdrop-blur-xs text-slate-300 hover:text-white group-hover:text-red-400 transition text-[10px] font-bold flex items-center gap-1 shadow-sm">
-                            <Eye className="w-3 h-3 text-red-400" />
+                          <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-lg bg-slate-900/80 backdrop-blur-xs text-slate-300 hover:text-white group-hover:text-red-400 transition text-[8px] sm:text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                            <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400" />
                             <span>Ficha</span>
                           </div>
                         </div>
@@ -594,49 +596,49 @@ export function SabrinaCatalogView({
                         {/* Título del Repuesto */}
                         <h3 
                           onClick={() => onOpenProductDetail(item)}
-                          className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight group-hover:text-red-600 transition leading-snug line-clamp-2 cursor-pointer"
+                          className="font-extrabold text-xs sm:text-base text-slate-900 tracking-tight group-hover:text-red-600 transition leading-snug line-clamp-2 cursor-pointer min-h-[2rem] sm:min-h-0"
                           title={item.name}
                         >
                           {item.name}
                         </h3>
 
                         {/* Compatibilidad Vehicular */}
-                        <div className="mt-2 text-xs text-slate-700 font-medium truncate" title={item.carModel}>
+                        <div className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-slate-700 font-medium truncate" title={item.carModel}>
                           <span className="text-slate-400">Aplica:</span>{' '}
                           <span className="text-slate-800 font-semibold truncate">{item.carModel || 'Universal'}</span>
-                          {item.engine && <span className="text-slate-400 font-mono text-[11px]">• {item.engine}</span>}
+                          {item.engine && <span className="text-slate-400 font-mono text-[9px] sm:text-[11px]">• {item.engine}</span>}
                         </div>
 
                         {/* VARIANTES DE DISEÑO SEGÚN OPCIÓN */}
                         {cardDesignMode === 'minimal' && (
                           /* ⭐ OPCIÓN 1: MINIMALISTA & VALOR COMERCIAL */
-                          <div className="mt-2.5 py-1.5 px-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2 text-[11px]">
-                            <span className="text-emerald-700 font-bold flex items-center gap-1">
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Probado en banco</span>
+                          <div className="mt-1.5 sm:mt-2.5 py-1 px-1.5 sm:px-2 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-1 text-[9px] sm:text-[11px]">
+                            <span className="text-emerald-700 font-bold flex items-center gap-0.5 sm:gap-1">
+                              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" />
+                              <span>Probado</span>
                             </span>
-                            <span className="text-slate-600 font-semibold flex items-center gap-1">
-                              <Truck className="w-3.5 h-3.5 text-red-600" />
-                              <span>Entrega Inmediata</span>
+                            <span className="text-slate-600 font-semibold flex items-center gap-0.5 sm:gap-1">
+                              <Truck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-600" />
+                              <span>Inmediato</span>
                             </span>
                           </div>
                         )}
 
                         {cardDesignMode === 'micro' && (
                           /* 🏷️ OPCIÓN 2: MICRO-OEM COMPACTO EN 1 LÍNEA */
-                          <div className="mt-2.5 flex items-center justify-between gap-2 text-xs">
+                          <div className="mt-1.5 sm:mt-2.5 flex items-center justify-between gap-1 sm:gap-2 text-[10px] sm:text-xs">
                             <div className="flex items-center gap-1 min-w-0">
-                              <span className="text-[10px] font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200 truncate">
+                              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 truncate max-w-[95px] sm:max-w-none">
                                 OEM: {primaryOem}
                               </span>
                               {extraOemCount > 0 && (
-                                <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shrink-0" title="Ver códigos adicionales en Ficha">
-                                  +{extraOemCount} más
+                                <span className="text-[8px] sm:text-[9px] font-bold text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200 shrink-0" title="Ver códigos adicionales en Ficha">
+                                  +{extraOemCount}
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1 shrink-0">
-                              <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 flex items-center gap-0.5 sm:gap-1 shrink-0">
+                              <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
                               <span>Probado</span>
                             </span>
                           </div>
@@ -644,21 +646,21 @@ export function SabrinaCatalogView({
 
                         {cardDesignMode === 'badge' && (
                           /* 📸 OPCIÓN 3: BADGE EN FOTO + GARANTÍA LIMPIA */
-                          <div className="mt-2.5 flex items-center gap-1.5 text-xs text-emerald-700 font-semibold">
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Probado en banco de prueba</span>
+                          <div className="mt-1.5 sm:mt-2.5 flex items-center gap-1 text-[10px] sm:text-xs text-emerald-700 font-semibold">
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>Probado en banco</span>
                           </div>
                         )}
 
                         {cardDesignMode === 'classic' && (
                           /* 📋 OPCIÓN ACTUAL: OEM COMPLETO */
-                          <div className="mt-2.5 flex items-center gap-2">
-                            <span className="text-[10px] font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-200 shadow-xs line-clamp-2">
+                          <div className="mt-1.5 sm:mt-2.5 flex items-center gap-1 sm:gap-2">
+                            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 truncate max-w-[100px] sm:max-w-none">
                               OEM: {rawOem}
                             </span>
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1 shrink-0">
-                              <Check className="w-3 h-3 text-emerald-600" />
-                              <span>Probado en banco</span>
+                            <span className="text-[9px] sm:text-[11px] text-slate-400 flex items-center gap-1 shrink-0">
+                              <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
+                              <span>Probado</span>
                             </span>
                           </div>
                         )}
@@ -668,73 +670,49 @@ export function SabrinaCatalogView({
 
                 </div>
 
-                {/* Footer de Tarjeta: Precios & Botón de Añadir Directo */}
-                <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-3">
+                {/* Footer de Tarjeta: Precios & Botón con Animación de Carrito */}
+                <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
                   <div>
-                    <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <span className="text-xl sm:text-2xl font-black text-slate-900 font-sans tracking-tight">
+                    <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
+                      <span className="text-base sm:text-2xl font-black text-slate-900 font-sans tracking-tight">
                         ${priceUSD.toFixed(2)}
                       </span>
                       {effectiveOldPrice > priceUSD && (
-                        <span className="text-xs sm:text-sm text-slate-400 line-through font-mono font-semibold">
+                        <span className="text-[10px] sm:text-sm text-slate-400 line-through font-mono font-semibold">
                           ${effectiveOldPrice.toFixed(2)}
                         </span>
                       )}
-                      <span className="text-xs font-semibold text-slate-400">USD</span>
+                      <span className="text-[9px] sm:text-xs font-semibold text-slate-400">USD</span>
                       {discountPct > 0 && (
-                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        <span className="text-[8px] sm:text-[10px] font-black text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
                           -{discountPct}%
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-red-600 font-bold font-mono">
+                    <div className="text-[10px] sm:text-xs text-red-600 font-bold font-mono truncate">
                       Bs. {priceVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto">
                     {/* Botón Admin: Editar Repuesto */}
                     {isAdmin && onEditCoil && (
                       <button
                         onClick={() => onEditCoil(item)}
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-amber-400 transition cursor-pointer"
+                        className="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-amber-500 transition cursor-pointer shrink-0"
                         title="Editar repuesto (Admin)"
                       >
-                        <Edit3 className="w-4 h-4" />
+                        <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                     )}
 
-                    {/* Botón Añadir al Carrito (Verde Esmeralda CRO) */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item.id, 1);
-                        setJustAddedId(item.id);
-                        setTimeout(() => setJustAddedId(null), 1200);
-                        if (setIsCartOpen) setIsCartOpen(true);
-                      }}
-                      disabled={isOutOfStock}
-                      className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all duration-300 shadow-md cursor-pointer disabled:opacity-40 active:scale-95 ${
-                        justAddedId === item.id
-                          ? 'bg-emerald-600 text-white scale-105 shadow-emerald-500/30'
-                          : 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
-                      }`}
-                      title="Añadir repuesto al carrito"
-                    >
-                      {justAddedId === item.id ? (
-                        <>
-                          <Check className="w-4 h-4 text-white animate-bounce" />
-                          <span>¡Añadido!</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag className="w-4 h-4" />
-                          <span>Añadir</span>
-                        </>
-                      )}
-                    </button>
-
+                    {/* Botón Añadir con animación de cajita y carrito de compras */}
+                    <AddToCartButton
+                      productId={item.id}
+                      stock={item.stock}
+                      className="w-full sm:w-auto flex-1 sm:flex-initial text-[10px] sm:text-xs"
+                      label="Añadir"
+                    />
                   </div>
                 </div>
 

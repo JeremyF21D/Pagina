@@ -374,7 +374,104 @@ export function SabrinaInventoryView({
 
       {/* Tabla de Inventario de Sabrina con Encabezados Ordenables */}
       <div className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Vista Móvil: Cuadrícula de 2 Columnas 100% Responsive */}
+        <div className="block lg:hidden p-3">
+          {paginatedCoils.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              No se encontraron repuestos con los filtros aplicados.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5">
+              {paginatedCoils.map(item => {
+                const price = Number(item.price) || 0;
+                const cost = getProductCost(item);
+                const isOutOfStock = Number(item.stock) <= 0;
+                const isCriticalStock = Number(item.stock) > 0 && Number(item.stock) <= 2;
+
+                return (
+                  <div key={`inv-mob-${item.id}`} className="bg-slate-50/70 border border-slate-200 rounded-2xl p-2.5 flex flex-col justify-between space-y-2">
+                    <div>
+                      {/* Foto */}
+                      <div className="w-full h-24 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-1.5 mb-2 relative overflow-hidden">
+                        <img
+                          src={item.image || defaultCoilImage}
+                          alt={item.name}
+                          className="h-full w-auto object-contain max-h-20 mix-blend-multiply"
+                          onError={(e) => { e.target.onerror = null; e.target.src = defaultCoilImage; }}
+                        />
+                        <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded bg-white/95 text-[8px] font-mono font-bold text-red-600 border border-slate-200 truncate max-w-[90px]">
+                          {item.oem || item.id}
+                        </span>
+                      </div>
+
+                      {/* Título & Modelo */}
+                      <h4 className="font-bold text-xs text-slate-900 line-clamp-2 leading-tight" title={item.name}>
+                        {item.name}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                        {item.carModel || 'Universal'}
+                      </p>
+                    </div>
+
+                    {/* Stock & Controles +/- */}
+                    <div className="space-y-1.5 pt-1.5 border-t border-slate-200/60">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-400 font-medium">Existencia:</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleQuickStock(item, -1)}
+                            disabled={Number(item.stock) <= 0}
+                            className="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold flex items-center justify-center cursor-pointer disabled:opacity-30"
+                          >
+                            -
+                          </button>
+                          <span className={`font-mono font-black px-1 ${
+                            isOutOfStock ? 'text-rose-600' : isCriticalStock ? 'text-amber-600' : 'text-emerald-600'
+                          }`}>
+                            {item.stock}
+                          </span>
+                          <button
+                            onClick={() => handleQuickStock(item, 1)}
+                            className="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold flex items-center justify-center cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Precios */}
+                      <div className="flex items-baseline justify-between text-[11px]">
+                        <span className="font-black text-slate-900 font-mono">${price.toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-400 font-mono">C: ${cost.toFixed(2)}</span>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex items-center justify-end gap-1 pt-1 border-t border-slate-200/40">
+                        <button
+                          onClick={() => onOpenEditModal(item)}
+                          className="flex-1 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Edit3 className="w-3 h-3 text-sky-600" />
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCoil(item.id, item.name)}
+                          className="p-1 rounded-lg bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Vista Escritorio: Tabla de 8 Columnas */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px]">

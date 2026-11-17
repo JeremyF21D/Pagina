@@ -13,7 +13,7 @@ import { useCart } from '../../context/CartContext';
  *    - Brief success checkmark ("¡Añadido!") appears
  *    - Updates cart and returns to idle
  */
-export function AddToCartButton({ productId, stock, className = '' }) {
+export function AddToCartButton({ productId, stock, className = '', label = 'Añadir' }) {
   const { addToCart } = useCart();
   const [animState, setAnimState] = useState('idle'); // 'idle' | 'animating' | 'done'
   const isBusyRef = useRef(false);
@@ -29,7 +29,7 @@ export function AddToCartButton({ productId, stock, className = '' }) {
     setTimeout(() => {
       addToCart(productId, 1);
 
-      const cartEl = document.getElementById('header-cart-btn');
+      const cartEl = document.getElementById('sabrina-cart-btn') || document.getElementById('header-cart-btn');
       if (cartEl) {
         cartEl.classList.remove('cart-bump-active');
         void cartEl.offsetWidth; // Force reflow
@@ -79,7 +79,7 @@ export function AddToCartButton({ productId, stock, className = '' }) {
       {/* 1. Default Label: Icon + Text */}
       <span className="btn-label-default">
         <i className="fa-solid fa-cart-plus text-[10px]"></i>
-        <span>Comprar</span>
+        <span>{label}</span>
       </span>
 
       {/* 2. Micro-Interaction Track: Cart + Dropping Box */}

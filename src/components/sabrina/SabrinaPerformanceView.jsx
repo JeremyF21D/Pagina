@@ -723,60 +723,60 @@ export function SabrinaPerformanceView({ onNavigateTab }) {
       </div>
 
       {/* 2. Tarjetas KPI de Rendimiento Adaptadas a Sabrina */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         
-        <div className="sabrina-card p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="sabrina-card p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Total Facturado
           </span>
-          <div className="text-3xl font-black text-slate-900 font-mono">
+          <div className="text-lg sm:text-3xl font-black text-slate-900 font-mono">
             {formatUSD(globalKpis.totalRevenue)}
           </div>
-          <span className="text-xs text-amber-600 font-semibold font-mono">
+          <span className="text-[10px] sm:text-xs text-amber-600 font-semibold font-mono truncate block">
             ≈ Bs. {(globalKpis.totalRevenue * binanceRate).toLocaleString('es-VE', { maximumFractionDigits: 0 })}
           </span>
         </div>
 
-        <div className="sabrina-card p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.08s' }}>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="sabrina-card p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.08s' }}>
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Unidades Vendidas
           </span>
-          <div className="text-3xl font-black text-red-600 font-mono">
-            {globalKpis.totalUnitsSold} <span className="text-xs text-slate-400">uds</span>
+          <div className="text-lg sm:text-3xl font-black text-red-600 font-mono">
+            {globalKpis.totalUnitsSold} <span className="text-[10px] sm:text-xs text-slate-400">uds</span>
           </div>
-          <span className="text-xs text-slate-400 font-semibold">
-            {globalKpis.totalOrdersCount} órdenes procesadas
+          <span className="text-[10px] sm:text-xs text-slate-400 font-semibold truncate block">
+            {globalKpis.totalOrdersCount} órdenes
           </span>
         </div>
 
-        <div className="sabrina-card p-5 rounded-3xl bg-emerald-50/40 border border-emerald-200 shadow-sm space-y-1" style={{ animationDelay: '0.16s' }}>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+        <div className="sabrina-card p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-emerald-50/40 border border-emerald-200 shadow-sm space-y-1" style={{ animationDelay: '0.16s' }}>
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-400">
             Ganancia Neta
           </span>
-          <div className="text-3xl font-black text-emerald-600 font-mono">
+          <div className="text-lg sm:text-3xl font-black text-emerald-600 font-mono">
             +{formatUSD(globalKpis.netProfit)}
           </div>
-          <span className="text-xs text-emerald-700 font-semibold font-mono">
-            Margen: {globalKpis.avgMargin}% de utilidad
+          <span className="text-[10px] sm:text-xs text-emerald-700 font-semibold font-mono truncate block">
+            Margen: {globalKpis.avgMargin}%
           </span>
         </div>
 
-        <div className="sabrina-card p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.24s' }}>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Tasa Binance P2P / BCV
+        <div className="sabrina-card p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1" style={{ animationDelay: '0.24s' }}>
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            Tasa P2P / BCV
           </span>
-          <div className="text-2xl font-black text-amber-600 font-mono">
+          <div className="text-lg sm:text-2xl font-black text-amber-600 font-mono truncate">
             Bs. {binanceRate.toFixed(2)}
           </div>
-          <span className="text-xs text-slate-400 font-mono">
-            BCV Oficial: Bs. {bcvRate?.toFixed(2)}
+          <span className="text-[10px] sm:text-xs text-slate-400 font-mono truncate block">
+            BCV: Bs. {bcvRate?.toFixed(2)}
           </span>
         </div>
 
       </div>
 
       {/* 3. GRÁFICA LINEAL CON SELECTOR DE REPUESTOS ("LOS REPUESTOS QUE QUIERO QUE SE GRAFIQUEN") */}
-      <div ref={chartSectionRef} className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4 animate-fadeInUp">
+      <div ref={chartSectionRef} className="p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4 animate-fadeInUp overflow-hidden">
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div>
