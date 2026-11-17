@@ -405,8 +405,8 @@ export function SabrinaInventoryView({
                         </span>
                       </div>
 
-                      {/* Título & Modelo */}
-                      <h4 className="font-bold text-xs text-slate-900 line-clamp-2 leading-tight" title={item.name}>
+                      {/* Título & Modelo (Fuente Montserrat) */}
+                      <h4 className="font-bold text-xs text-slate-900 line-clamp-2 leading-tight font-sans" style={{ fontFamily: "'Montserrat', sans-serif" }} title={item.name}>
                         {item.name}
                       </h4>
                       <p className="text-[10px] text-slate-500 truncate mt-0.5">

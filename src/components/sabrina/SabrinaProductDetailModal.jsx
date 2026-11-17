@@ -88,7 +88,10 @@ export function SabrinaProductDetailModal({ product, isOpen, onClose, onAddToCar
               <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                 {product.brand || 'OEM Direct'}
               </span>
-              <h4 className="font-extrabold text-base sm:text-lg text-slate-900 mt-1.5 leading-snug">
+              <h4 
+                className="font-extrabold text-base sm:text-lg text-slate-900 mt-1.5 leading-snug font-sans"
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
+              >
                 {product.name}
               </h4>
             </div>

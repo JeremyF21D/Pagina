@@ -580,8 +580,8 @@ export function SabrinaCatalogView({
                             onError={(e) => { e.target.onerror = null; e.target.src = defaultCoilImage; }}
                           />
 
-                          {/* Opción 3: Badge OEM flotante en la esquina de la foto */}
-                          {cardDesignMode === 'badge' && (
+                          {/* Opción 3: Badge OEM flotante en la esquina de la foto (Solo Admin) */}
+                          {cardDesignMode === 'badge' && isAdmin && (
                             <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white/95 backdrop-blur-xs border border-slate-200 text-[8px] sm:text-[10px] font-mono font-bold text-red-600 shadow-xs truncate max-w-[120px]">
                               OEM: {primaryOem}
                             </div>
@@ -593,10 +593,11 @@ export function SabrinaCatalogView({
                           </div>
                         </div>
 
-                        {/* Título del Repuesto */}
+                        {/* Título del Repuesto (Fuente Original Montserrat) */}
                         <h3 
                           onClick={() => onOpenProductDetail(item)}
-                          className="font-extrabold text-xs sm:text-base text-slate-900 tracking-tight group-hover:text-red-600 transition leading-snug line-clamp-2 cursor-pointer min-h-[2rem] sm:min-h-0"
+                          className="font-extrabold text-xs sm:text-base text-slate-900 tracking-tight group-hover:text-red-600 transition leading-snug line-clamp-2 cursor-pointer min-h-[2rem] sm:min-h-0 font-sans"
+                          style={{ fontFamily: "'Montserrat', sans-serif" }}
                           title={item.name}
                         >
                           {item.name}
@@ -625,19 +626,21 @@ export function SabrinaCatalogView({
                         )}
 
                         {cardDesignMode === 'micro' && (
-                          /* 🏷️ OPCIÓN 2: MICRO-OEM COMPACTO EN 1 LÍNEA */
+                          /* 🏷️ OPCIÓN 2: MICRO-OEM COMPACTO EN 1 LÍNEA (OEM visible solo para Admin) */
                           <div className="mt-1.5 sm:mt-2.5 flex items-center justify-between gap-1 sm:gap-2 text-[10px] sm:text-xs">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 truncate max-w-[95px] sm:max-w-none">
-                                OEM: {primaryOem}
-                              </span>
-                              {extraOemCount > 0 && (
-                                <span className="text-[8px] sm:text-[9px] font-bold text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200 shrink-0" title="Ver códigos adicionales en Ficha">
-                                  +{extraOemCount}
+                            {isAdmin && (
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="text-[9px] sm:text-[10px] font-mono font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 truncate max-w-[95px] sm:max-w-none">
+                                  OEM: {primaryOem}
                                 </span>
-                              )}
-                            </div>
-                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 flex items-center gap-0.5 sm:gap-1 shrink-0">
+                                {extraOemCount > 0 && (
+                                  <span className="text-[8px] sm:text-[9px] font-bold text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200 shrink-0" title="Ver códigos adicionales en Ficha">
+                                    +{extraOemCount}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 flex items-center gap-0.5 sm:gap-1 shrink-0 ml-auto">
                               <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
                               <span>Probado</span>
                             </span>
@@ -653,12 +656,14 @@ export function SabrinaCatalogView({
                         )}
 
                         {cardDesignMode === 'classic' && (
-                          /* 📋 OPCIÓN ACTUAL: OEM COMPLETO */
+                          /* 📋 OPCIÓN ACTUAL: OEM COMPLETO (Solo Admin) */
                           <div className="mt-1.5 sm:mt-2.5 flex items-center gap-1 sm:gap-2">
-                            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 truncate max-w-[100px] sm:max-w-none">
-                              OEM: {rawOem}
-                            </span>
-                            <span className="text-[9px] sm:text-[11px] text-slate-400 flex items-center gap-1 shrink-0">
+                            {isAdmin && (
+                              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 truncate max-w-[100px] sm:max-w-none">
+                                OEM: {rawOem}
+                              </span>
+                            )}
+                            <span className="text-[9px] sm:text-[11px] text-slate-400 flex items-center gap-1 shrink-0 ml-auto">
                               <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
                               <span>Probado</span>
                             </span>
