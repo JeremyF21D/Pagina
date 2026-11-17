@@ -294,10 +294,11 @@ export function normalizeCoilRecord(raw, existingCoils = []) {
   const costVal = parseFloat(rawCost);
   const safeCost = !isNaN(costVal) && costVal >= 0 ? costVal : 0;
 
-  // Old Price / Precio Anterior (solo si es un número válido > 0; de lo contrario igual al precio normal)
+  // Old Price / Precio Anterior (si es > precio, se mantiene; si es menor o igual, se genera precio de lista de referencia)
   const rawOldPrice = raw.oldPrice ?? raw.old_price ?? raw.precio_anterior ?? raw.precio_lista ?? raw.precio_viejo;
   const oldPriceVal = parseFloat(rawOldPrice);
-  const safeOldPrice = !isNaN(oldPriceVal) && oldPriceVal > 0 ? oldPriceVal : safePrice;
+  const calculatedAnchor = safePrice > 0 ? (safePrice <= 10 ? safePrice + 3 : Math.round(safePrice * 1.25)) : safePrice;
+  const safeOldPrice = !isNaN(oldPriceVal) && oldPriceVal > safePrice ? oldPriceVal : calculatedAnchor;
 
   // Stock / Cantidad
   const rawStock = raw.stock ?? raw.cantidad ?? raw.existencia ?? raw.inventario ?? raw.unidades ?? raw.qty ?? 0;

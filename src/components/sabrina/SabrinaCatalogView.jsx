@@ -516,6 +516,13 @@ export function SabrinaCatalogView({
             const priceVES = priceUSD * activeRate;
             const isCriticalStock = item.stock > 0 && item.stock <= 2;
             const isOutOfStock = item.stock <= 0;
+            const rawOldPrice = Number(item.oldPrice || item.old_price || 0);
+            const effectiveOldPrice = rawOldPrice > priceUSD
+              ? rawOldPrice
+              : (priceUSD > 0 ? (priceUSD <= 10 ? priceUSD + 3 : Math.round(priceUSD * 1.25)) : 0);
+            const discountPct = effectiveOldPrice > priceUSD
+              ? Math.round(((effectiveOldPrice - priceUSD) / effectiveOldPrice) * 100)
+              : 0;
 
             return (
               <div
@@ -666,8 +673,21 @@ export function SabrinaCatalogView({
                 {/* Footer de Tarjeta: Precios & Botón de Añadir Directo */}
                 <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-xl sm:text-2xl font-black text-slate-900 font-sans tracking-tight">
-                      ${priceUSD.toFixed(2)} <span className="text-xs font-semibold text-slate-400">USD</span>
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span className="text-xl sm:text-2xl font-black text-slate-900 font-sans tracking-tight">
+                        ${priceUSD.toFixed(2)}
+                      </span>
+                      {effectiveOldPrice > priceUSD && (
+                        <span className="text-xs sm:text-sm text-slate-400 line-through font-mono font-semibold">
+                          ${effectiveOldPrice.toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-xs font-semibold text-slate-400">USD</span>
+                      {discountPct > 0 && (
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          -{discountPct}%
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-red-600 font-bold font-mono">
                       Bs. {priceVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

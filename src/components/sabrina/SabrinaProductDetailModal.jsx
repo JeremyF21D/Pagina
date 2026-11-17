@@ -14,6 +14,14 @@ export function SabrinaProductDetailModal({ product, isOpen, onClose, onAddToCar
   const rate = Number(binanceRate) || 1076.87;
   const priceVES = priceUSD * rate;
 
+  const rawOldPrice = Number(product.oldPrice || product.old_price || 0);
+  const effectiveOldPrice = rawOldPrice > priceUSD
+    ? rawOldPrice
+    : (priceUSD > 0 ? (priceUSD <= 10 ? priceUSD + 3 : Math.round(priceUSD * 1.25)) : 0);
+  const discountPct = effectiveOldPrice > priceUSD
+    ? Math.round(((effectiveOldPrice - priceUSD) / effectiveOldPrice) * 100)
+    : 0;
+
   const handleWhatsAppInquiry = () => {
     const phone = normalizeWaPhone(ownerPhone || '04126497478');
     const msg = encodeURIComponent(
@@ -111,18 +119,30 @@ export function SabrinaProductDetailModal({ product, isOpen, onClose, onAddToCar
             {/* Precio */}
             <div className="flex items-baseline justify-between pt-1">
               <div>
-                <span className="text-2xl sm:text-3xl font-black text-slate-900">
-                  ${priceUSD.toFixed(2)}
-                </span>
-                <span className="text-xs font-semibold text-slate-400 ml-1.5">USD</span>
-                <div className="text-xs text-red-600 font-bold">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                    ${priceUSD.toFixed(2)}
+                  </span>
+                  {effectiveOldPrice > priceUSD && (
+                    <span className="text-sm sm:text-base text-slate-400 line-through font-mono font-semibold">
+                      ${effectiveOldPrice.toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold text-slate-400">USD</span>
+                  {discountPct > 0 && (
+                    <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      -{discountPct}% OFF
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-red-600 font-bold font-mono">
                   ~Bs. {priceVES.toLocaleString('es-VE', { minimumFractionDigits: 2 })}
                 </div>
               </div>
 
               <div className="text-right text-[11px] text-slate-500">
-                <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                  <Truck className="w-3 h-3" />
+                <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                  <Truck className="w-3 h-3 text-red-600" />
                   <span>Entrega Inmediata</span>
                 </span>
               </div>
