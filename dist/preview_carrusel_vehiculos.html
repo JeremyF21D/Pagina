@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista Previa Exacta • Carrusel de Vehículos Entrando | JF Auto Parts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0d0e12;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+
+    /* ========================================================= */
+    /* FÍSICA REAL DE VEHÍCULO FRENANDO (INERCIA + SUSPENSIÓN)   */
+    /* ========================================================= */
+    @keyframes realCarDriveIn {
+      0% {
+        opacity: 0;
+        transform: translateX(115%) scale(0.96) rotate(0deg) translateY(0);
+        filter: blur(3px);
+      }
+      18% {
+        opacity: 1;
+        filter: blur(0px);
+      }
+      /* Entrada veloz acercándose al centro */
+      60% {
+        transform: translateX(16%) scale(0.99) rotate(0deg) translateY(0);
+      }
+      /* El conductor pisa el freno a fondo: morro se inclina hacia abajo */
+      78% {
+        transform: translateX(2.5%) scale(1) rotate(-1.6deg) translateY(4px);
+      }
+      /* Frenazo completo: rebote de la suspensión hacia arriba */
+      89% {
+        transform: translateX(-0.6%) scale(1) rotate(0.8deg) translateY(-2px);
+      }
+      /* Asentamiento suave de los amortiguadores */
+      95% {
+        transform: translateX(0.2%) scale(1) rotate(-0.25deg) translateY(0.8px);
+      }
+      /* Posición de reposo absoluto */
+      100% {
+        transform: translateX(0%) scale(1) rotate(0deg) translateY(0);
+      }
+    }
+
+    /* Animación del auto saliendo suavemente hacia la izquierda */
+    @keyframes realCarDriveOut {
+      0% {
+        opacity: 1;
+        transform: translateX(0%) scale(1) rotate(0deg) translateY(0);
+        filter: blur(0px);
+      }
+      20% {
+        /* Aceleración inicial: suspensión trasera se comprime levemente */
+        transform: translateX(-8%) scale(0.99) rotate(0.8deg) translateY(-1px);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(-115%) scale(0.95) rotate(0deg) translateY(0);
+        filter: blur(3px);
+      }
+    }
+
+    /* Vibración sutil de motor encendido en ralentí (Engine Idle) */
+    @keyframes engineIdle {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      25% {
+        transform: translateY(-0.8px) rotate(0.06deg);
+      }
+      50% {
+        transform: translateY(0.5px) rotate(-0.05deg);
+      }
+      75% {
+        transform: translateY(-0.5px) rotate(0.04deg);
+      }
+    }
+
+    /* Animación de entrada de texto */
+    @keyframes textSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Animación de salida de texto */
+    @keyframes textSlideOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-12px);
+      }
+    }
+
+    .car-entrance {
+      animation: realCarDriveIn var(--anim-speed, 0.95s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity, filter;
+    }
+
+    .car-exit {
+      animation: realCarDriveOut var(--anim-speed, 0.75s) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      will-change: transform, opacity, filter;
+    }
+
+    .car-idle {
+      animation: engineIdle 0.18s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    .text-entering {
+      animation: textSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .text-exiting {
+      animation: textSlideOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* Sombra de contacto realista en el suelo para autos transparentes */
+    .car-ground-shadow {
+      position: absolute;
+      bottom: 6px;
+      left: 10%;
+      right: 8%;
+      height: 22px;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.35) 45%, transparent 75%);
+      filter: blur(7px);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: scaleY(0.65);
+      transition: all 0.3s ease;
+    }
+
+    /* Reflejo metálico sutil del banner */
+    .metallic-shine {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.08) 100%);
+    }
+
+    /* Haz de luz de faros delanteros encendidos */
+    .headlight-beam {
+      position: absolute;
+      top: 45%;
+      left: -8%;
+      width: 48%;
+      height: 52%;
+      background: radial-gradient(ellipse at 85% 40%, rgba(255, 255, 255, 0.35) 0%, rgba(220, 240, 255, 0.18) 35%, rgba(180, 220, 255, 0.05) 60%, transparent 75%);
+      clip-path: polygon(100% 42%, 0% 15%, 0% 88%, 100% 68%);
+      filter: blur(8px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease 0.3s;
+    }
+
+    .headlight-flare {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 15%, #93c5fd 55%, transparent 75%);
+      filter: drop-shadow(0 0 10px #60a5fa) drop-shadow(0 0 18px #ffffff);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.2s;
+    }
+
+    .lights-on .headlight-beam,
+    .lights-on .headlight-flare {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4 sm:p-8">
+
+  <!-- Header Superior de la Vista Previa -->
+  <header class="w-full max-w-6xl mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-2xl bg-gradient-to-br from-[#de2420] to-red-800 flex items-center justify-center text-white text-base font-black shadow-lg shadow-red-900/40">
+        JF
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base sm:text-lg font-black text-white tracking-tight">JF AUTO PARTS</h1>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#de2420]/20 text-red-400 border border-[#de2420]/40">
+            FÍSICA REAL + MOTOR ENCENDIDO
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">
+          Auto entra desde la derecha, frena y amortigua al medio con motor encendido y cambio dinámico de texto
+        </p>
+      </div>
+    </div>
+
+    <!-- Controles Rápidos -->
+    <div class="flex flex-wrap items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs">
+      <button onclick="toggleLights()" id="lightsBtn" class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5 cursor-pointer">
+        <i class="fa-solid fa-lightbulb text-amber-400"></i>
+        <span>Faros: Encendidos</span>
+      </button>
+
+      <div class="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
+
+      <span class="text-slate-400 font-bold px-1 text-[11px] hidden sm:inline">Velocidad:</span>
+      <button onclick="changeSpeed(0.75, this)" class="speed-btn px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-semibold transition">Rápida (0.75s)</button>
+      <button onclick="changeSpeed(0.95, this)" class="speed-btn px-2.5 py-1 rounded-xl bg-[#de2420] text-white font-bold transition shadow">Normal (0.95s)</button>
+      <button onclick="changeSpeed(1.35, this)" class="speed-btn px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-semibold transition">Suave (1.35s)</button>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL: BANNER CON FÍSICA REAL Y TEXTO DINÁMICO -->
+  <main class="w-full max-w-6xl space-y-4">
+
+    <!-- Selector de Vehículo Superior -->
+    <div class="flex items-center justify-between px-2 flex-wrap gap-2">
+      <div class="flex items-center gap-2 text-xs flex-wrap">
+        <span class="text-slate-400 font-bold">Auto en pantalla:</span>
+        <button onclick="selectCar(0)" id="pill-0" class="car-pill px-3 py-1.5 rounded-xl font-bold transition text-xs bg-[#de2420] text-white shadow">
+          1. Nissan Tiida 2008 (1.8L)
+        </button>
+        <button onclick="selectCar(1)" id="pill-1" class="car-pill px-3 py-1.5 rounded-xl font-bold transition text-xs bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+          2. Sentra B15 2008 (1.8L)
+        </button>
+        <button onclick="selectCar(2)" id="pill-2" class="car-pill px-3 py-1.5 rounded-xl font-bold transition text-xs bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+          3. Nissan Almera 2008 (1.8L)
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="replayCurrent()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl border border-slate-700 flex items-center gap-1.5 transition cursor-pointer shadow-sm" title="Repetir frenado">
+          <i class="fa-solid fa-rotate-right text-[11px] text-red-400"></i>
+          <span>Repetir Entrada</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- EL BANNER COMPLETO -->
+    <div
+      id="heroBannerContainer"
+      class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#cfd4db] via-[#ebedf2] to-[#d6dae1] border border-[#b8bcc6] shadow-2xl select-none group min-h-[340px] sm:min-h-[400px] flex items-center"
+      onmouseenter="pauseTimer()"
+      onmouseleave="resumeTimer()"
+    >
+      <!-- Brillo metálico superior idéntico al banner actual -->
+      <div class="absolute inset-0 metallic-shine pointer-events-none"></div>
+
+      <!-- Cuadrícula de 12 columnas -->
+      <div class="relative z-10 w-full px-5 py-7 sm:px-8 sm:py-9 lg:px-12 lg:py-10 grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-8 items-center">
+        
+        <!-- ======================================================== -->
+        <!-- LADO IZQUIERDO: TEXTO DINÁMICO SINCRONIZADO CON EL AUTO -->
+        <!-- ======================================================== -->
+        <div id="bannerTextContainer" class="md:col-span-7 space-y-3 sm:space-y-4 text-left text-entering">
+          
+          <!-- Badge Tag rojo de Especialidad -->
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/10 text-[#de2420] text-[11px] sm:text-xs font-black uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-[#de2420] animate-pulse"></span>
+            <span id="bannerBadgeText">ESPECIALIDAD NISSAN TIIDA 2008</span>
+          </div>
+
+          <!-- Título Principal Dinámico -->
+          <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-[#111317] tracking-tight leading-[1.08] uppercase font-sans">
+            <span id="bannerTitleLine1">BOBINAS & REPUESTOS OEM</span> <br />
+            <span id="bannerTitleLine2" class="text-[#de2420] font-black">
+              PARA NISSAN TIIDA 1.8L
+            </span>
+          </h1>
+
+          <!-- Párrafo Descriptivo Dinámico -->
+          <p id="bannerDescription" class="text-xs sm:text-sm text-slate-700 font-medium max-w-lg leading-relaxed">
+            Bobinas de encendido directas, cuerpos de aceleración electrónica, sensores MAF y conectores originales testeados para Tiida.
+          </p>
+
+          <!-- Especificaciones Técnicas del Modelo (Inspiradas en el video) -->
+          <div id="bannerSpecsRow" class="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-bold">
+            <span class="px-2.5 py-1 rounded-lg bg-black/10 text-slate-800 border border-black/10 flex items-center gap-1.5">
+              <i class="fa-solid fa-gauge-high text-[#de2420]"></i>
+              <span id="specMotor">Motor: MR18DE 1.8L</span>
+            </span>
+            <span class="px-2.5 py-1 rounded-lg bg-black/10 text-slate-800 border border-black/10 flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-amber-500"></i>
+              <span id="specBobina">Bobina: 3 Pines OEM</span>
+            </span>
+            <span class="px-2.5 py-1 rounded-lg bg-black/10 text-slate-800 border border-black/10 flex items-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-emerald-600"></i>
+              <span id="specStock">Maracaibo • Entrega Inmediata</span>
+            </span>
+          </div>
+
+          <!-- Botones de Acción Idénticos -->
+          <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-2">
+            <a
+              id="btnCatalogoLink"
+              href="https://jfautoparts.vercel.app"
+              target="_blank"
+              class="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#de2420] hover:bg-[#c81e1a] active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-[#de2420]/30 transition flex items-center gap-2 cursor-pointer"
+            >
+              <i class="fa-solid fa-boxes-stacked text-xs sm:text-sm"></i>
+              <span>Explorar Repuestos de este Modelo</span>
+            </a>
+
+            <a
+              id="btnWhatsappLink"
+              href="https://wa.me/584126497478?text=Hola%20JF%20Auto%20Parts,%20deseo%20consultar%20repuestos%20para%20Nissan%20Tiida%202008"
+              target="_blank"
+              class="px-5 py-2.5 sm:px-6 sm:py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
+            >
+              <i class="fa-brands fa-whatsapp text-sm sm:text-base"></i>
+              <span>Consultar por WhatsApp</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- LADO DERECHO: AUTO CON FÍSICA REAL Y MOTOR ENCENDIDO     -->
+        <!-- ======================================================== -->
+        <div class="md:col-span-5 relative flex items-center justify-center min-h-[220px] sm:min-h-[280px] overflow-visible">
+          
+          <!-- Contenedor del Escenario del Vehículo -->
+          <div id="carStage" class="relative w-full flex items-center justify-center overflow-visible lights-on">
+            
+            <!-- Sombra de Piso Realista (se adapta a los neumáticos) -->
+            <div id="carGroundShadow" class="car-ground-shadow"></div>
+
+            <!-- Haz de luz de faros delanteros proyectado al suelo -->
+            <div class="headlight-beam"></div>
+
+            <!-- Destellos de faros delanteros (Posición adaptada a los faros del auto) -->
+            <div id="flareLeft" class="headlight-flare" style="top: 52%; left: 16%;"></div>
+            <div id="flareRight" class="headlight-flare" style="top: 48%; left: 34%; opacity: 0.85;"></div>
+
+            <!-- Etiqueta Flotante con el Nombre del Auto Actual -->
+            <div id="carModelBadge" class="absolute -top-7 right-2 sm:right-4 px-3 py-1 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/60 text-[10px] font-mono font-bold text-white shadow-lg flex items-center gap-2 transition-all duration-300">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span id="carBadgeText">Nissan Tiida 2008 • Motor Encendido</span>
+            </div>
+
+            <!-- Contenedor del Chasis del Auto (aplica la física de amortiguación y luego ralentí) -->
+            <div id="carChassis" class="relative w-full flex items-center justify-center car-entrance">
+              <img
+                id="carImage"
+                src="/cars/tiida_2008_cutout.png"
+                alt="Nissan Tiida 2008"
+                class="w-full max-w-[340px] sm:max-w-[430px] lg:max-w-[480px] object-contain drop-shadow-[0_18px_24px_rgba(0,0,0,0.38)] select-none pointer-events-none"
+              />
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Flechas de Navegación Lateral -->
+      <button
+        type="button"
+        onclick="prevCar()"
+        class="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/15 hover:bg-black/30 text-slate-900 hover:text-black flex items-center justify-center transition active:scale-90 cursor-pointer z-20 backdrop-blur-xs opacity-70 hover:opacity-100"
+        title="Vehículo Anterior"
+        aria-label="Vehículo anterior"
+      >
+        <i class="fa-solid fa-chevron-left text-xs sm:text-sm"></i>
+      </button>
+
+      <button
+        type="button"
+        onclick="nextCar()"
+        class="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/15 hover:bg-black/30 text-slate-900 hover:text-black flex items-center justify-center transition active:scale-90 cursor-pointer z-20 backdrop-blur-xs opacity-70 hover:opacity-100"
+        title="Siguiente Vehículo"
+        aria-label="Siguiente vehículo"
+      >
+        <i class="fa-solid fa-chevron-right text-xs sm:text-sm"></i>
+      </button>
+
+      <!-- Puntos de Paginación Centrales -->
+      <div class="absolute bottom-2.5 sm:bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+        <button onclick="selectCar(0)" id="dot-0" class="w-6 h-2 rounded-full bg-[#de2420] transition-all duration-300 shadow-sm cursor-pointer"></button>
+        <button onclick="selectCar(1)" id="dot-1" class="w-2 h-2 rounded-full bg-slate-500/50 hover:bg-slate-700/80 transition-all duration-300 cursor-pointer"></button>
+        <button onclick="selectCar(2)" id="dot-2" class="w-2 h-2 rounded-full bg-slate-500/50 hover:bg-slate-700/80 transition-all duration-300 cursor-pointer"></button>
+      </div>
+
+    </div>
+
+    <!-- Panel de Detalles de la Física Implementada -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+      <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-1.5">
+        <div class="flex items-center gap-2 text-white font-bold">
+          <i class="fa-solid fa-car-side text-red-500"></i>
+          <span>1. Frenado Realista</span>
+        </div>
+        <p class="text-slate-400 leading-relaxed">
+          El auto entra con velocidad desde la derecha; al aproximarse al centro, el morro se hunde por la inercia de frenado (<code class="text-red-300">rotate(-1.6deg)</code>) y luego los amortiguadores rebotan suavemente hasta estabilizarse.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-1.5">
+        <div class="flex items-center gap-2 text-white font-bold">
+          <i class="fa-solid fa-fire-flame-curved text-amber-400"></i>
+          <span>2. Motor Encendido en Ralentí</span>
+        </div>
+        <p class="text-slate-400 leading-relaxed">
+          Una vez detenido, el auto mantiene una microvibración armónica continua (<code class="text-amber-300">engine-idle</code>) y faros encendidos con haz de luz en el suelo, simulando el motor encendido listo para marchar.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-1.5">
+        <div class="flex items-center gap-2 text-white font-bold">
+          <i class="fa-solid fa-repeat text-emerald-400"></i>
+          <span>3. Texto Sincronizado</span>
+        </div>
+        <p class="text-slate-400 leading-relaxed">
+          Al cambiar de auto, todo el bloque de texto izquierdo se actualiza con una transición fluida mostrando el motor exacto, repuestos especializados y enlace de WhatsApp adaptado al modelo.
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const CARS = [
+      {
+        id: 'tiida',
+        name: 'Nissan Tiida 2008',
+        badge: 'ESPECIALIDAD NISSAN TIIDA 2008',
+        titleLine1: 'BOBINAS & INYECCIÓN OEM',
+        titleLine2: 'PARA NISSAN TIIDA 1.8L',
+        description: 'Bobinas de encendido directas, cuerpos de aceleración electrónica, sensores MAF y conectores originales garantizados para tu Tiida.',
+        motor: 'Motor: MR18DE 1.8L',
+        bobina: 'Bobina: 3 Pines OEM',
+        stock: 'Maracaibo • Entrega Inmediata',
+        whatsappMsg: 'Hola JF Auto Parts, deseo consultar repuestos para Nissan Tiida 2008',
+        image: '/cars/tiida_2008_cutout.png',
+        flareLeft: { top: '53%', left: '16%' },
+        flareRight: { top: '49%', left: '33%' }
+      },
+      {
+        id: 'sentra',
+        name: 'Nissan Sentra B15 2008',
+        badge: 'ESPECIALIDAD SENTRA B15 2008',
+        titleLine1: 'SISTEMA DE ENCENDIDO OEM',
+        titleLine2: 'PARA SENTRA B15 1.8L',
+        description: 'Bobinas independientes de alto voltaje, sensores de posición de cigüeñal y levas, y conectores reforzados anti-falla.',
+        motor: 'Motor: QG18DE 1.8L',
+        bobina: 'Bobina: 3 Pines OEM',
+        stock: 'Maracaibo • Entrega Inmediata',
+        whatsappMsg: 'Hola JF Auto Parts, deseo consultar repuestos para Nissan Sentra B15 2008',
+        image: '/cars/sentra_b15_2008_cutout.png',
+        flareLeft: { top: '52%', left: '14%' },
+        flareRight: { top: '47%', left: '31%' }
+      },
+      {
+        id: 'almera',
+        name: 'Nissan Almera 2008',
+        badge: 'ESPECIALIDAD NISSAN ALMERA 2008',
+        titleLine1: 'ENCENDIDO & INYECCIÓN OEM',
+        titleLine2: 'PARA NISSAN ALMERA 1.8L',
+        description: 'Soluciona tirones, fallas de chispa y pérdida de potencia con repuestos testeados bajo especificaciones de fábrica.',
+        motor: 'Motor: QG16 / QG18DE',
+        bobina: 'Bobina: Original & OEM',
+        stock: 'Maracaibo • Entrega Inmediata',
+        whatsappMsg: 'Hola JF Auto Parts, deseo consultar repuestos para Nissan Almera 2008',
+        image: '/cars/almera_2008_cutout.png',
+        flareLeft: { top: '51%', left: '15%' },
+        flareRight: { top: '48%', left: '32%' }
+      }
+    ];
+
+    let currentCarIdx = 0;
+    let autoTimer = null;
+    let isPaused = false;
+    let animSpeed = 0.95;
+    let lightsEnabled = true;
+    let idleTimer = null;
+
+    function toggleLights() {
+      lightsEnabled = !lightsEnabled;
+      const stage = document.getElementById('carStage');
+      const btn = document.getElementById('lightsBtn');
+      if (lightsEnabled) {
+        stage.classList.add('lights-on');
+        btn.className = 'px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5 cursor-pointer';
+        btn.innerHTML = '<i class="fa-solid fa-lightbulb text-amber-400"></i><span>Faros: Encendidos</span>';
+      } else {
+        stage.classList.remove('lights-on');
+        btn.className = 'px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 border border-slate-700 font-bold transition flex items-center gap-1.5 cursor-pointer';
+        btn.innerHTML = '<i class="fa-regular fa-lightbulb text-slate-500"></i><span>Faros: Apagados</span>';
+      }
+    }
+
+    function changeSpeed(val, btn) {
+      animSpeed = val;
+      document.documentElement.style.setProperty('--anim-speed', val + 's');
+      document.querySelectorAll('.speed-btn').forEach(b => {
+        b.className = 'speed-btn px-2.5 py-1 rounded-xl text-slate-400 hover:text-white font-semibold transition';
+      });
+      btn.className = 'speed-btn px-2.5 py-1 rounded-xl bg-[#de2420] text-white font-bold transition shadow';
+      replayCurrent();
+    }
+
+    function updateTextContent(data) {
+      const textContainer = document.getElementById('bannerTextContainer');
+      
+      // Animación de salida breve del texto
+      textContainer.classList.remove('text-entering');
+      textContainer.classList.add('text-exiting');
+
+      setTimeout(() => {
+        // Reemplazar textos
+        document.getElementById('bannerBadgeText').textContent = data.badge;
+        document.getElementById('bannerTitleLine1').textContent = data.titleLine1;
+        document.getElementById('bannerTitleLine2').textContent = data.titleLine2;
+        document.getElementById('bannerDescription').textContent = data.description;
+        document.getElementById('specMotor').textContent = data.motor;
+        document.getElementById('specBobina').textContent = data.bobina;
+        document.getElementById('specStock').textContent = data.stock;
+        
+        // WhatsApp button link
+        document.getElementById('btnWhatsappLink').href = 
+          `https://wa.me/584126497478?text=${encodeURIComponent(data.whatsappMsg)}`;
+
+        // Animación de entrada fresca del texto
+        textContainer.classList.remove('text-exiting');
+        textContainer.classList.add('text-entering');
+      }, 180);
+    }
+
+    function renderCar(idx) {
+      const stage = document.getElementById('carStage');
+      const oldChassis = document.getElementById('carChassis');
+      const data = CARS[idx];
+
+      clearTimeout(idleTimer);
+
+      // Actualizar posición de los destellos de los faros
+      const flareLeft = document.getElementById('flareLeft');
+      const flareRight = document.getElementById('flareRight');
+      if (flareLeft && flareRight) {
+        flareLeft.style.top = data.flareLeft.top;
+        flareLeft.style.left = data.flareLeft.left;
+        flareRight.style.top = data.flareRight.top;
+        flareRight.style.left = data.flareRight.left;
+      }
+
+      // Animación de salida del auto que se retira
+      if (oldChassis) {
+        const exitChassis = oldChassis.cloneNode(true);
+        exitChassis.id = 'carChassisExit';
+        exitChassis.className = 'relative w-full flex items-center justify-center car-exit';
+        stage.appendChild(exitChassis);
+        setTimeout(() => exitChassis.remove(), animSpeed * 1000);
+      }
+
+      // Crear nuevo chasis de auto con física de frenado
+      const newChassis = document.createElement('div');
+      newChassis.id = 'carChassis';
+      newChassis.className = 'relative w-full flex items-center justify-center car-entrance';
+
+      const newImg = document.createElement('img');
+      newImg.id = 'carImage';
+      newImg.src = data.image;
+      newImg.alt = data.name;
+      newImg.className = 'w-full max-w-[340px] sm:max-w-[430px] lg:max-w-[480px] object-contain drop-shadow-[0_18px_24px_rgba(0,0,0,0.38)] select-none pointer-events-none';
+      newChassis.appendChild(newImg);
+
+      if (oldChassis) oldChassis.remove();
+      stage.appendChild(newChassis);
+
+      // Cuando termina el frenado, pasa a modo ralentí de motor encendido
+      idleTimer = setTimeout(() => {
+        if (newChassis && newChassis.parentNode) {
+          newChassis.classList.remove('car-entrance');
+          newChassis.classList.add('car-idle');
+        }
+      }, animSpeed * 1000);
+
+      // Actualizar texto del div sincronizado
+      updateTextContent(data);
+
+      // Actualizar badge flotante
+      document.getElementById('carBadgeText').textContent = `${data.name} • Motor Encendido`;
+
+      // Actualizar pills superiores
+      for (let i = 0; i < 3; i++) {
+        const pill = document.getElementById(`pill-${i}`);
+        if (i === idx) {
+          pill.className = 'car-pill px-3 py-1.5 rounded-xl font-bold transition text-xs bg-[#de2420] text-white shadow';
+        } else {
+          pill.className = 'car-pill px-3 py-1.5 rounded-xl font-bold transition text-xs bg-slate-800 text-slate-300 hover:text-white border border-slate-700';
+        }
+      }
+
+      // Actualizar puntos inferiores
+      for (let i = 0; i < 3; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (i === idx) {
+          dot.className = 'w-6 h-2 rounded-full bg-[#de2420] transition-all duration-300 shadow-sm cursor-pointer';
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-slate-500/50 hover:bg-slate-700/80 transition-all duration-300 cursor-pointer';
+        }
+      }
+    }
+
+    function replayCurrent() {
+      const chassis = document.getElementById('carChassis');
+      if (!chassis) return;
+      clearTimeout(idleTimer);
+      chassis.classList.remove('car-idle');
+      chassis.classList.remove('car-entrance');
+      void chassis.offsetWidth; // forzar reflow
+      chassis.classList.add('car-entrance');
+
+      // Animación de texto también
+      const textContainer = document.getElementById('bannerTextContainer');
+      textContainer.classList.remove('text-entering');
+      void textContainer.offsetWidth;
+      textContainer.classList.add('text-entering');
+
+      idleTimer = setTimeout(() => {
+        if (chassis && chassis.parentNode) {
+          chassis.classList.remove('car-entrance');
+          chassis.classList.add('car-idle');
+        }
+      }, animSpeed * 1000);
+    }
+
+    function selectCar(idx) {
+      if (idx === currentCarIdx) {
+        replayCurrent();
+        return;
+      }
+      currentCarIdx = idx;
+      renderCar(currentCarIdx);
+      restartAutoTimer();
+    }
+
+    function nextCar() {
+      currentCarIdx = (currentCarIdx + 1) % CARS.length;
+      renderCar(currentCarIdx);
+      restartAutoTimer();
+    }
+
+    function prevCar() {
+      currentCarIdx = (currentCarIdx === 0 ? CARS.length - 1 : currentCarIdx - 1);
+      renderCar(currentCarIdx);
+      restartAutoTimer();
+    }
+
+    function startAutoTimer() {
+      clearInterval(autoTimer);
+      autoTimer = setInterval(() => {
+        if (!isPaused) {
+          nextCar();
+        }
+      }, 5500);
+    }
+
+    function restartAutoTimer() {
+      startAutoTimer();
+    }
+
+    function pauseTimer() {
+      isPaused = true;
+    }
+
+    function resumeTimer() {
+      isPaused = false;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.documentElement.style.setProperty('--anim-speed', '0.95s');
+      renderCar(0);
+      startAutoTimer();
+    });
+  </script>
+</body>
+</html>

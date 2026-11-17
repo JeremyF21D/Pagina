@@ -59,8 +59,9 @@ export function CartProvider({ children }) {
     });
   }, []);
 
-  const addToCart = useCallback((productId, requestedQty = 1, sourceElement = null) => {
-    const product = coils.find(b => b.id === productId);
+  const addToCart = useCallback((productOrId, requestedQty = 1, sourceElement = null) => {
+    const productId = (typeof productOrId === 'object' && productOrId !== null) ? productOrId.id : productOrId;
+    const product = coils.find(b => String(b.id).trim().toLowerCase() === String(productId).trim().toLowerCase());
     if (!product) return;
 
     if (product.stock <= 0) {

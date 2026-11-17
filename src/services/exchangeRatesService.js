@@ -27,11 +27,38 @@ export function getCachedExchangeRates() {
 }
 
 // Guardar tasas en caché
-function setCachedExchangeRates(data) {
+export function setCachedExchangeRates(data) {
   if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY_RATES, JSON.stringify(data));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('EXCHANGE_RATES_UPDATED', { detail: data }));
+    }
   } catch (e) {}
+}
+
+export function updateCustomBinanceRate(newRate) {
+  const num = Number(newRate);
+  if (!num || isNaN(num)) return null;
+  const current = getCachedExchangeRates() || {
+    binance: 1076.87,
+    binanceBuy: 1076.87,
+    binanceSell: 1076.87,
+    bcv: 914.02,
+    spreadPct: 18.65,
+    lastUpdated: 'Manual',
+    source: 'Ajuste Manual'
+  };
+  const updated = {
+    ...current,
+    binance: num,
+    binanceBuy: num,
+    binanceSell: num,
+    lastUpdated: `Manual (${new Date().toLocaleTimeString('es-VE')})`,
+    source: 'Ajuste Manual de Tienda'
+  };
+  setCachedExchangeRates(updated);
+  return updated;
 }
 
 /**

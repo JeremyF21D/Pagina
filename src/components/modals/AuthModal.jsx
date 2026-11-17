@@ -94,8 +94,8 @@ export function AuthModal() {
         </div>
 
         {/* Lock reason banner */}
-        {authLockReason && (
-          <div className="mb-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-xl text-brand-300 text-xs flex items-start gap-2">
+        {typeof authLockReason === 'string' && authLockReason.trim() !== '' && (
+          <div className="mb-4 p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-red-600 text-xs flex items-start gap-2">
             <i className="fa-solid fa-shield-halved text-sm shrink-0 mt-0.5"></i>
             <span>{authLockReason}</span>
           </div>

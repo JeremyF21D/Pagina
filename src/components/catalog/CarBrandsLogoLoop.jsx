@@ -8,10 +8,10 @@ export function CarBrandsLogoLoop() {
     title: b.name,
     node: (
       <div
-        className="flex items-center gap-2.5 sm:gap-3 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-[#2d2f35] bg-[#141518]/90 text-slate-300 select-none cursor-default"
+        className="flex items-center gap-2.5 sm:gap-3 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 select-none cursor-default hover:border-red-500 hover:bg-rose-50/30 transition shadow-xs"
       >
         {/* Logo Vectorial SVG */}
-        <div className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center shrink-0 text-slate-200">
+        <div className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center shrink-0 text-slate-700">
           <svg
             viewBox="0 0 24 24"
             className="w-full h-full fill-current"
@@ -24,10 +24,10 @@ export function CarBrandsLogoLoop() {
 
         {/* Nombre & Subtítulo de Línea */}
         <div className="flex flex-col text-left leading-none">
-          <span className="font-black text-xs sm:text-sm tracking-wider uppercase font-sans text-white">
+          <span className="font-black text-xs sm:text-sm tracking-wider uppercase font-sans text-slate-900">
             {b.name}
           </span>
-          <span className="text-[9px] font-mono text-slate-400 mt-1">
+          <span className="text-[9px] font-mono text-red-600 font-semibold mt-1">
             {b.badge || 'Línea OEM'}
           </span>
         </div>
@@ -36,17 +36,17 @@ export function CarBrandsLogoLoop() {
   }));
 
   return (
-    <div className="w-full space-y-2 select-none">
+    <div className="w-full space-y-2 select-none animate-fadeIn">
       {/* Título Informativo */}
       <div className="flex items-center gap-2 px-1">
-        <span className="w-2 h-2 rounded-full bg-[#de2420]"></span>
-        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-300 font-sans">
+        <span className="w-2 h-2 rounded-full bg-red-600"></span>
+        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 font-sans">
           Marcas Compatibles & Líneas de Repuestos
         </span>
       </div>
 
-      {/* Contenedor del LogoLoop de React Bits con Fade Out en bordes (Exclusivamente Visual) */}
-      <div className="relative rounded-2xl bg-gradient-to-r from-[#141518]/95 via-[#1c1d22]/95 to-[#141518]/95 border border-[#2d2f35] py-2.5 sm:py-3 shadow-xl overflow-hidden">
+      {/* Contenedor del LogoLoop en Blanco y Rojo */}
+      <div className="relative rounded-3xl bg-white border border-slate-200 py-2.5 sm:py-3.5 shadow-xs overflow-hidden">
         <LogoLoop
           logos={logoItems}
           speed={45}

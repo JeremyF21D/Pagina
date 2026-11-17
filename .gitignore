@@ -30,3 +30,4 @@ dist-ssr
 *.mov
 *.gif
 scratch/
+.agents/

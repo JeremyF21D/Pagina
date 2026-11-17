@@ -49,9 +49,9 @@ export function SalesDatabaseTable() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
+    <div className="bg-[#3B3F4A] border border-[#5E6578]/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
       {/* Search & Filter Header */}
-      <div className="p-4 bg-slate-850 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 bg-[#242730] border-b border-[#5E6578]/80 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-sm shadow-xs">
             <i className="fa-solid fa-cash-register"></i>
@@ -76,13 +76,13 @@ export function SalesDatabaseTable() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filtrar por orden, cliente, repuesto..." 
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
           />
 
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             <option value="ALL">Todos los estados ({salesHistory.length})</option>
             <option value="CONFIRMED">Confirmadas ({confirmedCount})</option>
@@ -104,19 +104,19 @@ export function SalesDatabaseTable() {
 
       {/* Mini KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-4">
-        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5">
+        <div className="bg-[#242730]/60 border border-[#525868] rounded-xl p-2.5">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Total Facturado</span>
           <div className="text-base font-extrabold text-emerald-400 font-mono">{formatUSD(totalRevenue)}</div>
         </div>
-        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5">
+        <div className="bg-[#242730]/60 border border-[#525868] rounded-xl p-2.5">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Movimientos en DB</span>
           <div className="text-base font-extrabold text-white font-mono">{salesHistory.length}</div>
         </div>
-        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5">
+        <div className="bg-[#242730]/60 border border-[#525868] rounded-xl p-2.5">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Confirmadas</span>
           <div className="text-base font-extrabold text-sky-400 font-mono">{confirmedCount}</div>
         </div>
-        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5">
+        <div className="bg-[#242730]/60 border border-[#525868] rounded-xl p-2.5">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Pendientes</span>
           <div className="text-base font-extrabold text-amber-400 font-mono">{pendingCount}</div>
         </div>
@@ -125,7 +125,7 @@ export function SalesDatabaseTable() {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-mono">
+          <thead className="bg-[#242730] text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#525868] font-mono">
             <tr>
               <th className="py-3 px-4">N° Orden</th>
               <th className="py-3 px-4">Fecha / Hora</th>
@@ -148,7 +148,7 @@ export function SalesDatabaseTable() {
               </tr>
             ) : (
               filteredOrders.map(ord => (
-                <tr key={ord.orderId} className="hover:bg-slate-800/50 transition">
+                <tr key={ord.orderId} className="hover:bg-[#474C58]/50 transition">
                   <td className="py-3 px-4 font-mono font-bold text-brand-400">
                     <span className="inline-flex items-center gap-1">
                       <i className="fa-solid fa-cloud text-[10px] text-sky-400" title="Guardado en Supabase"></i>

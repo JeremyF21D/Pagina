@@ -66,9 +66,9 @@ export function ApiConnectionPanel() {
   const approxStorageKb = (JSON.stringify(coils).length / 1024).toFixed(1);
 
   return (
-    <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-4">
+    <div className="bg-[#3B3F4A] border border-[#5E6578]/80 rounded-2xl p-5 shadow-xl space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#525868]">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400">
             <i className="fa-solid fa-network-wired text-sm"></i>
@@ -76,7 +76,7 @@ export function ApiConnectionPanel() {
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <span>Conexión de Bases de Datos con API en Vivo</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#474C58] text-slate-300 border border-[#5E6578] font-mono">
                 REST / RPC / Data API
               </span>
             </h3>
@@ -106,7 +106,7 @@ export function ApiConnectionPanel() {
             </span>
           )}
           {apiConnectionStatus.status === 'idle' && (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5">
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#474C58] text-slate-400 border border-[#5E6578] flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
               <span>Motor Activo: {dbEngine.toUpperCase()}</span>
             </span>
@@ -126,8 +126,8 @@ export function ApiConnectionPanel() {
               onClick={() => handleTabChange(eng.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer ${
                 isActive
-                  ? 'bg-slate-800 text-white border border-brand-500/50 shadow-md'
-                  : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-[#474C58] text-white border border-brand-500/50 shadow-md'
+                  : 'bg-[#242730]/60 text-slate-400 hover:text-slate-200 border border-[#525868]'
               }`}
             >
               <i className={`${eng.icon} ${eng.color}`}></i>
@@ -168,7 +168,7 @@ export function ApiConnectionPanel() {
       )}
 
       {/* Connection Form by Tab */}
-      <form onSubmit={handleSave} className="space-y-3.5 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+      <form onSubmit={handleSave} className="space-y-3.5 bg-[#242730]/60 p-4 rounded-xl border border-[#525868]">
         {/* Supabase Tab */}
         {activeTab === 'supabase' && (
           <div className="space-y-3">
@@ -181,7 +181,7 @@ export function ApiConnectionPanel() {
                 value={formValues.url || ''}
                 onChange={(e) => handleInputChange('url', e.target.value)}
                 placeholder="https://peyvpeloxhjumgwlclkm.supabase.co/rest/v1"
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 required
               />
             </div>
@@ -205,7 +205,7 @@ export function ApiConnectionPanel() {
                   value={formValues.anonKey || ''}
                   onChange={(e) => handleInputChange('anonKey', e.target.value)}
                   placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                   required
                 />
               </div>
@@ -219,7 +219,7 @@ export function ApiConnectionPanel() {
                   value={formValues.table || ''}
                   onChange={(e) => handleInputChange('table', e.target.value)}
                   placeholder="bobinas_inventario"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                   required
                 />
               </div>
@@ -241,7 +241,7 @@ export function ApiConnectionPanel() {
                 Para permitir que la web lea y guarde bobinas, ve a tu proyecto en <strong>Supabase &rarr; SQL Editor &rarr; New Query</strong> y ejecuta:
               </p>
               <div className="relative group">
-                <pre className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-[11px] font-mono text-emerald-400 overflow-x-auto select-all">
+                <pre className="bg-[#242730] p-2.5 rounded-lg border border-[#525868] text-[11px] font-mono text-emerald-400 overflow-x-auto select-all">
 {`-- Desactivar RLS para permitir lectura y guardado desde la web
 ALTER TABLE ${formValues.table || 'bobinas_inventario'} DISABLE ROW LEVEL SECURITY;`}
                 </pre>
@@ -260,7 +260,7 @@ ALTER TABLE ${formValues.table || 'bobinas_inventario'} DISABLE ROW LEVEL SECURI
               <details className="text-[10px] text-slate-400 cursor-pointer pt-1">
                 <summary className="hover:text-slate-200">¿Prefieres mantener RLS activado con políticas de seguridad? Ver SQL</summary>
                 <div className="mt-2 relative">
-                  <pre className="bg-slate-950 p-2 rounded-lg border border-slate-800 font-mono text-slate-300 overflow-x-auto text-[10px]">
+                  <pre className="bg-[#242730] p-2 rounded-lg border border-[#525868] font-mono text-slate-300 overflow-x-auto text-[10px]">
 {`CREATE POLICY "Acceso publico lectura" ON public.${formValues.table || 'bobinas_inventario'} FOR SELECT USING (true);
 CREATE POLICY "Acceso publico insercion" ON public.${formValues.table || 'bobinas_inventario'} FOR INSERT WITH CHECK (true);
 CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bobinas_inventario'} FOR UPDATE USING (true);`}
@@ -272,7 +272,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                       navigator.clipboard.writeText(sql);
                       alert('¡Políticas SQL copiadas!');
                     }}
-                    className="absolute top-2 right-2 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[9px] border border-slate-700"
+                    className="absolute top-2 right-2 px-2 py-0.5 bg-[#474C58] hover:bg-slate-700 text-slate-200 rounded text-[9px] border border-[#5E6578]"
                   >
                     Copiar Políticas
                   </button>
@@ -294,7 +294,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                 value={formValues.uri || ''}
                 onChange={(e) => handleInputChange('uri', e.target.value)}
                 placeholder="https://data.mongodb-api.com/app/data-express/endpoint/data/v1"
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 required
               />
             </div>
@@ -309,7 +309,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                   value={formValues.apiKey || ''}
                   onChange={(e) => handleInputChange('apiKey', e.target.value)}
                   placeholder="mongo_sec_token_..."
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                   required
                 />
               </div>
@@ -323,7 +323,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                   value={formValues.database || ''}
                   onChange={(e) => handleInputChange('database', e.target.value)}
                   placeholder="bobinas_express_db"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 />
               </div>
 
@@ -336,7 +336,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                   value={formValues.collection || ''}
                   onChange={(e) => handleInputChange('collection', e.target.value)}
                   placeholder="bobinas"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 />
               </div>
             </div>
@@ -355,7 +355,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                 value={formValues.apiUrl || ''}
                 onChange={(e) => handleInputChange('apiUrl', e.target.value)}
                 placeholder="https://api.bobinasexpress.com/v1/inventory"
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 required
               />
             </div>
@@ -370,7 +370,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                   value={formValues.bearerToken || ''}
                   onChange={(e) => handleInputChange('bearerToken', e.target.value)}
                   placeholder="bearer_token_..."
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 />
               </div>
 
@@ -383,7 +383,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
                   value={formValues.table || ''}
                   onChange={(e) => handleInputChange('table', e.target.value)}
                   placeholder="bobinas"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-[#3B3F4A] border border-[#5E6578] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
                 />
               </div>
             </div>
@@ -392,7 +392,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
 
         {/* LocalStorage Tab */}
         {activeTab === 'local' && (
-          <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="p-3 bg-[#3B3F4A] rounded-xl border border-[#525868] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="space-y-1">
               <div className="text-white font-semibold flex items-center gap-2">
                 <i className="fa-solid fa-hard-drive text-amber-400"></i>
@@ -409,13 +409,13 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
         )}
 
         {/* Action Buttons Bar */}
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
+        <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#525868]">
           <div className="flex flex-wrap items-center gap-2">
             {activeTab !== dbEngine && (
               <button
                 type="button"
                 onClick={() => changeDbEngine(activeTab)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-slate-700"
+                className="px-3 py-1.5 bg-[#474C58] hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-[#5E6578]"
               >
                 <i className="fa-solid fa-check text-emerald-400"></i>
                 <span>Activar este Motor</span>
@@ -425,7 +425,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
             <button
               type="button"
               onClick={handleTestPing}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-sky-500/30"
+              className="px-3.5 py-1.5 bg-[#474C58] hover:bg-slate-700 text-sky-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-sky-500/30"
               title="Realizar un ping o prueba de endpoint a la API"
             >
               <i className="fa-solid fa-tower-broadcast"></i>
@@ -436,7 +436,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
               type="button"
               onClick={handlePull}
               disabled={isSyncing}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-emerald-500/30"
+              className="px-3.5 py-1.5 bg-[#474C58] hover:bg-slate-700 text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-emerald-500/30"
               title="Traer todas las bobinas desde la base de datos remota"
             >
               <i className={`fa-solid fa-cloud-arrow-down ${isSyncing ? 'fa-bounce text-emerald-400' : ''}`}></i>
@@ -447,7 +447,7 @@ CREATE POLICY "Acceso publico actualizacion" ON public.${formValues.table || 'bo
               type="button"
               onClick={handlePush}
               disabled={isSyncing}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-amber-500/30"
+              className="px-3 py-1.5 bg-[#474C58] hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-amber-500/30"
               title="Subir el inventario actual a la base de datos remota"
             >
               <i className={`fa-solid fa-cloud-arrow-up ${isSyncing ? 'fa-bounce text-amber-400' : ''}`}></i>

@@ -70,13 +70,13 @@ export function SalesTable() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
+    <div className="bg-[#3B3F4A] border border-[#5E6578]/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
       {/* Table Filter Header */}
-      <div className="p-4 bg-slate-850 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 bg-[#242730] border-b border-[#5E6578]/80 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <i className="fa-solid fa-list-check text-brand-400"></i>
           <h3 className="text-sm font-bold text-white">Registro de Órdenes y Ventas WhatsApp</h3>
-          <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700 font-mono">
+          <span className="text-xs bg-[#474C58] text-slate-300 px-2 py-0.5 rounded-full border border-[#5E6578] font-mono">
             {filteredOrders.length}
           </span>
           {dateFilter !== 'ALL' && (
@@ -89,7 +89,7 @@ export function SalesTable() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Selector de Período para Cuadre de Caja */}
-          <div className="flex items-center bg-slate-800 rounded-xl p-0.5 border border-slate-700 text-xs">
+          <div className="flex items-center bg-[#474C58] rounded-xl p-0.5 border border-[#5E6578] text-xs">
             <span className="px-2 text-[10px] text-slate-400 font-bold hidden sm:inline">Período:</span>
             <button
               type="button"
@@ -135,13 +135,13 @@ export function SalesTable() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por orden, cliente, bobina..." 
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
           />
 
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             <option value="ALL">Todas las órdenes</option>
             <option value="PENDING">Pendientes por Aprobar</option>
@@ -154,7 +154,7 @@ export function SalesTable() {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-mono">
+          <thead className="bg-[#242730] text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#525868] font-mono">
             <tr>
               <th className="py-3 px-4">Orden</th>
               <th className="py-3 px-4">Fecha / Hora</th>
@@ -177,7 +177,7 @@ export function SalesTable() {
               </tr>
             ) : (
               filteredOrders.map(ord => (
-                <tr key={ord.orderId} className="hover:bg-slate-800/50 transition">
+                <tr key={ord.orderId} className="hover:bg-[#474C58]/50 transition">
                   <td className="py-3 px-4 font-mono font-bold text-brand-400">
                     <span className="inline-flex items-center gap-1.5">
                       <i className="fa-solid fa-cloud text-[10px] text-sky-400" title="Sincronizado con Supabase (tabla 'ventas')"></i>
@@ -228,7 +228,7 @@ export function SalesTable() {
                           const curStock = itCoil ? itCoil.stock : null;
 
                           return (
-                            <div key={itIdx} className="flex items-center justify-between gap-2 text-[10px] bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800">
+                            <div key={itIdx} className="flex items-center justify-between gap-2 text-[10px] bg-[#242730]/70 px-2 py-1 rounded-lg border border-[#525868]">
                               <span className="truncate max-w-[120px] text-slate-300 font-medium" title={it.name}>
                                 {it.qty}x {it.name}
                               </span>
@@ -313,7 +313,7 @@ export function SalesTable() {
                         return {
                           name: 'Pago',
                           icon: 'fa-solid fa-receipt',
-                          color: 'bg-slate-800 text-slate-300 border-slate-700',
+                          color: 'bg-[#474C58] text-slate-300 border-[#5E6578]',
                           cleanText: txt
                         };
                       };
@@ -532,29 +532,29 @@ export function SalesTable() {
           onClick={() => setSelectedNoteModal(null)}
         >
           <div 
-            className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4 animate-modal-pop"
+            className="relative w-full max-w-md bg-[#3B3F4A] border border-[#525868] rounded-2xl shadow-2xl p-5 space-y-4 animate-modal-pop"
             onClick={e => e.stopPropagation()}
           >
             {/* Cabecera */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-[#525868]">
               <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
                 <i className="fa-solid fa-note-sticky text-base"></i>
                 <span>Nota de Venta / Motivo del Cambio</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 border border-slate-700 font-mono font-bold">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-[#474C58] text-sky-400 border border-[#5E6578] font-mono font-bold">
                   #{selectedNoteModal.orderId}
                 </span>
               </div>
               <button 
                 type="button"
                 onClick={() => setSelectedNoteModal(null)}
-                className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+                className="w-7 h-7 rounded-lg bg-[#474C58] hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
               >
                 <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
 
             {/* Texto Completo de la Nota */}
-            <div className="p-4 bg-slate-950 rounded-xl border border-amber-500/30 text-slate-200 text-xs space-y-2">
+            <div className="p-4 bg-[#242730] rounded-xl border border-amber-500/30 text-slate-200 text-xs space-y-2">
               <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
                 <i className="fa-solid fa-quote-left text-amber-400/60"></i>
                 <span>Observación Registrada por el Administrador:</span>
@@ -565,7 +565,7 @@ export function SalesTable() {
             </div>
 
             {/* Ficha Resumen de la Orden */}
-            <div className="space-y-3 text-[11px] bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+            <div className="space-y-3 text-[11px] bg-[#242730]/80 p-3.5 rounded-xl border border-[#525868]">
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Cliente</span>
@@ -583,7 +583,7 @@ export function SalesTable() {
               </div>
 
               {/* Repuestos Entregados: Lista de todos los artículos */}
-              <div className="pt-2 border-t border-slate-800/80">
+              <div className="pt-2 border-t border-[#525868]/80">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1.5 flex items-center gap-1.5">
                   <i className="fa-solid fa-box-open text-sky-400"></i>
                   <span>
@@ -595,7 +595,7 @@ export function SalesTable() {
                 {selectedNoteModal.items && selectedNoteModal.items.length > 1 ? (
                   <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                     {selectedNoteModal.items.map((it, itIdx) => (
-                      <div key={itIdx} className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
+                      <div key={itIdx} className="p-2 rounded-lg bg-[#3B3F4A] border border-[#525868] flex items-center justify-between text-xs">
                         <div className="min-w-0 pr-2">
                           <p className="font-bold text-white truncate text-[11px]">{it.name}</p>
                           <span className="text-[10px] text-slate-400 font-mono">OEM: {it.oem || 'N/A'}</span>
@@ -608,19 +608,19 @@ export function SalesTable() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 font-medium">
+                  <div className="p-2 rounded-lg bg-[#3B3F4A] border border-[#525868] text-slate-200 font-medium">
                     {selectedNoteModal.coilName}
                   </div>
                 )}
               </div>
 
               {/* Información Completa de Pago (Sin truncar) */}
-              <div className="pt-2 border-t border-slate-800/80">
+              <div className="pt-2 border-t border-[#525868]/80">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1 flex items-center gap-1.5">
                   <i className="fa-solid fa-money-bill-transfer text-emerald-400"></i>
                   <span>Detalle Completo del Pago & Referencia:</span>
                 </span>
-                <div className="p-2.5 rounded-lg bg-slate-900 border border-emerald-500/20 text-emerald-300 font-mono text-[11px] leading-relaxed break-words whitespace-normal select-all">
+                <div className="p-2.5 rounded-lg bg-[#3B3F4A] border border-emerald-500/20 text-emerald-300 font-mono text-[11px] leading-relaxed break-words whitespace-normal select-all">
                   {selectedNoteModal.paymentRef}
                 </div>
               </div>
@@ -631,7 +631,7 @@ export function SalesTable() {
               <button
                 type="button"
                 onClick={() => setSelectedNoteModal(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition cursor-pointer active:scale-95"
+                className="px-5 py-2 bg-[#474C58] hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition cursor-pointer active:scale-95"
               >
                 Cerrar
               </button>

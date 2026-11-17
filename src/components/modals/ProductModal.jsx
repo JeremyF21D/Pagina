@@ -244,24 +244,24 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in">
       {/* Modal Dialog Card */}
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-xl w-full shadow-2xl relative my-auto flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full shadow-2xl relative my-auto flex flex-col max-h-[88vh] overflow-hidden text-slate-900 animate-modal-pop">
         
         {/* Sticky Header - NEVER CLIPPED */}
-        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-900 z-10">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-800 border border-slate-700 shadow-xs">
-              <i className={`text-base ${isEditing ? 'fa-solid fa-pen-to-square text-sky-400' : `${currentCategory.icon} ${currentCategory.color}`}`}></i>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-red-50 border border-red-200 text-red-600 shadow-xs">
+              <i className={`text-base ${isEditing ? 'fa-solid fa-pen-to-square' : `${currentCategory.icon}`}`}></i>
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-white leading-tight flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-tight flex items-center gap-2">
                 <span>{isEditing ? `Editar Repuesto` : `Registrar Nuevo Repuesto`}</span>
-                <span className="font-mono text-xs px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">
+                <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-200 font-bold">
                   {form.id || 'NUEVO'}
                 </span>
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 {currentCategory.name} • {form.brand || 'Automotriz'}
               </p>
             </div>
@@ -270,7 +270,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
           <button 
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer border border-slate-700"
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition flex items-center justify-center cursor-pointer border border-slate-200"
             title="Cerrar ventana"
           >
             <i className="fa-solid fa-xmark text-sm"></i>
@@ -278,16 +278,16 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs custom-scrollbar">
           
           {/* Category Selector Bar */}
-          <div className="p-3 bg-slate-800/90 border border-slate-700 rounded-xl space-y-2">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-bold text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="text-[11px] font-bold text-red-600 flex items-center gap-1.5 uppercase tracking-wider">
                 <i className="fa-solid fa-layer-group"></i> Categoría del Repuesto *
               </label>
-              <span className="text-[10px] text-slate-400 font-mono">
-                Prefijo ID: <strong className="text-white">{currentCategory.prefix}-</strong>
+              <span className="text-[10px] text-slate-500 font-mono">
+                Prefijo ID: <strong className="text-slate-900">{currentCategory.prefix}-</strong>
               </span>
             </div>
 
@@ -301,11 +301,11 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                     onClick={() => handleCategorySelect(cat.id)}
                     className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer border text-left ${
                       isSelected
-                        ? 'bg-brand-500 text-white border-brand-400 shadow-sm'
-                        : 'bg-slate-900/90 hover:bg-slate-700 text-slate-300 border-slate-700/80'
+                        ? 'bg-red-600 text-white border-red-700 shadow-sm'
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                     }`}
                   >
-                    <i className={`${cat.icon} text-xs ${isSelected ? 'text-white' : cat.color}`}></i>
+                    <i className={`${cat.icon} text-xs ${isSelected ? 'text-white' : 'text-red-600'}`}></i>
                     <span className="truncate">{cat.name.split(' ')[0]}</span>
                   </button>
                 );
@@ -314,16 +314,16 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
           </div>
 
           {/* Product Photo Upload Section */}
-          <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-3">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
               <span className="flex items-center gap-1.5">
-                <i className="fa-solid fa-camera text-brand-400"></i> Foto / Imagen del Producto
+                <i className="fa-solid fa-camera text-red-600"></i> Foto / Imagen del Producto
               </span>
               {form.image && (
                 <button 
                   type="button" 
                   onClick={handleRemoveImage}
-                  className="px-2 py-0.5 rounded bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-[10px] font-bold flex items-center gap-1.5 cursor-pointer transition"
+                  className="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold flex items-center gap-1.5 cursor-pointer transition"
                 >
                   <i className="fa-solid fa-trash-can text-[10px]"></i> Eliminar Foto
                 </button>
@@ -333,7 +333,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             {/* Image Preview Box - Constrained and fully adapted to container */}
             {form.image ? (
               <div 
-                className="relative w-full h-44 rounded-xl bg-white border border-slate-700 overflow-hidden flex items-center justify-center p-3 group"
+                className="relative w-full h-44 rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center p-3 group shadow-xs"
                 style={{ backgroundColor: '#ffffff', isolation: 'isolate' }}
               >
                 <img 
@@ -346,19 +346,19 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold shadow-lg flex items-center gap-1 cursor-pointer transition"
+                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold shadow-md flex items-center gap-1 cursor-pointer transition"
                 >
                   <i className="fa-solid fa-trash-can text-[10px]"></i> Quitar
                 </button>
-                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-xs text-[10px] text-slate-300 font-mono border border-slate-700/80 pointer-events-none">
+                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-slate-900/80 backdrop-blur-xs text-[10px] text-white font-mono pointer-events-none">
                   Vista Previa Adaptada
                 </div>
               </div>
             ) : (
-              <div className="w-full h-24 rounded-xl bg-slate-950/60 border border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 text-center p-3">
-                <i className={`${currentCategory.icon} text-2xl mb-1 text-slate-600`}></i>
-                <span className="text-[11px] font-medium text-slate-400">Sin foto asignada</span>
-                <span className="text-[10px] text-slate-500">Sube una foto o pega una URL abajo</span>
+              <div className="w-full h-24 rounded-2xl bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-center p-3">
+                <i className={`${currentCategory.icon} text-2xl mb-1 text-slate-400`}></i>
+                <span className="text-[11px] font-medium text-slate-600">Sin foto asignada</span>
+                <span className="text-[10px] text-slate-400">Sube una foto o pega una URL abajo</span>
               </div>
             )}
 
@@ -375,12 +375,12 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 />
                 <label 
                   htmlFor="product-photo-upload"
-                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border border-slate-600 shadow-xs"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 active:scale-95 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition border border-slate-200 shadow-xs"
                 >
-                  <i className="fa-solid fa-arrow-up-from-bracket text-sky-400"></i>
+                  <i className="fa-solid fa-arrow-up-from-bracket text-red-600"></i>
                   <span>Subir archivo...</span>
                 </label>
-                <span className="text-[10px] text-slate-400">JPG, PNG o WEBP (máx. 3MB)</span>
+                <span className="text-[10px] text-slate-500">JPG, PNG o WEBP (máx. 3MB)</span>
               </div>
 
               {/* External URL Input */}
@@ -389,7 +389,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 value={form.image}
                 onChange={(e) => handleChange('image', e.target.value)}
                 placeholder="O pega URL de imagen (https://...)"
-                className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-[11px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-red-500 font-mono"
               />
             </div>
           </div>
@@ -398,14 +398,14 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-semibold text-slate-400">
+                <label className="text-[11px] font-bold text-slate-700">
                   Código / ID (Único) *
                 </label>
                 {!isEditing && (
                   <button 
                     type="button" 
                     onClick={handleRegenerateId}
-                    className="text-[10px] text-brand-400 hover:text-brand-300 font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] text-red-600 hover:text-red-700 font-bold flex items-center gap-1 cursor-pointer"
                     title="Recalcular ID inteligente con modelo y motor"
                   >
                     <i className="fa-solid fa-wand-magic-sparkles text-[9px]"></i> Auto-generar
@@ -422,22 +422,22 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                     setIdAutoGenerated(false);
                   }}
                   placeholder="Ej: BOB-AVEO16"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono uppercase focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono uppercase focus:bg-white focus:outline-none focus:border-red-500 font-bold"
                   required
                 />
                 {!isEditing && idAutoGenerated && (
-                  <span className="absolute right-2 top-2 text-[9px] bg-brand-500/20 text-brand-400 border border-brand-500/30 px-1.5 py-0.5 rounded font-mono font-bold">
+                  <span className="absolute right-2 top-2 text-[9px] bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-mono font-bold">
                     Auto-Smart
                   </span>
                 )}
               </div>
               <p className="text-[10px] text-slate-500 mt-0.5">
-                Estructura: <span className="font-mono text-slate-400">{currentCategory.prefix}-[MODELO][MOTOR]</span> (Ej: {currentCategory.prefix}-AVEO16)
+                Estructura: <span className="font-mono text-slate-600">{currentCategory.prefix}-[MODELO][MOTOR]</span> (Ej: {currentCategory.prefix}-AVEO16)
               </p>
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 Marca de Auto *
               </label>
               <input 
@@ -445,7 +445,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 value={form.brand}
                 onChange={(e) => handleChange('brand', e.target.value)}
                 placeholder="Chevrolet, Ford, Toyota, Nissan..."
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500"
                 required
               />
             </div>
@@ -453,7 +453,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
 
           {/* Product Name */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+            <label className="block text-[11px] font-bold text-slate-700 mb-1">
               Nombre del Repuesto / Artículo *
             </label>
             <input 
@@ -461,7 +461,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
               value={form.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder={`Ej: ${currentCategory.singular} ${form.brand || 'Chevrolet'} Aveo 1.6`}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500 font-medium"
               required
             />
           </div>
@@ -469,7 +469,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
           {/* Car Model & Engine */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 Vehículos / Modelos Compatibles *
               </label>
               <input 
@@ -477,13 +477,13 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 value={form.carModel}
                 onChange={(e) => handleChange('carModel', e.target.value)}
                 placeholder="Ej: Aveo, Optra, Tiida, Corolla..." 
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 Motor / Cilindrada *
               </label>
               <input 
@@ -491,7 +491,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 value={form.engine}
                 onChange={(e) => handleChange('engine', e.target.value)}
                 placeholder="Ej: 1.6L E-TEC, 1.8L 16V, 2.0L..." 
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500 font-mono"
                 required
               />
             </div>
@@ -499,7 +499,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
 
           {/* OEM codes */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+            <label className="block text-[11px] font-bold text-slate-700 mb-1">
               Códigos OEM Equivalentes *
             </label>
             <input 
@@ -507,21 +507,21 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
               value={form.oem}
               onChange={(e) => handleChange('oem', e.target.value)}
               placeholder="Ej: 96414260 / 25186687 / 0221604112" 
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-red-500 font-bold"
               required
             />
           </div>
 
           {/* Dynamic Technical Specs: Spec 1 & Spec 2 */}
-          <div className="p-3 bg-slate-850/80 border border-slate-700/90 rounded-xl space-y-3">
-            <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
-              <i className={`${currentCategory.icon} ${currentCategory.color}`}></i>
-              Especificaciones Técnicas para <strong className="text-white">{currentCategory.name}</strong>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+              <i className={`${currentCategory.icon} text-red-600`}></i>
+              Especificaciones Técnicas para <strong className="text-slate-900">{currentCategory.name}</strong>
             </span>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {currentCategory.typeLabel}
                 </label>
                 <input 
@@ -529,12 +529,12 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                   value={form.type}
                   onChange={(e) => handleChange('type', e.target.value)}
                   placeholder={currentCategory.typePlaceholder}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-red-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {currentCategory.connectorLabel}
                 </label>
                 <input 
@@ -542,26 +542,26 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                   value={form.connector}
                   onChange={(e) => handleChange('connector', e.target.value)}
                   placeholder={currentCategory.connectorPlaceholder}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-red-500"
                 />
               </div>
             </div>
           </div>
 
           {/* Pricing, Cost & Stock */}
-          <div className="p-3 bg-slate-850/80 border border-slate-700/80 rounded-xl space-y-2.5">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i className="fa-solid fa-dollar-sign text-emerald-400"></i> Precios, Costo & Stock
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i className="fa-solid fa-dollar-sign text-emerald-600"></i> Precios, Costo & Stock
               </span>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 font-bold">
                 Utilidad: +${Math.max(0, (parseFloat(form.price) || 0) - (parseFloat(form.cost) || 0)).toFixed(2)} USD / unidad
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   Precio Venta ($) *
                 </label>
                 <input 
@@ -569,13 +569,13 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                   step="0.01"
                   value={form.price}
                   onChange={(e) => handleChange('price', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-bold focus:outline-none focus:border-red-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   Costo Compra ($)
                 </label>
                 <input 
@@ -584,15 +584,15 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                   value={form.cost}
                   onChange={(e) => handleChange('cost', e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-amber-700 font-mono font-bold focus:outline-none focus:border-amber-600"
                 />
-                <span className="text-[9px] text-slate-500 block mt-0.5 font-mono">
+                <span className="text-[9px] text-slate-400 block mt-0.5 font-mono">
                   $0 si costó 0$
                 </span>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   Precio Tachado
                 </label>
                 <input 
@@ -601,22 +601,22 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                   value={form.oldPrice}
                   onChange={(e) => handleChange('oldPrice', e.target.value)}
                   placeholder="Opcional"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-600 font-mono focus:outline-none focus:border-red-500"
                 />
-                <span className="text-[9px] text-slate-500 block mt-0.5">
+                <span className="text-[9px] text-slate-400 block mt-0.5">
                   Para ofertas
                 </span>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   Stock Almacén *
                 </label>
                 <input 
                   type="number" 
                   value={form.stock}
                   onChange={(e) => handleChange('stock', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-bold focus:outline-none focus:border-red-500"
                   required
                 />
               </div>
@@ -626,7 +626,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
           {/* Warranty & Badge */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 Garantía
               </label>
               <input 
@@ -634,12 +634,12 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 value={form.warranty}
                 onChange={(e) => handleChange('warranty', e.target.value)}
                 placeholder="12 meses / 6 meses" 
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 Insignia / Etiqueta
               </label>
               <input 
@@ -647,14 +647,14 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
                 value={form.badge}
                 onChange={(e) => handleChange('badge', e.target.value)}
                 placeholder="Más Vendida, Oferta, OEM Spec..." 
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-brand-500"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500"
               />
             </div>
           </div>
         </form>
 
         {/* Sticky Footer - ALWAYS VISIBLE */}
-        <div className="px-5 py-3.5 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0 bg-slate-900 z-10">
+        <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0 bg-slate-50/90 z-10">
           {isEditing ? (
             <button 
               type="button"
@@ -670,7 +670,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
               className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 confirmDelete 
                   ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/40 ring-2 ring-rose-400' 
-                  : 'bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30'
+                  : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold'
               }`}
             >
               <i className={`fa-solid ${confirmDelete ? 'fa-triangle-exclamation' : 'fa-trash-can'}`}></i>
@@ -682,7 +682,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             <button 
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700 cursor-pointer transition border border-slate-700"
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 cursor-pointer transition border border-slate-200"
             >
               Cancelar
             </button>
@@ -690,7 +690,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
               type="button"
               onClick={handleSubmit}
               disabled={isSaving}
-              className="px-5 py-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20 cursor-pointer transition flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-600/25 cursor-pointer transition flex items-center gap-2 disabled:opacity-50"
             >
               <i className={`fa-solid ${isSaving ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`}></i>
               <span>{isSaving ? 'Guardando en Base de Datos...' : (isEditing ? 'Guardar Cambios' : 'Insertar en Base de Datos')}</span>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils/formatters';
 
-export function ProductHoverPreview({ order, coils = [] }) {
+export function ProductHoverPreview({ order, coils = [], theme = "light" }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
@@ -13,6 +13,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
   const popoverRef = useRef(null);
 
   const hasMultipleItems = order.items && Array.isArray(order.items) && order.items.length > 1;
+  const isLight = theme === "light";
 
   // Helper para resolver la imagen de cualquier repuesto (individual o dentro de items)
   const getItemImage = (it) => {
@@ -70,6 +71,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
   const displayBrand = matchedCoil?.brand || 'Repuesto Original';
   const displayPrice = Number(order.unitPrice || matchedCoil?.price || 0);
   const currentStock = matchedCoil ? matchedCoil.stock : null;
+  const qty = Number(order.qty || order.quantity || (order.items && order.items[0]?.qty) || 1);
 
   // 4. Calcular coordenadas del popover flotante
   const updatePosition = () => {
@@ -154,15 +156,15 @@ export function ProductHoverPreview({ order, coils = [] }) {
       >
         {hasMultipleItems ? (
           /* Miniatura especial para orden con varios repuestos */
-          <div className="w-9 h-9 rounded-xl flex-shrink-0 bg-red-950/40 border border-[#de2420]/40 flex items-center justify-center text-[#de2420] shadow-sm group-hover:scale-105 transition">
+          <div className="w-9 h-9 rounded-xl flex-shrink-0 bg-red-50 border border-red-200 flex items-center justify-center text-red-600 shadow-xs group-hover:scale-105 transition">
             <i className="fa-solid fa-boxes-packing text-sm"></i>
           </div>
         ) : (
           /* Miniatura para repuesto único */
           <div className={`w-9 h-9 rounded-xl flex-shrink-0 border overflow-hidden flex items-center justify-center transition shadow-xs ${
             productImage 
-              ? 'bg-white border-slate-700/80 group-hover:border-brand-500 group-hover:shadow-md group-hover:shadow-brand-500/10' 
-              : 'bg-slate-800 border-slate-700 group-hover:border-slate-500'
+              ? 'bg-white border-slate-200 group-hover:border-red-500 group-hover:shadow-md group-hover:shadow-red-500/10' 
+              : 'bg-slate-100 border-slate-200 group-hover:border-slate-400'
           }`}>
             {productImage ? (
               <img 
@@ -176,7 +178,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
               />
             ) : null}
             <div className={`w-full h-full flex items-center justify-center text-xs ${productImage ? 'hidden' : 'flex'}`}>
-              <i className={`${catConfig.icon} ${catConfig.color}`}></i>
+              <i className={`${catConfig.icon} text-red-600`}></i>
             </div>
           </div>
         )}
@@ -185,7 +187,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
         <div className="min-w-0">
           {hasMultipleItems ? (
             <>
-              <div className="text-white font-bold group-hover:text-red-400 transition-colors flex items-center gap-1.5">
+              <div className={`${isLight ? "text-slate-900 group-hover:text-red-600" : "text-white group-hover:text-red-400"} font-bold transition-colors flex items-center gap-1.5`}>
                 <span className="truncate max-w-[200px] sm:max-w-xs block text-xs">
                   {order.items.length} repuestos distintos
                 </span>
@@ -199,19 +201,16 @@ export function ProductHoverPreview({ order, coils = [] }) {
             </>
           ) : (
             <>
-              <div className="text-white font-semibold group-hover:text-brand-300 transition-colors flex items-center gap-1.5">
-                <span className="truncate max-w-[190px] sm:max-w-xs block">{displayName}</span>
-                <span className="text-[10px] text-slate-500 group-hover:text-brand-400 transition-colors flex-shrink-0" title="Ver imagen">
+              <div className={`${isLight ? "text-slate-900 group-hover:text-red-600" : "text-white group-hover:text-brand-300"} font-bold transition-colors flex items-center gap-1.5`}>
+                <span className="truncate max-w-[210px] sm:max-w-xs block">
+                  <span className={isLight ? "text-red-600 font-extrabold mr-1" : "text-brand-400 font-extrabold mr-1"}>
+                    {qty}x
+                  </span>
+                  {displayName}
+                </span>
+                <span className={`text-[10px] ${isLight ? "text-slate-400 group-hover:text-red-500" : "text-slate-500 group-hover:text-brand-400"} transition-colors shrink-0`} title="Ver imagen">
                   <i className="fa-regular fa-image"></i>
                 </span>
-              </div>
-              <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5 flex-wrap">
-                <span className="truncate max-w-[150px]">OEM: {displayOem}</span>
-                {matchedCoil?.brand && (
-                  <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 text-[9px] uppercase font-bold border border-slate-700">
-                    {matchedCoil.brand}
-                  </span>
-                )}
               </div>
             </>
           )}
@@ -232,18 +231,18 @@ export function ProductHoverPreview({ order, coils = [] }) {
             left: `${coords.left}px`,
             zIndex: 99999
           }}
-          className={`${hasMultipleItems ? 'w-96' : 'w-80'} bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 rounded-2xl p-3.5 shadow-2xl shadow-black/80 space-y-3 pointer-events-auto animate-in fade-in zoom-in-95 duration-150`}
+          className={`${hasMultipleItems ? 'w-96' : 'w-80'} bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-3.5 shadow-2xl shadow-slate-900/15 space-y-3 pointer-events-auto animate-in fade-in zoom-in-95 duration-150 text-slate-900`}
           onClick={(e) => e.stopPropagation()}
         >
           {hasMultipleItems ? (
             /* Popover para Múltiples Repuestos */
             <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#de2420] uppercase bg-[#de2420]/15 px-2 py-0.5 rounded border border-[#de2420]/30">
+                  <span className="text-[10px] font-bold text-red-600 uppercase bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
                     Desglose de Pedido
                   </span>
-                  <span className="text-xs font-mono font-bold text-white">
+                  <span className="text-xs font-mono font-bold text-slate-800">
                     {order.items.length} Repuestos
                   </span>
                 </div>
@@ -251,7 +250,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
                   <button
                     type="button"
                     onClick={() => { setIsPinned(false); setIsOpen(false); }}
-                    className="text-slate-400 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 text-xs transition"
+                    className="text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-slate-100 text-xs transition"
                   >
                     <i className="fa-solid fa-xmark"></i>
                   </button>
@@ -262,10 +261,10 @@ export function ProductHoverPreview({ order, coils = [] }) {
                 {order.items.map((it, idx) => {
                   const itemImg = getItemImage(it);
                   return (
-                    <div key={idx} className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+                    <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${
-                          itemImg ? 'bg-white border border-slate-700/80 p-0.5' : 'bg-slate-900 border border-slate-800'
+                          itemImg ? 'bg-white border border-slate-200 p-0.5' : 'bg-slate-100 border border-slate-200'
                         }`}>
                           {itemImg ? (
                             <img 
@@ -278,36 +277,36 @@ export function ProductHoverPreview({ order, coils = [] }) {
                               }}
                             />
                           ) : null}
-                          <i className={`fa-solid fa-bolt text-[#de2420] text-xs ${itemImg ? 'hidden' : 'block'}`}></i>
+                          <i className={`fa-solid fa-bolt text-red-600 text-xs ${itemImg ? 'hidden' : 'block'}`}></i>
                         </div>
                         <div className="truncate">
-                          <h5 className="font-bold text-white truncate text-[11px]">{it.name}</h5>
-                          <span className="text-[10px] text-slate-400 font-mono">OEM: {it.oem || it.coilId}</span>
+                          <h5 className="font-bold text-slate-900 truncate text-[11px]">{it.name}</h5>
+                          <span className="text-[10px] text-slate-500 font-mono">OEM: {it.oem || it.coilId}</span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="font-mono font-bold text-emerald-400 text-xs">{formatUSD(it.subtotal || it.unitPrice)}</span>
-                        <span className="block text-[10px] text-slate-400">{it.qty} ud(s)</span>
+                        <span className="font-mono font-bold text-emerald-600 text-xs">{formatUSD(it.subtotal || it.unitPrice)}</span>
+                        <span className="block text-[10px] text-slate-500">{it.qty} ud(s)</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">Total Unificado:</span>
-                <strong className="text-emerald-400 font-bold text-sm">{formatUSD(order.totalPrice || order.totalUSD)}</strong>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-500">Total Unificado:</span>
+                <strong className="text-emerald-600 font-bold text-sm">{formatUSD(order.totalPrice || order.totalUSD)}</strong>
               </div>
             </div>
           ) : (
             /* Popover para Repuesto Único */
             <>
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20">
+                  <span className="text-[10px] font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
                     {matchedCoil?.id || order.coilId || 'REP-INFO'}
                   </span>
-                  <span className="text-[10px] uppercase font-bold text-slate-300 px-1.5 py-0.5 rounded bg-slate-800">
+                  <span className="text-[10px] uppercase font-bold text-slate-700 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
                     {displayBrand}
                   </span>
                 </div>
@@ -317,7 +316,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
                     <button
                       type="button"
                       onClick={() => setIsZoomOpen(true)}
-                      className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-xs transition"
+                      className="text-slate-400 hover:text-slate-800 p-1 rounded-lg hover:bg-slate-100 text-xs transition"
                       title="Ampliar foto a pantalla completa"
                     >
                       <i className="fa-solid fa-up-right-and-down-left-from-center"></i>
@@ -327,7 +326,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
                     <button
                       type="button"
                       onClick={() => { setIsPinned(false); setIsOpen(false); }}
-                      className="text-slate-400 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 text-xs transition"
+                      className="text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-slate-100 text-xs transition"
                     >
                       <i className="fa-solid fa-xmark"></i>
                     </button>
@@ -337,7 +336,7 @@ export function ProductHoverPreview({ order, coils = [] }) {
 
               {productImage ? (
                 <div 
-                  className="w-full h-36 bg-white rounded-xl overflow-hidden flex items-center justify-center p-2 border border-slate-700/80 shadow-inner cursor-zoom-in group"
+                  className="w-full h-36 bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center p-2 border border-slate-200 shadow-inner cursor-zoom-in group"
                   onClick={() => setIsZoomOpen(true)}
                 >
                   <img 
@@ -349,10 +348,10 @@ export function ProductHoverPreview({ order, coils = [] }) {
               ) : null}
 
               <div>
-                <h4 className="text-xs font-bold text-white line-clamp-2">{displayName}</h4>
+                <h4 className="text-xs font-bold text-slate-900 line-clamp-2">{displayName}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-mono text-slate-400">OEM: <strong className="text-white">{displayOem}</strong></span>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold">{formatUSD(displayPrice)}</span>
+                  <span className="text-[10px] font-mono text-slate-500">OEM: <strong className="text-slate-800">{displayOem}</strong></span>
+                  <span className="text-[11px] font-mono text-emerald-600 font-extrabold">{formatUSD(displayPrice)}</span>
                 </div>
               </div>
             </>
@@ -364,17 +363,17 @@ export function ProductHoverPreview({ order, coils = [] }) {
       {/* Modal Zoom Foto */}
       {isZoomOpen && productImage && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[100000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setIsZoomOpen(false)}
         >
-          <div className="relative max-w-xl w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl space-y-3 animate-in fade-in zoom-in-95" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <h3 className="text-sm font-bold text-white truncate">{displayName}</h3>
-              <button type="button" onClick={() => setIsZoomOpen(false)} className="text-slate-400 hover:text-white p-1">
-                <i className="fa-solid fa-xmark text-lg"></i>
+          <div className="relative max-w-xl w-full bg-white border border-slate-200 rounded-3xl p-5 shadow-2xl space-y-3 animate-in fade-in zoom-in-95 text-slate-900" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 truncate">{displayName}</h3>
+              <button type="button" onClick={() => setIsZoomOpen(false)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition">
+                <i className="fa-solid fa-xmark text-sm"></i>
               </button>
             </div>
-            <div className="max-h-[60vh] flex items-center justify-center bg-white rounded-xl p-4">
+            <div className="max-h-[60vh] flex items-center justify-center bg-slate-50 rounded-2xl p-4 border border-slate-200">
               <img src={productImage} alt={displayName} className="max-h-[50vh] object-contain mix-blend-multiply" />
             </div>
           </div>

@@ -9,7 +9,7 @@ const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Se
 
 // Paleta de colores distintivos y contrastantes para las curvas de la gráfica
 const CURVE_COLORS = [
-  "#de2420", // Rojo JF Racing
+  "#EF4444", // Rojo JF Racing
   "#10b981", // Esmeralda
   "#06b6d4", // Cyan
   "#f97316", // Naranja
@@ -380,13 +380,13 @@ export function PerformanceView({ onNavigateTab }) {
     <div className="space-y-3 pb-8 animate-fade-in text-slate-100">
       
       {/* 1. BARRA SUPERIOR DE CONTROL EJECUTIVA (DESDE / HASTA SIN PRESETS) */}
-      <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl">
+      <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-3 sm:p-3.5 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           
           {/* Título & Tasa Oficial */}
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-[#de2420]/15 text-[#de2420] border border-[#de2420]/30">
+              <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30">
                 Auditoría Financiera & Margen
               </span>
               <span className="text-slate-600 text-xs">•</span>
@@ -398,7 +398,7 @@ export function PerformanceView({ onNavigateTab }) {
             </div>
 
             <h1 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-              <i className="fa-solid fa-chart-line text-[#de2420]"></i>
+              <i className="fa-solid fa-chart-line text-[#EF4444]"></i>
               <span>Rendimiento Financiero & Estacionalidad</span>
             </h1>
             <p className="text-[11px] text-slate-400">
@@ -409,7 +409,7 @@ export function PerformanceView({ onNavigateTab }) {
           {/* Selector de Rango Exclusivo: DESDE / HASTA */}
           <div className="flex flex-wrap items-center gap-2">
             
-            <div className="flex items-center bg-[#141518] border border-[#2d2f35] rounded-xl p-1 shadow-inner text-xs">
+            <div className="flex items-center bg-[#474C58] border border-[#525868] rounded-xl p-1 shadow-inner text-xs">
               
               {/* Campo Desde */}
               <div className="flex items-center gap-1.5 px-2.5 py-1">
@@ -439,13 +439,13 @@ export function PerformanceView({ onNavigateTab }) {
             </div>
 
             {/* Selector de Métrica: Unidades vs Ganancia ($) */}
-            <div className="flex items-center bg-[#141518] border border-[#2d2f35] rounded-xl p-1 text-xs font-semibold">
+            <div className="flex items-center bg-[#474C58] border border-[#525868] rounded-xl p-1 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setChartMetric('units')}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   chartMetric === 'units'
-                    ? 'bg-[#25272e] text-white shadow-xs'
+                    ? 'bg-[#525868] text-white shadow-xs'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -476,7 +476,7 @@ export function PerformanceView({ onNavigateTab }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         
         {/* KPI 1: Facturación Real */}
-        <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-base shrink-0">
             <i className="fa-solid fa-file-invoice-dollar"></i>
           </div>
@@ -492,7 +492,7 @@ export function PerformanceView({ onNavigateTab }) {
         </div>
 
         {/* KPI 2: Costo de Bodega (0$ por defecto) */}
-        <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-base shrink-0">
             <i className="fa-solid fa-boxes-packing"></i>
           </div>
@@ -508,7 +508,7 @@ export function PerformanceView({ onNavigateTab }) {
         </div>
 
         {/* KPI 3: Ganancia Neta Limpia */}
-        <div className="bg-gradient-to-br from-emerald-950/70 via-[#1c1d22] to-[#1c1d22] border border-emerald-500/50 rounded-2xl p-2.5 sm:p-3 shadow-xl flex items-center gap-3 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-emerald-950/70 via-[#3B3F4A] to-[#3B3F4A] border border-emerald-500/50 rounded-2xl p-2.5 sm:p-3 shadow-xl flex items-center gap-3 relative overflow-hidden">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-base shrink-0 shadow-lg shadow-emerald-700/20">
             <i className="fa-solid fa-sack-dollar"></i>
           </div>
@@ -527,7 +527,7 @@ export function PerformanceView({ onNavigateTab }) {
         </div>
 
         {/* KPI 4: Margen Global */}
-        <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center gap-3">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-base shrink-0">
             <i className="fa-solid fa-percent"></i>
           </div>
@@ -548,13 +548,13 @@ export function PerformanceView({ onNavigateTab }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-start">
         
         {/* COLUMNA IZQUIERDA (7 COLS): GRÁFICA MULTI-LÍNEA DINÁMICA */}
-        <div className="lg:col-span-7 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2.5">
+        <div className="lg:col-span-7 bg-[#3B3F4A] border border-[#525868] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2.5">
           
           {/* Header de la Gráfica */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-[#2d2f35]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-[#525868]">
             <div>
               <h2 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-                <i className="fa-solid fa-arrow-trend-up text-[#de2420]"></i>
+                <i className="fa-solid fa-arrow-trend-up text-[#EF4444]"></i>
                 <span>Curva de Demanda & Estacionalidad</span>
               </h2>
               <p className="text-[10px] text-slate-400">Rotación real mes a mes basada en tus ventas registradas</p>
@@ -592,7 +592,7 @@ export function PerformanceView({ onNavigateTab }) {
                 <button
                   type="button"
                   onClick={() => setSearchDropdownOpen(prev => !prev)}
-                  className="px-2.5 py-1 rounded-lg bg-[#de2420] hover:bg-[#c81e1a] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                  className="px-2.5 py-1 rounded-lg bg-[#EF4444] hover:bg-[#DC2626] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
                 >
                   <i className="fa-solid fa-plus text-[10px]"></i>
                   <span>Agregar Repuesto</span>
@@ -604,7 +604,7 @@ export function PerformanceView({ onNavigateTab }) {
                   <button
                     type="button"
                     onClick={() => setActiveCurveIds([])}
-                    className="px-2 py-1 rounded-lg bg-[#141518] hover:bg-slate-800 border border-[#2d2f35] text-slate-400 hover:text-white text-[10px] font-semibold transition cursor-pointer"
+                    className="px-2 py-1 rounded-lg bg-[#474C58] hover:bg-slate-800 border border-[#525868] text-slate-400 hover:text-white text-[10px] font-semibold transition cursor-pointer"
                     title="Quitar todos los repuestos de la gráfica"
                   >
                     Limpiar
@@ -613,10 +613,10 @@ export function PerformanceView({ onNavigateTab }) {
 
                 {/* BUSCADOR FLOTANTE PARA AGREGAR CUALQUIER REPUESTO DEL CATÁLOGO */}
                 {searchDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-[#1c1d22] border border-[#3a3c44] rounded-2xl shadow-2xl p-2.5 z-50 backdrop-blur-xl animate-fade-in text-slate-100">
-                    <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#2d2f35]">
+                  <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-[#3B3F4A] border border-[#5E6578] rounded-2xl shadow-2xl p-2.5 z-50 backdrop-blur-xl animate-fade-in text-slate-100">
+                    <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#525868]">
                       <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
-                        <i className="fa-solid fa-magnifying-glass text-[#de2420]"></i>
+                        <i className="fa-solid fa-magnifying-glass text-[#EF4444]"></i>
                         <span>Elige un repuesto para graficar:</span>
                       </span>
                       <span className="text-[9px] text-slate-400 font-mono">{aggregatedProducts.length} disponibles</span>
@@ -630,7 +630,7 @@ export function PerformanceView({ onNavigateTab }) {
                         placeholder="Buscar por nombre, modelo o OEM..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-[#141518] border border-[#2d2f35] focus:border-[#de2420] rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none font-sans"
+                        className="w-full bg-[#474C58] border border-[#525868] focus:border-[#EF4444] rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none font-sans"
                       />
                       {searchQuery && (
                         <button
@@ -665,11 +665,11 @@ export function PerformanceView({ onNavigateTab }) {
                               className={`p-1.5 rounded-xl flex items-center justify-between gap-2 transition cursor-pointer text-xs ${
                                 isAlreadyIn
                                   ? 'bg-emerald-950/40 border border-emerald-500/30 text-white'
-                                  : 'hover:bg-[#25272e] text-slate-200'
+                                  : 'hover:bg-[#525868] text-slate-200'
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-7 h-7 rounded-lg bg-white border border-[#2d2f35] p-0.5 flex items-center justify-center shrink-0">
+                                <div className="w-7 h-7 rounded-lg bg-white border border-[#525868] p-0.5 flex items-center justify-center shrink-0">
                                   <img
                                     src={prod.image || defaultCoilImage}
                                     alt={prod.name}
@@ -693,7 +693,7 @@ export function PerformanceView({ onNavigateTab }) {
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                                 isAlreadyIn
                                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                  : 'bg-slate-800 text-slate-300 hover:bg-[#de2420] hover:text-white'
+                                  : 'bg-slate-800 text-slate-300 hover:bg-[#EF4444] hover:text-white'
                               }`}>
                                 {isAlreadyIn ? '✓ Activo' : '+ Graficar'}
                               </span>
@@ -716,7 +716,7 @@ export function PerformanceView({ onNavigateTab }) {
                   <button
                     type="button"
                     onClick={selectTopSellingCurves}
-                    className="text-[#de2420] hover:underline font-bold"
+                    className="text-[#EF4444] hover:underline font-bold"
                   >
                     Mostrar los más vendidos
                   </button>
@@ -733,7 +733,7 @@ export function PerformanceView({ onNavigateTab }) {
                 chartData.activeProds.map(prod => (
                   <div
                     key={`chip-active-${prod.id}`}
-                    className="px-2.5 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-2 transition bg-[#141518] text-white border border-[#3a3c44] shadow-xs group"
+                    className="px-2.5 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-2 transition bg-[#474C58] text-white border border-[#5E6578] shadow-xs group"
                   >
                     {/* Punto de Color de la Curva */}
                     <span
@@ -785,10 +785,10 @@ export function PerformanceView({ onNavigateTab }) {
               </defs>
 
               {/* Guías Horizontales */}
-              <line x1="45" y1="20" x2="795" y2="20" stroke="#25272e" strokeDasharray="3,3" />
-              <line x1="45" y1="65" x2="795" y2="65" stroke="#25272e" strokeDasharray="3,3" />
-              <line x1="45" y1="110" x2="795" y2="110" stroke="#25272e" strokeDasharray="3,3" />
-              <line x1="45" y1="155" x2="795" y2="155" stroke="#25272e" strokeDasharray="3,3" />
+              <line x1="45" y1="20" x2="795" y2="20" stroke="#525868" strokeDasharray="3,3" />
+              <line x1="45" y1="65" x2="795" y2="65" stroke="#525868" strokeDasharray="3,3" />
+              <line x1="45" y1="110" x2="795" y2="110" stroke="#525868" strokeDasharray="3,3" />
+              <line x1="45" y1="155" x2="795" y2="155" stroke="#525868" strokeDasharray="3,3" />
               <line x1="45" y1="200" x2="795" y2="200" stroke="#333640" strokeWidth="1.5" />
 
               {/* Eje Y */}
@@ -840,7 +840,7 @@ export function PerformanceView({ onNavigateTab }) {
                     cy={pt.y}
                     r="3.5"
                     fill={c.product.curveColor}
-                    stroke="#141518"
+                    stroke="#474C58"
                     strokeWidth="1.5"
                     className="pointer-events-none"
                   />
@@ -873,7 +873,7 @@ export function PerformanceView({ onNavigateTab }) {
                   y1="15"
                   x2={hoveredMonth.x}
                   y2="200"
-                  stroke="#de2420"
+                  stroke="#EF4444"
                   strokeWidth="1.5"
                   strokeDasharray="3,3"
                 />
@@ -902,13 +902,13 @@ export function PerformanceView({ onNavigateTab }) {
             {/* Tooltip Flotante */}
             {hoveredMonth && (
               <div
-                className="absolute pointer-events-none bg-[#1c1d22]/95 border border-[#3a3c44] rounded-xl p-2.5 shadow-2xl backdrop-blur-md text-xs min-w-[210px] -translate-x-1/2 -translate-y-full z-30 transition-all duration-100"
+                className="absolute pointer-events-none bg-[#3B3F4A]/95 border border-[#5E6578] rounded-xl p-2.5 shadow-2xl backdrop-blur-md text-xs min-w-[210px] -translate-x-1/2 -translate-y-full z-30 transition-all duration-100"
                 style={{
                   left: `${(hoveredMonth.x / 820) * 100}%`,
                   top: '90px'
                 }}
               >
-                <div className="font-bold text-white border-b border-[#2d2f35] pb-1 mb-1.5 flex items-center justify-between">
+                <div className="font-bold text-white border-b border-[#525868] pb-1 mb-1.5 flex items-center justify-between">
                   <span className="text-amber-400 font-bold flex items-center gap-1">
                     <i className="fa-regular fa-calendar-check text-[11px]"></i>
                     <span>{MONTH_NAMES[hoveredMonth.mIdx]} 2026</span>
@@ -939,7 +939,7 @@ export function PerformanceView({ onNavigateTab }) {
           </div>
 
           {/* Footer de la gráfica */}
-          <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-[#2d2f35]">
+          <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-[#525868]">
             <span className="flex items-center gap-1">
               <i className="fa-solid fa-circle-info text-sky-400"></i>
               <span>Pasa el cursor por cada mes para auditar la rotación de repuestos.</span>
@@ -950,10 +950,10 @@ export function PerformanceView({ onNavigateTab }) {
         </div>
 
         {/* COLUMNA DERECHA (5 COLS): TOP REPUESTOS MÁS RENTABLES */}
-        <div className="lg:col-span-5 bg-[#1c1d22] border border-[#2d2f35] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2.5">
+        <div className="lg:col-span-5 bg-[#3B3F4A] border border-[#525868] rounded-2xl p-3 sm:p-3.5 shadow-xl space-y-2.5">
           
           {/* Header del Ranking */}
-          <div className="flex items-center justify-between pb-2 border-b border-[#2d2f35]">
+          <div className="flex items-center justify-between pb-2 border-b border-[#525868]">
             <div>
               <h2 className="text-sm font-bold text-white flex items-center gap-1.5">
                 <i className="fa-solid fa-trophy text-amber-400"></i>
@@ -983,7 +983,7 @@ export function PerformanceView({ onNavigateTab }) {
               ];
 
               return (
-                <div key={p.id} className="p-2.5 rounded-xl bg-[#141518] border border-[#2d2f35] hover:border-[#3a3c44] transition space-y-1.5">
+                <div key={p.id} className="p-2.5 rounded-xl bg-[#474C58] border border-[#525868] hover:border-[#5E6578] transition space-y-1.5">
                   <div className="flex items-center justify-between text-xs gap-2">
                     
                     {/* Foto Real + Posición + Datos */}
@@ -993,7 +993,7 @@ export function PerformanceView({ onNavigateTab }) {
                       </span>
 
                       {/* Contenedor de Imagen de Repuesto */}
-                      <div className="w-10 h-10 rounded-lg bg-white border border-[#2d2f35] p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-10 h-10 rounded-lg bg-white border border-[#525868] p-1 flex items-center justify-center shrink-0 overflow-hidden">
                         <img
                           src={p.image || defaultCoilImage}
                           alt={p.name}
@@ -1025,7 +1025,7 @@ export function PerformanceView({ onNavigateTab }) {
                   </div>
 
                   {/* Barra de Retorno de Ganancia */}
-                  <div className="w-full bg-[#1c1d22] h-1.5 rounded-full overflow-hidden flex border border-[#2d2f35]/50">
+                  <div className="w-full bg-[#3B3F4A] h-1.5 rounded-full overflow-hidden flex border border-[#525868]/50">
                     <div
                       className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full transition-all duration-500"
                       style={{ width: `${pctBar}%` }}
@@ -1044,7 +1044,7 @@ export function PerformanceView({ onNavigateTab }) {
 
           {/* Tarjeta de Recomendación de Inventario Inteligente */}
           {topProducts[0] && (
-            <div className="p-2.5 rounded-xl bg-[#141518] border border-[#2d2f35] text-xs space-y-1">
+            <div className="p-2.5 rounded-xl bg-[#474C58] border border-[#525868] text-xs space-y-1">
               <div className="flex items-center gap-1.5 text-amber-400 font-bold text-[11px]">
                 <i className="fa-solid fa-lightbulb"></i>
                 <span>Diagnóstico de Inventario:</span>
@@ -1060,16 +1060,16 @@ export function PerformanceView({ onNavigateTab }) {
       </div>
 
       {/* 4. MATRIZ DETALLADA DE RENTABILIDAD POR PRODUCTO (DESPLEGABLE / DRAWER) */}
-      <div className="bg-[#1c1d22] border border-[#2d2f35] rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
+      <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
         
         {/* Botón para Abrir / Cerrar el Desglose */}
         <button
           type="button"
           onClick={() => setIsDrawerOpen(prev => !prev)}
-          className="w-full px-4 py-3 bg-[#1c1d22] hover:bg-[#25272e] flex items-center justify-between text-left transition cursor-pointer select-none"
+          className="w-full px-4 py-3 bg-[#3B3F4A] hover:bg-[#525868] flex items-center justify-between text-left transition cursor-pointer select-none"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#de2420]/15 border border-[#de2420]/30 text-[#de2420] flex items-center justify-center text-xs">
+            <div className="w-7 h-7 rounded-lg bg-[#EF4444]/15 border border-[#EF4444]/30 text-[#EF4444] flex items-center justify-center text-xs">
               <i className="fa-solid fa-table-list"></i>
             </div>
             <div>
@@ -1089,7 +1089,7 @@ export function PerformanceView({ onNavigateTab }) {
             <span className="text-[11px] font-bold text-slate-400 hidden sm:inline">
               {isDrawerOpen ? 'Ocultar Tabla' : 'Desplegar Tabla'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-[#141518] border border-[#2d2f35] flex items-center justify-center text-slate-400">
+            <div className="w-7 h-7 rounded-lg bg-[#474C58] border border-[#525868] flex items-center justify-center text-slate-400">
               <i className={`fa-solid fa-chevron-down text-xs transition-transform duration-300 ${isDrawerOpen ? 'rotate-180' : ''}`}></i>
             </div>
           </div>
@@ -1097,11 +1097,11 @@ export function PerformanceView({ onNavigateTab }) {
 
         {/* Contenido Desplegable */}
         {isDrawerOpen && (
-          <div className="border-t border-[#2d2f35] p-3.5 bg-[#141518] animate-fade-in">
+          <div className="border-t border-[#525868] p-3.5 bg-[#474C58] animate-fade-in">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#2d2f35] text-[10px] font-mono uppercase text-slate-400">
+                  <tr className="border-b border-[#525868] text-[10px] font-mono uppercase text-slate-400">
                     <th className="py-2.5 px-3">Repuesto & Vehículo</th>
                     <th className="py-2.5 px-2 text-center">Código OEM</th>
                     <th className="py-2.5 px-2 text-center">Unidades Vendidas</th>
@@ -1112,14 +1112,14 @@ export function PerformanceView({ onNavigateTab }) {
                     <th className="py-2.5 px-2 text-center">Margen</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2d2f35]/60 text-slate-200">
+                <tbody className="divide-y divide-[#525868]/60 text-slate-200">
                   {aggregatedProducts.map(p => (
-                    <tr key={`table-row-${p.id}`} className="hover:bg-[#1c1d22] transition">
+                    <tr key={`table-row-${p.id}`} className="hover:bg-[#3B3F4A] transition">
                       
                       {/* Repuesto */}
                       <td className="py-2 px-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-md bg-white border border-[#2d2f35] p-0.5 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-md bg-white border border-[#525868] p-0.5 flex items-center justify-center shrink-0">
                             <img
                               src={p.image || defaultCoilImage}
                               alt={p.name}

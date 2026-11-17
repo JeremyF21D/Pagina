@@ -97,7 +97,7 @@ export function SalesView({ onOpenManualSaleModal }) {
 
           <button 
             onClick={handleQuickSimulation}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+            className="px-3.5 py-2 bg-[#474C58] hover:bg-slate-700 text-slate-200 border border-[#5E6578] rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
             title="Simula un pedido nuevo de WhatsApp en estado Pendiente para probar la confirmación"
           >
             <i className="fa-solid fa-bolt text-amber-400"></i> Simular Pedido WA
@@ -142,7 +142,7 @@ export function SalesView({ onOpenManualSaleModal }) {
 
       {/* KPI Cards Globales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center gap-4">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-4 shadow-lg flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
             <i className="fa-solid fa-hand-holding-dollar"></i>
           </div>
@@ -153,7 +153,7 @@ export function SalesView({ onOpenManualSaleModal }) {
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center gap-4">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-4 shadow-lg flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-xl">
             <i className="fa-solid fa-receipt"></i>
           </div>
@@ -163,7 +163,7 @@ export function SalesView({ onOpenManualSaleModal }) {
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center gap-4">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-4 shadow-lg flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
             <i className="fa-solid fa-clock"></i>
           </div>
@@ -173,7 +173,7 @@ export function SalesView({ onOpenManualSaleModal }) {
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center gap-4">
+        <div className="bg-[#3B3F4A] border border-[#525868] rounded-2xl p-4 shadow-lg flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-xl">
             <i className="fa-solid fa-boxes-stacked"></i>
           </div>
@@ -185,8 +185,8 @@ export function SalesView({ onOpenManualSaleModal }) {
       </div>
 
       {/* KPI Desglose por Método de Pago (Cuadre Administrativo) */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+      <div className="bg-[#3B3F4A]/90 border border-[#525868] rounded-2xl p-4 shadow-lg space-y-3">
+        <div className="flex items-center justify-between border-b border-[#525868] pb-2">
           <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
             <i className="fa-solid fa-wallet text-brand-400"></i>
             <span>Desglose de Ingresos por Método de Pago (Cuadre de Caja)</span>

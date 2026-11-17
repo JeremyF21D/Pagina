@@ -170,22 +170,22 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
 
   return (
     <div 
-      className="fixed inset-0 z-[100000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-[100000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
       onClick={onClose}
     >
       <div 
-        className="relative max-w-lg w-full bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-modal-pop"
+        className="relative max-w-lg w-full bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-modal-pop text-slate-900 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-start justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-lg">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center text-lg">
               <i className="fa-solid fa-receipt"></i>
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Confirmar Venta & Comprobante</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-base font-bold text-slate-900">Confirmar Venta & Comprobante</h3>
+              <p className="text-xs text-slate-500">
                 Selecciona el método de pago recibido para registrarlo en la Base de Datos.
               </p>
             </div>
@@ -193,55 +193,55 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
           <button 
             type="button" 
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-all duration-200 cursor-pointer hover:rotate-90"
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
           >
-            <i className="fa-solid fa-xmark text-lg"></i>
+            <i className="fa-solid fa-xmark text-sm"></i>
           </button>
         </div>
 
         {/* Resumen del Pedido */}
-        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex items-center justify-between gap-3">
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-12 h-12 rounded-xl bg-white border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
               {order.items && order.items.length > 1 ? (
-                <i className="fa-solid fa-boxes-packing text-[#de2420] text-xl"></i>
+                <i className="fa-solid fa-boxes-packing text-red-600 text-xl"></i>
               ) : productImage ? (
                 <img src={productImage} alt="" className="w-full h-full object-contain mix-blend-multiply" />
               ) : (
-                <i className="fa-solid fa-bolt text-amber-400 text-lg"></i>
+                <i className="fa-solid fa-bolt text-red-600 text-lg"></i>
               )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-brand-400">#{order.orderId}</span>
-                <span className="text-[11px] text-slate-300 font-medium truncate">{order.customerName}</span>
+                <span className="font-mono text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.2 rounded">#{order.orderId}</span>
+                <span className="text-[11px] text-slate-700 font-bold truncate">{order.customerName}</span>
               </div>
               {order.items && order.items.length > 1 ? (
                 <>
-                  <div className="text-xs font-bold text-white truncate max-w-xs">
+                  <div className="text-xs font-bold text-slate-900 truncate max-w-xs">
                     {order.items.length} repuestos distintos ({order.items.reduce((acc, it) => acc + (it.qty || 1), 0)} uds)
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate max-w-xs">
+                  <div className="text-[10px] text-slate-500 truncate max-w-xs">
                     {order.items.map(it => `${it.qty}x ${it.name}`).join(', ')}
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="text-xs font-bold text-white truncate max-w-xs">{order.qty}x {order.coilName}</div>
-                  <div className="text-[10px] font-mono text-slate-400">Stock actual: {order.stockBefore} ➔ Descontará {order.qty} uds</div>
+                  <div className="text-xs font-bold text-slate-900 truncate max-w-xs">{order.qty}x {order.coilName}</div>
+                  <div className="text-[10px] font-mono text-slate-500">Stock actual: {order.stockBefore} ➔ Descontará {order.qty} uds</div>
                 </>
               )}
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <span className="text-[10px] text-slate-400 block font-semibold uppercase">Total a Cobrar</span>
-            <span className="text-base font-extrabold text-emerald-400 font-mono">{formatUSD(order.totalPrice)}</span>
+            <span className="text-[10px] text-slate-500 block font-bold uppercase">Total a Cobrar</span>
+            <span className="text-base font-extrabold text-emerald-600 font-mono">{formatUSD(order.totalPrice)}</span>
           </div>
         </div>
 
         {/* Selector de Método de Pago */}
         <div>
-          <label className="text-xs font-bold text-slate-300 block mb-2">
+          <label className="text-xs font-bold text-slate-700 block mb-2">
             1. Selecciona el Método de Pago:
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -250,8 +250,8 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
               onClick={() => setMethod('PAGO_MOVIL')}
               className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer ${
                 method === 'PAGO_MOVIL'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500 shadow-lg shadow-emerald-500/20'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-750'
+                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-md shadow-emerald-600/20'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <i className="fa-solid fa-mobile-screen text-base"></i>
@@ -263,8 +263,8 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
               onClick={() => setMethod('BINANCE')}
               className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer ${
                 method === 'BINANCE'
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500 shadow-lg shadow-amber-500/20'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-750'
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/20'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <i className="fa-brands fa-bitcoin text-base"></i>
@@ -276,8 +276,8 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
               onClick={() => setMethod('ZELLE')}
               className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer ${
                 method === 'ZELLE'
-                  ? 'bg-purple-500/20 text-purple-300 border-purple-500 shadow-lg shadow-purple-500/20'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-750'
+                  ? 'bg-purple-600 text-white border-purple-700 shadow-md shadow-purple-600/20'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <i className="fa-solid fa-building-columns text-base"></i>
@@ -289,8 +289,8 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
               onClick={() => setMethod('EFECTIVO')}
               className={`p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition cursor-pointer ${
                 method === 'EFECTIVO'
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500 shadow-lg shadow-sky-500/20'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-750'
+                  ? 'bg-slate-900 text-white border-slate-950 shadow-md shadow-slate-900/20'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <i className="fa-solid fa-money-bill-wave text-base"></i>
@@ -300,7 +300,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
         </div>
 
         {/* Campos Específicos según el método */}
-        <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3">
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
           {/* PAGO MÓVIL */}
           {method === 'PAGO_MOVIL' && (
             <>
@@ -539,41 +539,41 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
         </div>
 
         {/* Vista previa en tiempo real de cómo se guardará en la BDD */}
-        <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-          <span className="text-[10px] text-slate-400 block font-semibold mb-1">
-            <i className="fa-solid fa-database text-brand-400 mr-1"></i>
-            Registro que se guardará en Supabase (columna <code className="text-sky-300">referencia_pago</code>):
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+          <span className="text-[10px] text-slate-500 block font-semibold mb-1">
+            <i className="fa-solid fa-database text-red-600 mr-1"></i>
+            Registro que se guardará en Supabase (columna <code className="text-red-600 font-bold">referencia_pago</code>):
           </span>
-          <div className="font-mono text-[11px] text-emerald-300 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 break-all">
+          <div className="font-mono text-[11px] text-emerald-700 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 break-all shadow-xs">
             {getBuiltPaymentReference()}
           </div>
         </div>
 
         {/* Opción para generar factura formal inmediatamente */}
-        <label className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl cursor-pointer select-none hover:bg-amber-500/15 transition">
+        <label className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl cursor-pointer select-none hover:bg-amber-100 transition">
           <input
             type="checkbox"
             checked={generateInvoiceNow}
             onChange={e => setGenerateInvoiceNow(e.target.checked)}
-            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-700 cursor-pointer"
+            className="w-4 h-4 rounded text-red-600 focus:ring-red-500 bg-white border-slate-300 cursor-pointer"
           />
           <div className="text-xs">
-            <span className="font-bold text-amber-300 flex items-center gap-1.5">
-              <i className="fa-solid fa-file-invoice text-amber-400"></i> Generar e imprimir factura oficial inmediatamente
+            <span className="font-bold text-amber-900 flex items-center gap-1.5">
+              <i className="fa-solid fa-file-invoice text-amber-600"></i> Generar e imprimir factura oficial inmediatamente
             </span>
-            <span className="text-[10px] text-slate-400 block mt-0.5">
+            <span className="text-[10px] text-slate-600 block mt-0.5">
               Abre el comprobante digital con RIF y desglose listo para imprimir en PDF o enviar por WhatsApp.
             </span>
           </div>
         </label>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+            className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
           >
             Cancelar
           </button>
@@ -582,7 +582,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
             type="button"
             onClick={handleSubmit}
             disabled={!isFormValid() || isSubmitting}
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer"
+            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-white font-bold rounded-xl text-xs shadow-lg shadow-red-600/25 flex items-center gap-2 transition cursor-pointer"
           >
             {isSubmitting ? (
               <>

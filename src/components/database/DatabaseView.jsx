@@ -79,7 +79,7 @@ export function DatabaseView({
 
           <button 
             onClick={onOpenBulkModal}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+            className="px-3.5 py-2 bg-[#474C58] hover:bg-slate-700 text-slate-200 border border-[#5E6578] rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
           >
             <i className="fa-solid fa-file-import text-sky-400"></i> Carga Masiva (CSV / JSON)
           </button>
@@ -98,7 +98,7 @@ export function DatabaseView({
           <div className="relative">
             <button 
               onClick={() => setIsExportOpen(!isExportOpen)}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+              className="px-3.5 py-2 bg-[#474C58] hover:bg-slate-700 text-slate-200 border border-[#5E6578] rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
             >
               <i className="fa-solid fa-file-export text-emerald-400"></i> Exportar
               <i className={`fa-solid fa-chevron-down text-[10px] transition-transform ${isExportOpen ? 'rotate-180' : ''}`}></i>
@@ -111,24 +111,24 @@ export function DatabaseView({
                   className="fixed inset-0 z-20" 
                   onClick={() => setIsExportOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-1.5 w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30 space-y-0.5 animate-fade-in">
+                <div className="absolute right-0 top-full mt-1.5 w-44 bg-[#3B3F4A] border border-[#5E6578] rounded-xl shadow-2xl py-1.5 z-30 space-y-0.5 animate-fade-in">
                   <button 
                     onClick={() => handleExport('csv')}
-                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-[#474C58] flex items-center gap-2.5 transition cursor-pointer"
                   >
                     <i className="fa-solid fa-file-csv text-emerald-400 text-sm"></i> 
                     <span>Formato CSV (Excel)</span>
                   </button>
                   <button 
                     onClick={() => handleExport('json')}
-                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-[#474C58] flex items-center gap-2.5 transition cursor-pointer"
                   >
                     <i className="fa-solid fa-file-code text-amber-400 text-sm"></i> 
                     <span>Formato JSON</span>
                   </button>
                   <button 
                     onClick={() => handleExport('sql')}
-                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                    className="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:text-white hover:bg-[#474C58] flex items-center gap-2.5 transition cursor-pointer"
                   >
                     <i className="fa-solid fa-database text-sky-400 text-sm"></i> 
                     <span>Dump SQL DDL</span>
@@ -140,7 +140,7 @@ export function DatabaseView({
 
           <button 
             onClick={onOpenSchemaModal}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+            className="px-3.5 py-2 bg-[#474C58] hover:bg-slate-700 text-slate-200 border border-[#5E6578] rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
           >
             <i className="fa-solid fa-code text-purple-400"></i> Ver Esquemas DDL
           </button>
@@ -160,7 +160,7 @@ export function DatabaseView({
       {/* Modal Seguro de Confirmación para Vaciar Base de Datos */}
       {isClearModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+          <div className="bg-[#3B3F4A] border border-[#5E6578] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-xl mx-auto">
               <i className="fa-solid fa-triangle-exclamation"></i>
             </div>
@@ -179,7 +179,7 @@ export function DatabaseView({
             <div className="grid grid-cols-2 gap-2.5 pt-2">
               <button
                 onClick={() => setIsClearModalOpen(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer"
+                className="px-4 py-2.5 bg-[#474C58] hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer"
               >
                 Cancelar
               </button>
@@ -206,15 +206,15 @@ export function DatabaseView({
             <div 
               key={eng.id}
               onClick={() => changeDbEngine(eng.id)}
-              className={`p-4 rounded-2xl bg-slate-900 border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+              className={`p-4 rounded-2xl bg-[#3B3F4A] border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
                 isSelected 
-                  ? `${eng.activeBorder} shadow-lg shadow-brand-500/5 bg-slate-850` 
-                  : 'border-slate-800 hover:border-slate-700'
+                  ? `${eng.activeBorder} shadow-lg shadow-brand-500/5 bg-[#242730]` 
+                  : 'border-[#525868] hover:border-[#5E6578]'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="h-9 w-9 rounded-xl bg-slate-800 flex items-center justify-center text-sm text-brand-400">
+                  <div className="h-9 w-9 rounded-xl bg-[#474C58] flex items-center justify-center text-sm text-brand-400">
                     <i className={eng.icon}></i>
                   </div>
                   {isSelected && (
@@ -227,7 +227,7 @@ export function DatabaseView({
                 <p className="text-[11px] text-slate-400">{eng.desc}</p>
               </div>
 
-              <div className="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
+              <div className="mt-3 pt-2 border-t border-[#525868] text-[10px] font-mono text-slate-500">
                 {isSelected ? 'Sincronizado en tiempo real' : 'Clic para conectar motor'}
               </div>
             </div>
@@ -240,13 +240,13 @@ export function DatabaseView({
 
       {/* Selector de Tablas de la Base de Datos */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-2 p-1.5 bg-slate-950/80 border border-slate-800 rounded-2xl">
+        <div className="flex items-center gap-2 p-1.5 bg-[#242730]/80 border border-[#525868] rounded-2xl">
           <button
             onClick={() => setActiveSubTab('inventory')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
               activeSubTab === 'inventory'
                 ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-400 hover:text-white hover:bg-[#474C58]'
             }`}
           >
             <i className="fa-solid fa-boxes-stacked"></i>
@@ -259,7 +259,7 @@ export function DatabaseView({
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
               activeSubTab === 'sales'
                 ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-400 hover:text-white hover:bg-[#474C58]'
             }`}
           >
             <i className="fa-solid fa-cash-register"></i>

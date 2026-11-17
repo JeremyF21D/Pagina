@@ -50,13 +50,13 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
   });
 
   return (
-    <div className="bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
+    <div className="bg-[#3B3F4A] border border-[#5E6578]/80 rounded-2xl overflow-hidden shadow-xl space-y-4">
       {/* Search & Filter Bar */}
-      <div className="p-4 bg-slate-850 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 bg-[#242730] border-b border-[#5E6578]/80 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <i className="fa-solid fa-database text-sky-400"></i>
           <h3 className="text-sm font-bold text-white">Inventario de Repuestos en Base de Datos</h3>
-          <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700 font-mono">
+          <span className="text-xs bg-[#474C58] text-slate-300 px-2 py-0.5 rounded-full border border-[#5E6578] font-mono">
             {filtered.length} referencias
           </span>
         </div>
@@ -69,7 +69,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
             className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${
               onlyNoPhoto 
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                : 'bg-[#474C58] text-slate-400 border-[#5E6578] hover:text-white'
             }`}
             title="Mostrar solo repuestos que no tienen foto asignada"
           >
@@ -82,13 +82,13 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filtrar por código, auto, OEM..." 
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
           />
 
           <select 
             value={stockStatusFilter}
             onChange={(e) => setStockStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             <option value="ALL">Todo el Stock</option>
             <option value="CRITICAL">⚠️ Stock Crítico (1-2 uds)</option>
@@ -99,7 +99,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
           <select 
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             <option value="ALL">Todas las categorías</option>
             {PRODUCT_CATEGORIES.map(c => (
@@ -110,7 +110,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
           <select 
             value={brandFilter}
             onChange={(e) => setBrandFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+            className="px-3 py-1.5 bg-[#474C58] border border-[#5E6578] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
           >
             <option value="ALL">Todas las marcas</option>
             {brands.map(b => (
@@ -123,7 +123,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-mono">
+          <thead className="bg-[#242730] text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#525868] font-mono">
             <tr>
               <th className="py-3 px-4">Código / ID</th>
               <th className="py-3 px-4">Marca & Repuesto</th>
@@ -152,7 +152,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
                 return (
                   <tr 
                     key={coil.id} 
-                    className={`transition hover:bg-slate-800/60 ${
+                    className={`transition hover:bg-[#474C58]/60 ${
                       isEmpty 
                         ? 'bg-rose-950/10' 
                         : isCritical 
@@ -165,7 +165,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-lg bg-[#474C58] border border-[#5E6578] overflow-hidden flex-shrink-0 flex items-center justify-center">
                           {coil.image ? (
                             <img 
                               src={coil.image} 
@@ -200,12 +200,12 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
 
                     {/* Ajuste Rápido de Stock en Línea con Semáforo */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+                      <div className="inline-flex items-center gap-1.5 bg-[#242730] px-2 py-1 rounded-xl border border-[#525868]">
                         <button
                           type="button"
                           onClick={() => handleStockAdjust(coil, -1)}
                           disabled={coil.stock <= 0}
-                          className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-200 text-xs flex items-center justify-center transition cursor-pointer"
+                          className="w-5 h-5 rounded bg-[#474C58] hover:bg-slate-700 disabled:opacity-30 text-slate-200 text-xs flex items-center justify-center transition cursor-pointer"
                           title="Restar 1 unidad"
                         >
                           -
@@ -224,7 +224,7 @@ export function InventoryTable({ onEditCoil, onDeleteCoil }) {
                         <button
                           type="button"
                           onClick={() => handleStockAdjust(coil, 1)}
-                          className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs flex items-center justify-center transition cursor-pointer"
+                          className="w-5 h-5 rounded bg-[#474C58] hover:bg-slate-700 text-slate-200 text-xs flex items-center justify-center transition cursor-pointer"
                           title="Sumar 1 unidad"
                         >
                           +

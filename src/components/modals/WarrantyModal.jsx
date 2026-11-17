@@ -132,24 +132,24 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto animate-fade-in" role="dialog">
-      <div className="bg-[#141518] border border-slate-700/80 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in" role="dialog">
+      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl my-auto text-slate-900 max-h-[90vh] flex flex-col">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-[#18191e] border-b border-slate-800 flex items-center justify-between">
+        <div className="p-4 sm:p-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 text-lg">
               <i className="fa-solid fa-shield-halved"></i>
             </div>
             <div>
-              <h3 className="font-extrabold text-white text-sm sm:text-base flex items-center gap-2">
+              <h3 className="font-extrabold text-slate-900 text-sm sm:text-base flex items-center gap-2">
                 <span>Gestión de Garantía y Devoluciones</span>
-                <span className="text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                <span className="text-xs font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                   #{order.orderId}
                 </span>
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Cliente: <strong className="text-slate-200">{order.customerName}</strong> ({order.customerPhone})
+              <p className="text-xs text-slate-500 mt-0.5">
+                Cliente: <strong className="text-slate-800">{order.customerName}</strong> ({order.customerPhone})
               </p>
             </div>
           </div>
@@ -157,31 +157,31 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
           <button 
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition"
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition"
           >
-            <i className="fa-solid fa-xmark text-lg"></i>
+            <i className="fa-solid fa-xmark text-sm"></i>
           </button>
         </div>
 
         {/* Snapshot Summary Bar */}
-        <div className="px-5 py-3 bg-[#0d0e11] border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
           <div>
-            <span className="text-slate-400">Total Venta Original: </span>
-            <strong className="text-emerald-400 font-mono font-black text-sm">{formatUSD(order.totalPrice || order.totalUSD)}</strong>
+            <span className="text-slate-500">Total Venta Original: </span>
+            <strong className="text-emerald-600 font-mono font-black text-sm">{formatUSD(order.totalPrice || order.totalUSD)}</strong>
           </div>
           {frozenBinance && (
-            <div className="flex items-center gap-2 font-mono text-[11px] text-slate-300">
-              <span className="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
+            <div className="flex items-center gap-2 font-mono text-[11px] text-slate-600">
+              <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
                 Tasa Binance: {frozenBinance} Bs/$
               </span>
               {frozenVES && (
-                <span className="text-slate-400">({frozenVES})</span>
+                <span className="text-slate-500 font-semibold">({frozenVES})</span>
               )}
             </div>
           )}
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-5 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
           {/* 1. Selector de Repuesto Defectuoso (si la orden tiene más de 1 artículo) */}
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
