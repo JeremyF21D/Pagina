@@ -637,7 +637,7 @@ Directrices de conversación:
             type: String(coil.type || '').trim(),
             connector: String(coil.connector || '').trim(),
             price: Number(coil.price) || 0,
-            oldPrice: Number(coil.oldPrice) || Number(coil.price) || 0,
+            oldPrice: Number(coil.oldPrice) || 0,
             stock: parseInt(coil.stock, 10) || 0,
             warranty: String(coil.warranty || '12 meses').trim(),
             badge: String(coil.badge || 'OEM Spec').trim(),

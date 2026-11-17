@@ -517,9 +517,7 @@ export function SabrinaCatalogView({
             const isCriticalStock = item.stock > 0 && item.stock <= 2;
             const isOutOfStock = item.stock <= 0;
             const rawOldPrice = Number(item.oldPrice || item.old_price || 0);
-            const effectiveOldPrice = rawOldPrice > priceUSD
-              ? rawOldPrice
-              : (priceUSD > 0 ? (priceUSD <= 10 ? priceUSD + 3 : Math.round(priceUSD * 1.25)) : 0);
+            const effectiveOldPrice = rawOldPrice > priceUSD ? rawOldPrice : 0;
             const discountPct = effectiveOldPrice > priceUSD
               ? Math.round(((effectiveOldPrice - priceUSD) / effectiveOldPrice) * 100)
               : 0;

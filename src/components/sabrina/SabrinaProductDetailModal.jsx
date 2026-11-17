@@ -15,9 +15,7 @@ export function SabrinaProductDetailModal({ product, isOpen, onClose, onAddToCar
   const priceVES = priceUSD * rate;
 
   const rawOldPrice = Number(product.oldPrice || product.old_price || 0);
-  const effectiveOldPrice = rawOldPrice > priceUSD
-    ? rawOldPrice
-    : (priceUSD > 0 ? (priceUSD <= 10 ? priceUSD + 3 : Math.round(priceUSD * 1.25)) : 0);
+  const effectiveOldPrice = rawOldPrice > priceUSD ? rawOldPrice : 0;
   const discountPct = effectiveOldPrice > priceUSD
     ? Math.round(((effectiveOldPrice - priceUSD) / effectiveOldPrice) * 100)
     : 0;
