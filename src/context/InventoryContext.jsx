@@ -113,6 +113,7 @@ export const encodeOrderPaymentRef = (rawRef = '', order = {}) => {
 
   const meta = {
     items: Array.isArray(order.items) && order.items.length > 0 ? order.items : null,
+    status: order.status || null,
     rateBinance: order.exchangeRateBinance ?? null,
     rateBCV: order.exchangeRateBCV ?? null,
     totalVES: order.totalVES ?? null,
@@ -122,7 +123,7 @@ export const encodeOrderPaymentRef = (rawRef = '', order = {}) => {
     notes: order.notes ?? ''
   };
 
-  if (meta.items || meta.rateBinance || (meta.warrantyEvents && meta.warrantyEvents.length > 0) || meta.notes) {
+  if (meta.items || meta.status || meta.rateBinance || (meta.warrantyEvents && meta.warrantyEvents.length > 0) || meta.notes) {
     try {
       const metaString = JSON.stringify(meta);
       return cleanRef ? `${cleanRef} | [JF_META_START]${metaString}[JF_META_END]` : `[JF_META_START]${metaString}[JF_META_END]`;
@@ -1388,6 +1389,14 @@ Directrices de conversación:
     const cleanId = String(orderId || '').replace(/^#/, '').trim();
     if (!cleanId) return;
 
+    // Registrar en blacklist persistente para que no resucite al re-sincronizar
+    try {
+      const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
+      const deletedSet = new Set(Array.isArray(deletedArr) ? deletedArr : []);
+      deletedSet.add(cleanId);
+      localStorage.setItem('JF_DELETED_SALES_IDS', JSON.stringify([...deletedSet]));
+    } catch (e) {}
+
     setSalesHistory(prev => {
       const next = prev.filter(s => String(s.orderId).replace(/^#/, '') !== cleanId);
       try {
@@ -1702,7 +1711,7 @@ Directrices de conversación:
                 stockBefore: Number(item.stock_anterior ?? item.stock_before ?? 0),
                 stockAfter: Number(item.stock_posterior ?? item.stock_after ?? 0),
                 paymentRef: cleanRef,
-                status: (item.estado || item.status || 'CONFIRMED').toUpperCase(),
+                status: (item.estado || item.status || meta?.status || existingLocal?.status || 'CONFIRMED').toUpperCase(),
                 userId: item.usuario_id || item.user_id || 'CLI-SUPABASE',
                 exchangeRateBinance: rateBinance,
                 exchangeRateBCV: rateBCV,
@@ -1720,13 +1729,22 @@ Directrices de conversación:
               return mappedOrder;
             });
 
+            // Respetar lista de órdenes eliminadas para que no resuciten
+            let deletedIdsSet = new Set();
+            try {
+              const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
+              deletedIdsSet = new Set(Array.isArray(deletedArr) ? deletedArr : []);
+            } catch (e) {}
+
+            const filteredSupabase = mappedSupabase.filter(o => !deletedIdsSet.has(o.orderId));
+
             // Preservar órdenes locales que aún no hayan impactado Supabase
             const unsyncedLocals = localSales.filter(s => {
               const id = String(s.orderId || s.order_id || '').replace(/^#/, '').trim();
-              return id && !supabaseIdSet.has(id);
+              return id && !supabaseIdSet.has(id) && !deletedIdsSet.has(id);
             });
 
-            const mergedHistory = [...mappedSupabase, ...unsyncedLocals];
+            const mergedHistory = [...filteredSupabase, ...unsyncedLocals];
 
             setSalesHistory(mergedHistory);
             try { 

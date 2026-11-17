@@ -11,6 +11,14 @@ import { formatUSD, detectProductCategory, getCategoryConfig } from '../../utils
 import { exportToCSV, exportToSQL, downloadFile } from '../../utils/csvParser';
 import defaultCoilImage from '../../assets/bobina_tiida_studio.jpg';
 
+export const getProductCost = (item) => {
+  if (!item) return 0;
+  if (item.cost !== undefined && item.cost !== null && !isNaN(Number(item.cost))) return Number(item.cost);
+  if (item.costUSD !== undefined && item.costUSD !== null && !isNaN(Number(item.costUSD))) return Number(item.costUSD);
+  if (item.costo !== undefined && item.costo !== null && !isNaN(Number(item.costo))) return Number(item.costo);
+  return 0;
+};
+
 export function SabrinaInventoryView({
   onOpenCreateModal,
   onOpenEditModal,
@@ -30,6 +38,15 @@ export function SabrinaInventoryView({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [exportOpen, setExportOpen] = useState(false);
+  const [editingCostId, setEditingCostId] = useState(null);
+  const [costDraft, setCostDraft] = useState('');
+
+  const handleSaveCost = async (item, newCostStr) => {
+    const val = parseFloat(newCostStr);
+    const safeCost = !isNaN(val) && val >= 0 ? val : 0;
+    await upsertCoil({ ...item, cost: safeCost });
+    setEditingCostId(null);
+  };
 
   // Marcas únicas
   const brands = useMemo(() => {
@@ -103,11 +120,11 @@ export function SabrinaInventoryView({
     list.sort((a, b) => {
       let valA, valB;
       const priceA = Number(a.price) || 0;
-      const costA = Number(a.costUSD) || Number(a.cost) || Math.round(priceA * 0.55);
+      const costA = getProductCost(a);
       const marginA = priceA - costA;
 
       const priceB = Number(b.price) || 0;
-      const costB = Number(b.costUSD) || Number(b.cost) || Math.round(priceB * 0.55);
+      const costB = getProductCost(b);
       const marginB = priceB - costB;
 
       switch (sortField) {
@@ -459,7 +476,7 @@ export function SabrinaInventoryView({
               ) : (
                 paginatedCoils.map(item => {
                   const price = Number(item.price) || 0;
-                  const cost = Number(item.costUSD) || Number(item.cost) || Math.round(price * 0.55);
+                  const cost = getProductCost(item);
                   const margin = price - cost;
                   const marginPct = price > 0 ? Math.round((margin / price) * 100) : 0;
                   const isOutOfStock = item.stock <= 0;
@@ -544,9 +561,41 @@ export function SabrinaInventoryView({
                         </div>
                       </td>
 
-                      {/* Costo */}
-                      <td className="py-3 px-4 text-slate-500 font-mono">
-                        ${cost.toFixed(2)}
+                      {/* Costo Dinámico Editable */}
+                      <td className="py-3 px-4 font-mono">
+                        {editingCostId === item.id ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-slate-400 font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              value={costDraft}
+                              onChange={(e) => setCostDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveCost(item, costDraft);
+                                if (e.key === 'Escape') setEditingCostId(null);
+                              }}
+                              onBlur={() => handleSaveCost(item, costDraft)}
+                              autoFocus
+                              className="w-16 px-1.5 py-0.5 text-xs font-bold font-mono bg-white border-2 border-red-500 rounded-md text-slate-900 focus:outline-none shadow-xs"
+                            />
+                          </div>
+                        ) : (
+                          <div 
+                            onClick={() => {
+                              setEditingCostId(item.id);
+                              setCostDraft(String(cost));
+                            }}
+                            className="group/cost inline-flex items-center gap-1 cursor-pointer hover:text-red-600 transition"
+                            title="Haz clic para editar el costo de compra dinámicamente"
+                          >
+                            <span className={`font-semibold ${cost === 0 ? 'text-slate-400 italic' : 'text-slate-700'}`}>
+                              ${cost.toFixed(2)}
+                            </span>
+                            <Edit3 className="w-3 h-3 text-slate-300 opacity-0 group-hover/cost:opacity-100 transition" />
+                          </div>
+                        )}
                       </td>
 
                       {/* Margen */}

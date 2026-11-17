@@ -1,4 +1,4 @@
-/* ─── Animación de Chispa de Bujía de Alto Voltaje (JF Auto Parts) ─── */
+/* ─── Animación de Chispa de Bujía de Alto Voltaje (JF Auto Parts - Estilo Sabrina) ─── */
 
 .jf-spark-overlay {
   position: fixed;
@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(11, 11, 13, 0.88);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   opacity: 0;
@@ -24,12 +24,12 @@
 .jf-spark-card {
   position: relative;
   width: 90%;
-  max-width: 380px;
-  padding: 30px 22px;
-  border-radius: 22px;
-  background: linear-gradient(160deg, #141418 0%, #0B0B0D 100%);
-  border: 1px solid rgba(225, 45, 39, 0.45);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(225, 45, 39, 0.18);
+  max-width: 390px;
+  padding: 30px 24px;
+  border-radius: 24px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25), 0 0 35px rgba(225, 45, 39, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,7 +48,7 @@
   top: 38%;
   left: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0.14;
+  opacity: 0.08;
   pointer-events: none;
   animation: jfLogoPulse 0.45s infinite alternate ease-in-out;
 }
@@ -58,11 +58,11 @@
   position: absolute;
   top: 48%;
   left: 50%;
-  width: 130px;
-  height: 130px;
+  width: 140px;
+  height: 140px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, rgba(225, 45, 39, 0.25) 50%, transparent 75%);
+  background: radial-gradient(circle, rgba(225, 45, 39, 0.16) 0%, rgba(56, 189, 248, 0.12) 50%, transparent 75%);
   pointer-events: none;
   animation: jfGlowFlash 0.18s infinite alternate;
 }
@@ -107,9 +107,9 @@
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.5px;
-  color: #E12D27;
-  background: rgba(225, 45, 39, 0.12);
-  border: 1px solid rgba(225, 45, 39, 0.35);
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
   padding: 4px 12px;
   border-radius: 999px;
   margin-bottom: 10px;
@@ -118,15 +118,16 @@
 .jf-spark-title {
   margin: 0 0 12px;
   font-size: 15px;
-  font-weight: 700;
-  color: #F4F4F5;
+  font-weight: 800;
+  color: #0F172A;
   letter-spacing: -0.2px;
 }
 
 .jf-progress-track {
   width: 100%;
   height: 6px;
-  background: #27272A;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
   border-radius: 999px;
   overflow: hidden;
 }

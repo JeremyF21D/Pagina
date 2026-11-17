@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Receipt, Plus, RefreshCw, MessageSquare, Search, 
   DollarSign, CheckCircle, Clock, Smartphone, Shield, ArrowUpRight,
-  Edit3, RotateCcw, FileText, Check, Ban, Filter, Calendar, CreditCard
+  Edit3, RotateCcw, FileText, Check, Ban, Filter, Calendar, CreditCard, Trash2
 } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -41,6 +41,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
     refreshSalesHistory,
     confirmSale,
     revertSale,
+    deleteSale,
     updateSaleTransaction,
     processWarrantyReplacement,
     processWarrantyRefund,
@@ -50,6 +51,14 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
   
   const { binanceRate, bcvRate, rates } = useCurrency();
   const activeRate = Number(binanceRate || rates?.binance || 1076.87);
+
+  // Auto-recarga en segundo plano cada 15 segundos para pedidos nuevos en tiempo real
+  useEffect(() => {
+    const timer = setInterval(() => {
+      refreshSalesHistory(false);
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [refreshSalesHistory]);
 
   // Estados de Filtros
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,6 +127,15 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
       }
 
       return true;
+    }).sort((a, b) => {
+      const dateA = parseOrderDate(a.timestamp || a.fecha_hora || a.created_at || a.fecha);
+      const dateB = parseOrderDate(b.timestamp || b.fecha_hora || b.created_at || b.fecha);
+      const timeA = dateA && !isNaN(dateA.getTime()) ? dateA.getTime() : 0;
+      const timeB = dateB && !isNaN(dateB.getTime()) ? dateB.getTime() : 0;
+      if (timeB !== timeA) return timeB - timeA;
+      const numA = parseInt(String(a.orderId || a.order_id || '').replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(String(b.orderId || b.order_id || '').replace(/\D/g, ''), 10) || 0;
+      return numB - numA;
     });
   }, [salesHistory, filterStatus, dateFilter, paymentFilter, searchQuery]);
 
@@ -191,10 +209,12 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition cursor-pointer"
-            title="Refrescar órdenes desde Supabase"
+            className="px-3.5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+            title="Refrescar órdenes desde Supabase en tiempo real"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-red-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-red-600' : 'text-slate-500'}`} />
+            <span>{isRefreshing ? 'Recargando...' : 'Recargar Pedidos'}</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Sincronización activa en tiempo real"></span>
           </button>
 
           <button
@@ -436,7 +456,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                 <th className="py-3.5 px-4 font-bold">TOTAL USD</th>
                 <th className="py-3.5 px-4 font-bold">PAGO / REF</th>
                 <th className="py-3.5 px-4 font-bold">ESTADO</th>
-                <th className="py-3.5 px-4 text-right font-bold">ACCIONES DE GESTIÓN</th>
+                <th className="py-3.5 px-4 text-right font-bold min-w-[200px]">ACCIONES DE GESTIÓN</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -615,16 +635,16 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                         )}
                       </td>
 
-                      {/* Botones de Gestión (Editar, Garantía, Factura, Revertir, Confirmar, WhatsApp) */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center justify-end gap-1.5">
+                      {/* Botones de Gestión (Editar, Garantía, Factura, Revertir, Confirmar, WhatsApp, Eliminar) */}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[200px]">
+                        <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
                           
                           {/* Botón: Confirmar (solo si está pendiente) */}
                           {isPending && (
                             <>
                               <button
                                 onClick={() => setOrderToConfirm(order)}
-                                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1"
+                                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1 active:scale-95"
                                 title="Confirmar pedido y descontar stock"
                               >
                                 <Check className="w-3.5 h-3.5" />
@@ -632,7 +652,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                               </button>
                               <button
                                 onClick={() => revertSale(orderId)}
-                                className="p-1.5 bg-rose-950/40 hover:bg-rose-900/50 text-rose-400 border border-rose-700/50 rounded-xl text-xs transition cursor-pointer"
+                                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs transition cursor-pointer active:scale-95"
                                 title="Rechazar pedido"
                               >
                                 <Ban className="w-3.5 h-3.5" />
@@ -644,30 +664,30 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                           {isConfirmed && (
                             <button
                               onClick={() => setOrderForWarranty(order)}
-                              className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs transition cursor-pointer"
+                              className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs transition cursor-pointer active:scale-95"
                               title="Tramitar garantía por defecto o devolución"
                             >
-                              <Shield className="w-3.5 h-3.5 text-purple-300" />
+                              <Shield className="w-3.5 h-3.5 text-purple-500" />
                             </button>
                           )}
 
-                          {/* Botón: Editar Orden */}
+                          {/* Botón: Editar Orden (Habilitado para cualquier estado) */}
                           <button
                             onClick={() => setOrderToEdit(order)}
-                            className="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs transition cursor-pointer"
-                            title="Editar datos de venta o cambio de repuesto"
+                            className="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs transition cursor-pointer active:scale-95"
+                            title="Editar datos de venta, estado o cambio de repuesto"
                           >
-                            <Edit3 className="w-3.5 h-3.5 text-sky-400" />
+                            <Edit3 className="w-3.5 h-3.5 text-sky-600" />
                           </button>
 
                           {/* Botón: Factura Formal */}
                           {isConfirmed && (
                             <button
                               onClick={() => setOrderForReceipt(order)}
-                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs transition cursor-pointer"
+                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs transition cursor-pointer active:scale-95"
                               title="Generar e imprimir factura formal"
                             >
-                              <FileText className="w-3.5 h-3.5 text-amber-400" />
+                              <FileText className="w-3.5 h-3.5 text-amber-600" />
                             </button>
                           )}
 
@@ -679,10 +699,10 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                                   revertSale(orderId);
                                 }
                               }}
-                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs transition cursor-pointer"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs transition cursor-pointer active:scale-95"
                               title="Revertir venta y devolver piezas a bodega"
                             >
-                              <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                              <RotateCcw className="w-3.5 h-3.5 text-rose-500" />
                             </button>
                           )}
 
@@ -691,11 +711,24 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                             href={`https://wa.me/${custPhone.startsWith('58') ? custPhone : '58' + custPhone.replace(/^0/, '')}?text=${waMessage}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition text-xs cursor-pointer"
+                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition text-xs cursor-pointer active:scale-95"
                             title="Contactar al cliente por WhatsApp"
                           >
-                            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                            <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
                           </a>
+
+                          {/* Botón: Eliminar Venta */}
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`¿Estás seguro de eliminar permanentemente la orden #${orderId}? Se borrará del registro y de Supabase.`)) {
+                                deleteSale(orderId);
+                              }
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 text-xs transition cursor-pointer active:scale-95"
+                            title="Eliminar venta definitivamente"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
 
                         </div>
                       </td>
@@ -724,7 +757,9 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
         order={orderToEdit}
         coils={coils}
         onClose={() => setOrderToEdit(null)}
+        onSave={updateSaleTransaction}
         onUpdateOrder={updateSaleTransaction}
+        onDelete={deleteSale}
       />
 
       <ReceiptModal

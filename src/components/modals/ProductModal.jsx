@@ -60,7 +60,7 @@ export function ProductModal({ isOpen, onClose, initialProduct }) {
             type: String(initialProduct.type || ''),
             connector: String(initialProduct.connector || ''),
             price: String(initialProduct.price ?? '29.50'),
-            cost: String(initialProduct.cost ?? '0'),
+            cost: String(initialProduct.cost ?? initialProduct.costUSD ?? initialProduct.costo ?? '0'),
             oldPrice: String(initialProduct.oldPrice || ''),
             stock: String(initialProduct.stock ?? '15'),
             warranty: String(initialProduct.warranty || '12 meses'),

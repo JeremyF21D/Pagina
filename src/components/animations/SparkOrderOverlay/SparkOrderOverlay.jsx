@@ -64,7 +64,7 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+            className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
             title="Cerrar ventana"
           >
             <i className="fa-solid fa-xmark text-sm"></i>
@@ -168,44 +168,44 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
             </div>
           </>
         ) : (
-          /* FASE 2: ORDEN GENERADA CON OPCIÓN PARA CONTACTAR POR WHATSAPP */
+          /* FASE 2: ORDEN GENERADA CON OPCIÓN PARA CONTACTAR POR WHATSAPP (ESTILO SABRINA BLANCO Y ROJO) */
           <div className="relative z-10 w-full flex flex-col items-center text-center space-y-4 animate-modal-pop">
             {/* Badge de Orden Confirmada */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[11px] font-bold font-mono">
-              <i className="fa-solid fa-circle-check text-xs"></i>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold font-mono">
+              <i className="fa-solid fa-circle-check text-xs text-emerald-600"></i>
               <span>ORDEN #{orderId} GENERADA</span>
             </div>
 
             {/* Título de Confirmación */}
             <div>
-              <h3 className="text-lg font-black text-white font-sans tracking-tight">
+              <h3 className="text-lg font-black text-slate-900 font-sans tracking-tight">
                 ¡Tu orden está lista para despacho!
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Haz clic abajo para contactarnos vía WhatsApp y finalizar tu compra.
               </p>
             </div>
 
-            {/* Tarjeta de Resumen Rápido */}
-            <div className="w-full bg-[#18191f] border border-[#2d2f35] rounded-xl p-3 text-left space-y-1.5 text-xs font-sans">
+            {/* Tarjeta de Resumen Rápido Estilo Sabrina */}
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-left space-y-2 text-xs font-sans">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Cliente:</span>
-                <span className="font-bold text-white truncate max-w-[170px]">{order?.customerName || 'Cliente'}</span>
+                <span className="text-slate-500">Cliente:</span>
+                <span className="font-bold text-slate-900 truncate max-w-[170px]">{order?.customerName || 'Cliente'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Artículos:</span>
-                <span className="font-bold text-slate-200">{itemsCount} {itemsCount === 1 ? 'repuesto' : 'repuestos'}</span>
+                <span className="text-slate-500">Artículos:</span>
+                <span className="font-bold text-slate-800">{itemsCount} {itemsCount === 1 ? 'repuesto' : 'repuestos'}</span>
               </div>
-              <div className="flex justify-between items-center border-t border-[#2d2f35] pt-1.5 mt-1.5">
-                <span className="text-slate-300 font-bold">Total a Pagar:</span>
-                <span className="text-base font-black text-emerald-400 font-mono">
+              <div className="flex justify-between items-center border-t border-slate-200 pt-2 mt-1">
+                <span className="text-slate-700 font-bold">Total a Pagar:</span>
+                <span className="text-base font-black text-emerald-600 font-mono">
                   {formatUSD(totalVal)} USD
                 </span>
               </div>
               {totalVES && (
-                <div className="flex justify-between items-center text-[11px] text-amber-400 font-mono">
+                <div className="flex justify-between items-center text-[11px] text-red-600 font-mono font-bold">
                   <span>En Bolívares (VES):</span>
-                  <span className="font-bold">{totalVES}</span>
+                  <span>{totalVES}</span>
                 </div>
               )}
             </div>
@@ -224,8 +224,8 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
               </a>
 
               {/* Aviso de seguridad: Factura oficial solo emitida por la tienda tras verificar pago */}
-              <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] text-slate-400">
-                <i className="fa-solid fa-shield-halved text-emerald-400 text-xs"></i>
+              <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] text-slate-500">
+                <i className="fa-solid fa-shield-halved text-emerald-600 text-xs"></i>
                 <span>Factura oficial emitida tras verificación del pago</span>
               </div>
 
@@ -233,7 +233,7 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-1 text-[11px] text-slate-400 hover:text-white transition cursor-pointer"
+                className="w-full py-1 text-[11px] text-slate-500 hover:text-red-600 transition cursor-pointer font-medium"
               >
                 Seguir explorando el catálogo
               </button>

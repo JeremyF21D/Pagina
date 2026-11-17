@@ -109,7 +109,7 @@ export function parsePaymentReference(rawText, defaultPrice = 0, defaultCustomer
   return result;
 }
 
-export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
+export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUpdateOrder, onDelete }) {
   // ==============================================================
   // 1. TODOS LOS HOOKS ARRIBA (REGLAS ESTRICTAS DE REACT)
   // ==============================================================
@@ -480,29 +480,32 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
     }
 
     try {
-      await onSave(order.orderId, {
-        items: finalItems,
-        inventoryAdjustments: inventoryAdjustments.length > 0 ? inventoryAdjustments : undefined,
-        coilId: selectedCoilId || order.coilId,
-        coilName: summaryCoilName,
-        oem: curCoil ? curCoil.oem : order.oem,
-        qty: isMulti ? totalOrderQty : (Number(qty) || 1),
-        unitPrice: Number(unitPrice) || 0,
-        totalPrice: calculatedTotal,
-        customerName,
-        customerPhone,
-        paymentRef: finalPaymentRef,
-        status,
-        notes: notes.trim(),
-        paymentMethod,
-        paymentDetails: {
-          method: paymentMethod,
-          ...(paymentMethod === 'PAGO_MOVIL' ? { ref: pagoMovilRef, monto: pagoMovilMonto, banco: pagoMovilBanco } : {}),
-          ...(paymentMethod === 'BINANCE' ? { ref: binanceRef, montoUsdt: binanceMonto, user: binanceUser } : {}),
-          ...(paymentMethod === 'ZELLE' ? { titular: zelleTitular, contacto: zelleContacto, ref: zelleRef, monto: zelleMonto } : {}),
-          ...(paymentMethod === 'EFECTIVO' ? { montoUsd: efectivoMonto, detalle: efectivoDetalle } : {})
-        }
-      });
+      const saveHandler = onSave || onUpdateOrder;
+      if (typeof saveHandler === 'function') {
+        await saveHandler(order.orderId, {
+          items: finalItems,
+          inventoryAdjustments: inventoryAdjustments.length > 0 ? inventoryAdjustments : undefined,
+          coilId: selectedCoilId || order.coilId,
+          coilName: summaryCoilName,
+          oem: curCoil ? curCoil.oem : order.oem,
+          qty: isMulti ? totalOrderQty : (Number(qty) || 1),
+          unitPrice: Number(unitPrice) || 0,
+          totalPrice: calculatedTotal,
+          customerName,
+          customerPhone,
+          paymentRef: finalPaymentRef,
+          status,
+          notes: notes.trim(),
+          paymentMethod,
+          paymentDetails: {
+            method: paymentMethod,
+            ...(paymentMethod === 'PAGO_MOVIL' ? { ref: pagoMovilRef, monto: pagoMovilMonto, banco: pagoMovilBanco } : {}),
+            ...(paymentMethod === 'BINANCE' ? { ref: binanceRef, montoUsdt: binanceMonto, user: binanceUser } : {}),
+            ...(paymentMethod === 'ZELLE' ? { titular: zelleTitular, contacto: zelleContacto, ref: zelleRef, monto: zelleMonto } : {}),
+            ...(paymentMethod === 'EFECTIVO' ? { montoUsd: efectivoMonto, detalle: efectivoDetalle } : {})
+          }
+        });
+      }
       onClose();
     } catch (err) {
       console.error('Error al guardar cambios de la venta:', err);
@@ -1362,32 +1365,52 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave }) {
           {/* ============================================================== */}
           {/* BOTONES DE ACCIÓN - PIE FIJO SIEMPRE VISIBLE */}
           {/* ============================================================== */}
-          <div className="flex items-center justify-end gap-3 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/90 shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition cursor-pointer disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/25 transition cursor-pointer active:scale-95 flex items-center gap-2 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <i className="fa-solid fa-spinner fa-spin"></i>
-                  <span>Guardando en Supabase...</span>
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-floppy-disk"></i>
-                  <span>Guardar Cambios</span>
-                </>
-              )}
-            </button>
+          <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/90 shrink-0">
+            {typeof onDelete === 'function' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`¿Estás seguro de eliminar permanentemente la orden #${order.orderId}? Esta acción borrará la venta del registro y de Supabase.`)) {
+                    onDelete(order.orderId);
+                    onClose();
+                  }
+                }}
+                disabled={isSubmitting}
+                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold transition cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 disabled:opacity-50"
+                title="Eliminar orden definitivamente"
+              >
+                <i className="fa-solid fa-trash-can"></i>
+                <span>Eliminar Venta</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition cursor-pointer disabled:opacity-50 text-xs sm:text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/25 transition cursor-pointer active:scale-95 flex items-center gap-2 disabled:opacity-50 text-xs sm:text-sm"
+              >
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>Guardando en Supabase...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-floppy-disk"></i>
+                    <span>Guardar Cambios</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
         </form>
