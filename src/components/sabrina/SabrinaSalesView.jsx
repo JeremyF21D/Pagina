@@ -296,7 +296,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
               placeholder="Buscar por cliente, teléfono, OEM, repuesto o referencia..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-base sm:text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition"
             />
             {searchQuery && (
               <button

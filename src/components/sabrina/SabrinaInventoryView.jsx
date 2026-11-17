@@ -339,7 +339,7 @@ export function SabrinaInventoryView({
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:bg-white transition"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-base sm:text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:bg-white transition"
           />
         </div>
 
@@ -349,7 +349,7 @@ export function SabrinaInventoryView({
             setSelectedBrand(e.target.value);
             setCurrentPage(1);
           }}
-          className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:border-red-500 cursor-pointer"
+          className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-base sm:text-xs text-slate-800 focus:outline-none focus:border-red-500 cursor-pointer"
         >
           <option value="ALL">Todas las marcas ({brands.length})</option>
           {brands.map(b => (

@@ -262,7 +262,7 @@ export function SabrinaHeader({
                 if (setSearchQuery) setSearchQuery(e.target.value);
                 if (activeTab !== 'catalog') setActiveTab('catalog');
               }}
-              className="w-full bg-slate-50 border border-slate-300 focus:border-red-600 rounded-xl pl-3 pr-20 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all shadow-inner"
+              className="w-full bg-slate-50 border border-slate-300 focus:border-red-600 rounded-xl pl-3 pr-20 py-2 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all shadow-inner"
             />
             {searchQuery && (
               <button

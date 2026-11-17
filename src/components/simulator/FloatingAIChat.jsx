@@ -257,7 +257,7 @@ export function FloatingAIChat({ onTriggerSaleModal }) {
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 placeholder="Escribe tu consulta (modelo, OEM, marca...)"
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition"
+                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-base sm:text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition"
               />
               <button
                 type="submit"

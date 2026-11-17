@@ -228,14 +228,14 @@ export function SabrinaCartDrawer() {
                       value={buyerDraft.name}
                       onChange={(e) => updateBuyerDraft({ name: e.target.value })}
                       placeholder="Tu Nombre / Taller *" 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
                     />
                     <input 
                       type="text" 
                       value={buyerDraft.phone}
                       onChange={(e) => updateBuyerDraft({ phone: e.target.value })}
                       placeholder="WhatsApp *" 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 font-mono"
                     />
                   </div>
 
@@ -245,7 +245,7 @@ export function SabrinaCartDrawer() {
                       value={buyerDraft.car}
                       onChange={(e) => updateBuyerDraft({ car: e.target.value })}
                       placeholder="Modelo / Año auto" 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
                     />
                     <input 
                       type="text" 
@@ -256,7 +256,7 @@ export function SabrinaCartDrawer() {
                         paymentMethod === 'BINANCE' ? "ID Binance Pay" :
                         "¿Pagas exacto o vuelto?"
                       }
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>

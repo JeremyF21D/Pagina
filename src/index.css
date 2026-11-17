@@ -7,6 +7,21 @@
   font-family: 'Orbitron', sans-serif;
 }
 
+/* Prevenir auto-zoom molesto en iPhone / Safari / Chrome al enfocar inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="search"],
+  input[type="password"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

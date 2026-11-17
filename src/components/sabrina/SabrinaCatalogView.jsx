@@ -388,7 +388,7 @@ export function SabrinaCatalogView({
             <select 
               value={selectedBrand} 
               onChange={(e) => setSelectedBrand(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500 transition cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-slate-900 focus:outline-none focus:border-red-500 transition cursor-pointer"
             >
               <option value="Todas">Todas las marcas</option>
               {brands.map(b => (
@@ -403,7 +403,7 @@ export function SabrinaCatalogView({
             <select 
               value={selectedModel} 
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500 transition cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-slate-900 focus:outline-none focus:border-red-500 transition cursor-pointer"
             >
               <option value="Todos">Todos los modelos</option>
               {models.map(m => (
@@ -422,7 +422,7 @@ export function SabrinaCatalogView({
                 placeholder="Código OEM, nombre o motor..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500 transition placeholder-slate-400"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs text-slate-900 focus:outline-none focus:border-red-500 transition placeholder-slate-400"
               />
               {searchQuery && (
                 <button
