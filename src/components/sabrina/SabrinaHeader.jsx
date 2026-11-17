@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import logoImg from '../../assets/logo.png';
+import logoCompleto from '../../assets/brand/logo_jf_completo.png';
 
 export function SabrinaHeader({ 
   activeTab, 
@@ -59,27 +60,32 @@ export function SabrinaHeader({
         {/* Fila Principal del Header */}
         <div className="h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
           
-          {/* Logo Oficial JF Auto Parts */}
+          {/* Logo Oficial JF Auto Parts (Identidad de Marca Oficial) */}
           <div 
             onClick={() => handleSelectTab('catalog')}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group shrink-0"
             title="JF Auto Parts - Especialistas en Encendido"
           >
+            {/* Versión Completa en Desktop / Tablet */}
             <img 
-              src={logoImg} 
+              src={logoCompleto} 
               alt="JF Auto Parts" 
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-cover shadow-md shadow-red-500/20 group-hover:scale-105 transition-transform border border-slate-200"
+              className="hidden sm:block h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-xs"
             />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight">JF Auto Parts</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-red-50 text-red-600 border border-red-200 hidden xs:inline">
-                  TIENDA
+
+            {/* Versión Compacta en Móvil: Isotipo Bujía JF + Texto Orbitron */}
+            <div className="flex sm:hidden items-center gap-2">
+              <img 
+                src={logoImg} 
+                alt="JF Auto Parts" 
+                className="w-9 h-9 rounded-xl object-contain group-hover:scale-105 transition-transform"
+              />
+              <div>
+                <span className="font-orbitron font-black text-sm text-slate-900 tracking-tight block">
+                  JF <span className="text-red-600">PARTS</span>
                 </span>
+                <span className="text-[9px] text-slate-400 font-medium block">Maracaibo</span>
               </div>
-              <p className="text-[11px] text-slate-500 hidden sm:block font-medium">
-                Especialistas en Encendido • Maracaibo
-              </p>
             </div>
           </div>
 

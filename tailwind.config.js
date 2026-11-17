@@ -8,6 +8,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        orbitron: ['Orbitron', 'sans-serif'],
         sans: ['Montserrat', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },

@@ -3,6 +3,7 @@ import { Shield, Truck, Phone, MessageSquare, CheckCircle, ChevronRight } from '
 import { useInventory } from '../../context/InventoryContext';
 import { normalizeWaPhone } from '../../utils/whatsapp';
 import logoImg from '../../assets/logo.png';
+import logoCompleto from '../../assets/brand/logo_jf_completo.png';
 
 export function SabrinaFooter() {
   const { ownerSettings } = useInventory();
@@ -22,13 +23,10 @@ export function SabrinaFooter() {
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               <img 
-                src={logoImg} 
+                src={logoCompleto} 
                 alt="JF Auto Parts" 
-                className="w-8 h-8 rounded-xl object-cover shadow-xs border border-slate-200"
+                className="h-10 w-auto object-contain"
               />
-              <span className="text-base font-extrabold text-slate-900 tracking-tight">
-                JF <span className="text-red-600">AUTO PARTS</span>
-              </span>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
               Distribución y venta directa de bobinas de encendido, inyectores, conectores y repuestos automotrices probados en banco desde Maracaibo con despachos a toda Venezuela.

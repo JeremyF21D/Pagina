@@ -157,8 +157,8 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
 
             {/* Texto y barra de progreso técnico */}
             <div className="jf-spark-status">
-              <span className="jf-spark-badge">IGNICIÓN OEM • JF AUTO PARTS</span>
-              <h3 className="jf-spark-title">{statusText}</h3>
+              <span className="jf-spark-badge font-orbitron">IGNICIÓN OEM • JF AUTO PARTS</span>
+              <h3 className="jf-spark-title font-orbitron">{statusText}</h3>
               <div className="jf-progress-track">
                 <div
                   className="jf-progress-fill"
@@ -178,7 +178,7 @@ export function SparkOrderOverlay({ isOpen, orderData, onClose }) {
 
             {/* Título de Confirmación */}
             <div>
-              <h3 className="text-lg font-black text-slate-900 font-sans tracking-tight">
+              <h3 className="text-lg font-black text-slate-900 font-orbitron tracking-tight">
                 ¡Tu orden está lista para despacho!
               </h3>
               <p className="text-xs text-slate-500 mt-1">

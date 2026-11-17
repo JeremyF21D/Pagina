@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatUSD, formatOrderDate } from '../../utils/formatters';
 import logoImg from '../../assets/logo.png';
+import logoCompleto from '../../assets/brand/logo_jf_completo.png';
 
 export function ReceiptModal({ isOpen, order, onClose }) {
   if (!isOpen || !order) return null;
@@ -55,7 +56,7 @@ export function ReceiptModal({ isOpen, order, onClose }) {
           
           /* Encabezado */
           .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #de2420; padding-bottom: 16px; margin-bottom: 16px; }
-          .brand-title { font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+          .brand-title { font-size: 22px; font-weight: 900; color: #0f172a; font-family: 'Orbitron', -apple-system, sans-serif; letter-spacing: -0.5px; }
           .brand-title span { color: #de2420; }
           .brand-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
           .brand-contact { font-size: 11px; color: #334155; margin-top: 4px; font-weight: 500; }
@@ -273,11 +274,8 @@ ${itemsSummary}
         <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs">
           {/* Header del Ticket */}
           <div className="text-center border-b border-dashed border-slate-700/80 pb-4">
-            <div className="flex items-center justify-center gap-2 mb-1.5">
-              <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
-              <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
-                JF AUTO PARTS, C.A.
-              </h2>
+            <div className="flex items-center justify-center mb-2">
+              <img src={logoCompleto} alt="JF Auto Parts" className="h-10 w-auto object-contain" />
             </div>
             <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
               RIF: J-50000000-0 • Repuestos & Encendido Automotriz

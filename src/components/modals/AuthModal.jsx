@@ -79,13 +79,13 @@ export function AuthModal() {
             <img 
               src={logoImg} 
               alt="JF Auto Parts Logo" 
-              className="h-16 w-16 rounded-2xl object-cover mx-auto border-2 border-slate-700 shadow-xl shadow-black/50" 
+              className="h-16 w-16 rounded-2xl object-contain mx-auto border-2 border-slate-700 bg-slate-950/80 p-2 shadow-xl shadow-black/50" 
             />
             <div className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-lg ${isAdmin ? 'bg-emerald-500' : 'bg-brand-500'} text-white flex items-center justify-center text-xs shadow-md border-2 border-slate-900`}>
               <i className={`fa-solid ${isAdmin ? 'fa-unlock-keyhole' : 'fa-lock'}`}></i>
             </div>
           </div>
-          <h3 className="text-base font-bold text-white">
+          <h3 className="text-base font-orbitron font-bold text-white tracking-wide">
             {isAdmin ? 'Sesión de Administrador Activa' : 'JF AUTO PARTS • Acceso Seguro'}
           </h3>
           <p className="text-xs text-slate-400 mt-1">
