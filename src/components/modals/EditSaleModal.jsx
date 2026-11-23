@@ -1165,7 +1165,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                       </div>
 
                       {/* Tasa aplicada sutil y clara */}
-                      <div className="flex items-center justify-between pt-1 text-[11px] font-mono text-slate-500 border-t border-slate-100">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1 text-[11px] font-mono text-slate-500 border-t border-slate-100">
                         <span className="flex items-center gap-1.5 text-slate-700">
                           <i className="fa-solid fa-calculator text-amber-500"></i>
                           <span>Tasa aplicada: <strong>1 USD = {effectiveRate} Bs.</strong></span>
@@ -1201,7 +1201,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                         />
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                           <label className="text-[11px] font-bold text-slate-700">
                             Monto USDT <span className="text-amber-600">*</span>
                           </label>
@@ -1282,7 +1282,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                         />
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                           <label className="text-[11px] font-bold text-slate-700">
                             Monto Transferido ($) <span className="text-purple-600">*</span>
                           </label>
@@ -1310,7 +1310,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                 {paymentMethod === 'EFECTIVO' && (
                   <div className="space-y-3 animate-fadeIn">
                     <div>
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                         <label className="text-[11px] font-bold text-slate-700">
                           Monto Recibido en Dólares ($) <span className="text-red-600">*</span>
                         </label>
