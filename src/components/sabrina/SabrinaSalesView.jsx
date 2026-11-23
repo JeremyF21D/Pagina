@@ -612,18 +612,18 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
           )}
         </div>
 
-        {/* Vista Escritorio: Tabla Completa con 7 Columnas */}
+        {/* Vista Escritorio: Tabla Completa con 7 Columnas (Diseño compacto sin scroll horizontal) */}
         <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px]">
-                <th className="py-3.5 px-4 font-bold">ORDEN</th>
-                <th className="py-3.5 px-4 font-bold">CLIENTE</th>
-                <th className="py-3.5 px-4 font-bold">REPUESTOS</th>
-                <th className="py-3.5 px-4 font-bold">TOTAL USD</th>
-                <th className="py-3.5 px-4 font-bold">PAGO / REF</th>
-                <th className="py-3.5 px-4 font-bold">ESTADO</th>
-                <th className="py-3.5 px-4 text-right font-bold min-w-[200px]">ACCIONES DE GESTIÓN</th>
+                <th className="py-2.5 px-2.5 font-bold whitespace-nowrap">ORDEN</th>
+                <th className="py-2.5 px-2.5 font-bold">CLIENTE</th>
+                <th className="py-2.5 px-2.5 font-bold">REPUESTOS</th>
+                <th className="py-2.5 px-2.5 font-bold whitespace-nowrap">TOTAL USD</th>
+                <th className="py-2.5 px-2.5 font-bold">PAGO / REF</th>
+                <th className="py-2.5 px-2.5 font-bold whitespace-nowrap">ESTADO</th>
+                <th className="py-2.5 px-2.5 text-right font-bold whitespace-nowrap">ACCIONES</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -657,42 +657,44 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                     <tr key={orderId} className="hover:bg-rose-50/30 transition">
                       
                       {/* Código de Orden y Fecha */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-red-600">
-                        <div>{orderId}</div>
+                      <td className="py-2.5 px-2.5 font-mono font-bold text-red-600 whitespace-nowrap">
+                        <div className="text-xs">{orderId}</div>
                         <div className="text-[10px] text-slate-400 font-normal">
                           {order.timestamp ? formatOrderDate(order.timestamp, false) : 'Reciente'}
                         </div>
                       </td>
 
                       {/* Cliente y Teléfono */}
-                      <td className="py-3.5 px-4">
-                        <strong className="block text-slate-900">{custName}</strong>
-                        <span className="text-[11px] text-slate-400 font-mono">
+                      <td className="py-2.5 px-2.5">
+                        <strong className="block text-slate-900 truncate max-w-[115px] xl:max-w-[150px]" title={custName}>
+                          {custName}
+                        </strong>
+                        <span className="text-[10px] text-slate-400 font-mono block truncate max-w-[115px] xl:max-w-[150px]">
                           {order.customerPhone || order.customer_phone || 'Sin teléfono'}
                         </span>
                       </td>
 
                       {/* Repuestos con Vista Previa Hover */}
-                      <td className="py-3.5 px-4 text-slate-800">
+                      <td className="py-2.5 px-2.5 text-slate-800">
                         <ProductHoverPreview order={order} coils={coils} theme="light" />
                         {/* Indicador de Descuento de Stock */}
                         {order.stockBefore !== undefined && order.stockAfter !== undefined && (
-                          <div className="text-[10px] font-mono text-slate-400 mt-1 pl-11">
+                          <div className="text-[10px] font-mono text-slate-400 mt-0.5 pl-10 truncate">
                             Bodega: <span className="text-rose-500 font-semibold">{order.stockBefore}</span> ➔ <span className="text-emerald-600 font-bold">{order.stockAfter}</span> uds
                           </div>
                         )}
                       </td>
 
                       {/* Total USD & Bs (Calculado Dinámicamente con Tasa Binance) */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-black text-slate-900 font-mono">${total.toFixed(2)}</div>
+                      <td className="py-2.5 px-2.5 whitespace-nowrap">
+                        <div className="font-black text-slate-900 font-mono text-xs">${total.toFixed(2)}</div>
                         <div className="text-[10px] text-red-600 font-mono font-bold">
                           Bs. {(total * activeRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       </td>
 
                       {/* Pago y Referencia con Botón de Nota */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-2.5 px-2.5">
                         {(() => {
                           const raw = String(order.paymentRef || order.referencia_pago || 'Pago Acordado');
                           const hasAjuste = raw.includes(' | [AJUSTE: ');
@@ -741,11 +743,11 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                           const meta = getPaymentMeta(mainText);
 
                           return (
-                            <div className="space-y-1">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${meta.color}`}>
+                            <div className="space-y-0.5">
+                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold border ${meta.color}`}>
                                 <span>{meta.name}</span>
                               </span>
-                              <div className="truncate font-mono text-[10px] text-slate-700 max-w-[170px]" title={mainText}>
+                              <div className="truncate font-mono text-[10px] text-slate-700 max-w-[110px]" title={mainText}>
                                 {meta.cleanText || mainText}
                               </div>
                               {ajusteText && (
@@ -762,12 +764,12 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                                     items: order.items,
                                     timestamp: order.timestamp
                                   })}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[10px] max-w-full font-sans cursor-pointer active:scale-95 transition text-left group shadow-xs mt-1"
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[9px] max-w-full font-sans cursor-pointer active:scale-95 transition text-left group shadow-xs mt-0.5"
                                   title="Haz clic para leer la nota de venta completa"
                                 >
                                   <span>📝</span>
-                                  <span className="truncate max-w-[130px] font-medium">{ajusteText}</span>
-                                  <ArrowUpRight className="w-3 h-3 text-amber-600 opacity-70 group-hover:opacity-100 shrink-0" />
+                                  <span className="truncate max-w-[90px] font-medium">{ajusteText}</span>
+                                  <ArrowUpRight className="w-2.5 h-2.5 text-amber-600 opacity-70 group-hover:opacity-100 shrink-0" />
                                 </button>
                               )}
                             </div>
@@ -776,25 +778,25 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                       </td>
 
                       {/* Estado */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="py-2.5 px-2.5 whitespace-nowrap">
                         {isConfirmed && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             CONFIRMADA
                           </span>
                         )}
                         {isPending && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
                             PENDIENTE
                           </span>
                         )}
                         {isReverted && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                             REVERTIDA
                           </span>
                         )}
                         {hasWarranty && (
-                          <div className="mt-1">
-                            <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1 w-max">
+                          <div className="mt-0.5">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-0.5 w-max">
                               <Shield className="w-2.5 h-2.5 text-purple-400" />
                               <span>{order.hasRefundApplied ? 'REEMBOLSADO' : 'GARANTÍA'}</span>
                             </span>
@@ -803,15 +805,15 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                       </td>
 
                       {/* Botones de Gestión (Editar, Garantía, Factura, Revertir, Confirmar, WhatsApp, Eliminar) */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[200px]">
-                        <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
+                      <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-1 flex-nowrap">
                           
                           {/* Botón: Confirmar (solo si está pendiente) */}
                           {isPending && (
                             <>
                               <button
                                 onClick={() => setOrderToConfirm(order)}
-                                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs transition cursor-pointer shadow-sm flex items-center gap-1 active:scale-95"
+                                className="h-7 px-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-xs flex items-center gap-1 active:scale-95"
                                 title="Confirmar pedido y descontar stock"
                               >
                                 <Check className="w-3.5 h-3.5" />
@@ -819,7 +821,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                               </button>
                               <button
                                 onClick={() => revertSale(orderId)}
-                                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs transition cursor-pointer active:scale-95"
+                                className="w-7 h-7 flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs transition cursor-pointer active:scale-95"
                                 title="Rechazar pedido"
                               >
                                 <Ban className="w-3.5 h-3.5" />
@@ -831,7 +833,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                           {isConfirmed && (
                             <button
                               onClick={() => setOrderForWarranty(order)}
-                              className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs transition cursor-pointer active:scale-95"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs transition cursor-pointer active:scale-95"
                               title="Tramitar garantía por defecto o devolución"
                             >
                               <Shield className="w-3.5 h-3.5 text-purple-500" />
@@ -841,7 +843,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                           {/* Botón: Editar Orden (Habilitado para cualquier estado) */}
                           <button
                             onClick={() => setOrderToEdit(order)}
-                            className="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs transition cursor-pointer active:scale-95"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs transition cursor-pointer active:scale-95"
                             title="Editar datos de venta, estado o cambio de repuesto"
                           >
                             <Edit3 className="w-3.5 h-3.5 text-sky-600" />
@@ -851,7 +853,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                           {isConfirmed && (
                             <button
                               onClick={() => setOrderForReceipt(order)}
-                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs transition cursor-pointer active:scale-95"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs transition cursor-pointer active:scale-95"
                               title="Generar e imprimir factura formal"
                             >
                               <FileText className="w-3.5 h-3.5 text-amber-600" />
@@ -866,7 +868,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                                   revertSale(orderId);
                                 }
                               }}
-                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs transition cursor-pointer active:scale-95"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs transition cursor-pointer active:scale-95"
                               title="Revertir venta y devolver piezas a bodega"
                             >
                               <RotateCcw className="w-3.5 h-3.5 text-rose-500" />
@@ -878,7 +880,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                             href={`https://wa.me/${custPhone.startsWith('58') ? custPhone : '58' + custPhone.replace(/^0/, '')}?text=${waMessage}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition text-xs cursor-pointer active:scale-95"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition text-xs cursor-pointer active:scale-95"
                             title="Contactar al cliente por WhatsApp"
                           >
                             <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
@@ -891,7 +893,7 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
                                 deleteSale(orderId);
                               }
                             }}
-                            className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 text-xs transition cursor-pointer active:scale-95"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 text-xs transition cursor-pointer active:scale-95"
                             title="Eliminar venta definitivamente"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

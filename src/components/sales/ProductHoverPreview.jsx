@@ -156,12 +156,12 @@ export function ProductHoverPreview({ order, coils = [], theme = "light" }) {
       >
         {hasMultipleItems ? (
           /* Miniatura especial para orden con varios repuestos */
-          <div className="w-9 h-9 rounded-xl flex-shrink-0 bg-red-50 border border-red-200 flex items-center justify-center text-red-600 shadow-xs group-hover:scale-105 transition">
-            <i className="fa-solid fa-boxes-packing text-sm"></i>
+          <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-red-50 border border-red-200 flex items-center justify-center text-red-600 shadow-xs group-hover:scale-105 transition">
+            <i className="fa-solid fa-boxes-packing text-xs"></i>
           </div>
         ) : (
           /* Miniatura para repuesto único */
-          <div className={`w-9 h-9 rounded-xl flex-shrink-0 border overflow-hidden flex items-center justify-center transition shadow-xs ${
+          <div className={`w-8 h-8 rounded-lg flex-shrink-0 border overflow-hidden flex items-center justify-center transition shadow-xs ${
             productImage 
               ? 'bg-white border-slate-200 group-hover:border-red-500 group-hover:shadow-md group-hover:shadow-red-500/10' 
               : 'bg-slate-100 border-slate-200 group-hover:border-slate-400'
@@ -188,21 +188,21 @@ export function ProductHoverPreview({ order, coils = [], theme = "light" }) {
           {hasMultipleItems ? (
             <>
               <div className={`${isLight ? "text-slate-900 group-hover:text-red-600" : "text-white group-hover:text-red-400"} font-bold transition-colors flex items-center gap-1.5`}>
-                <span className="truncate max-w-[200px] sm:max-w-xs block text-xs">
+                <span className="truncate max-w-[140px] xl:max-w-[190px] block text-xs">
                   {order.items.length} repuestos distintos
                 </span>
-                <span className="text-[10px] bg-[#de2420]/20 text-[#de2420] border border-[#de2420]/40 px-1.5 py-0.2 rounded font-mono font-bold">
+                <span className="text-[10px] bg-[#de2420]/20 text-[#de2420] border border-[#de2420]/40 px-1 py-0.2 rounded font-mono font-bold">
                   {order.items.reduce((acc, it) => acc + (it.qty || 1), 0)} uds
                 </span>
               </div>
-              <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
+              <div className="text-[10px] text-slate-400 truncate max-w-[140px] xl:max-w-[190px]">
                 {order.items.map(it => `${it.qty}x ${it.name}`).join(', ')}
               </div>
             </>
           ) : (
             <>
               <div className={`${isLight ? "text-slate-900 group-hover:text-red-600" : "text-white group-hover:text-brand-300"} font-bold transition-colors flex items-center gap-1.5`}>
-                <span className="truncate max-w-[210px] sm:max-w-xs block">
+                <span className="truncate max-w-[140px] xl:max-w-[190px] block">
                   <span className={isLight ? "text-red-600 font-extrabold mr-1" : "text-brand-400 font-extrabold mr-1"}>
                     {qty}x
                   </span>
