@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect } from 'react';
 import { formatUSD } from '../../utils/formatters';
 import { getCachedExchangeRates, formatVES } from '../../services/exchangeRatesService';
@@ -168,7 +169,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
     }
   };
 
-  return (
+  const modalContent = (
     <div 
       className="fixed inset-0 z-[100000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
       onClick={onClose}
@@ -600,4 +601,7 @@ export function ConfirmSalePaymentModal({ isOpen, order, coils = [], onClose, on
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modalContent, document.body);
 }

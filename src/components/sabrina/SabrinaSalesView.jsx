@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Receipt, Plus, RefreshCw, MessageSquare, Search, 
@@ -945,9 +946,9 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
       />
 
       {/* Modal de Nota de Venta / Motivo del Cambio */}
-      {selectedNoteModal && (
+      {selectedNoteModal && typeof document !== "undefined" && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" 
           onClick={() => setSelectedNoteModal(null)}
         >
           <div 
@@ -1033,7 +1034,8 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

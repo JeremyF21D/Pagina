@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useState } from 'react';
 import { formatUSD } from '../../utils/formatters';
 
@@ -131,8 +132,8 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in" role="dialog">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in" role="dialog">
       <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl my-auto text-slate-900 max-h-[90vh] flex flex-col">
         
         {/* Header */}
@@ -457,4 +458,7 @@ export function WarrantyModal({ isOpen, order, coils = [], onClose, onProcessRep
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modalContent, document.body);
 }

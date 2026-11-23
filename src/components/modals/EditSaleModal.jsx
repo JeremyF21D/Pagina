@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useMemo } from 'react';
 import { formatUSD, detectProductCategory, getCategoryConfig, matchesSearchTerms } from '../../utils/formatters';
 import { getCachedExchangeRates, formatVES } from '../../services/exchangeRatesService';
@@ -520,8 +521,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
   const currentCat = getCategoryConfig(detectProductCategory(currentSelectedCoil));
   const originalCat = getCategoryConfig(detectProductCategory(originalCoil));
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in overflow-x-hidden">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-modal-pop text-slate-900">
         
         {/* Encabezado Fijo */}
@@ -1419,4 +1420,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modalContent, document.body);
 }
