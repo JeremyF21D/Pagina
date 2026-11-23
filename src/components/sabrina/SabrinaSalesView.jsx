@@ -955,18 +955,18 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
             onClick={e => e.stopPropagation()}
           >
             {/* Cabecera */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
+            <div className="flex items-start sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-amber-600 font-bold text-xs sm:text-sm">
                 <span>📝</span>
-                <span className="text-slate-900 font-extrabold">Nota de Venta / Motivo del Cambio</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono font-bold">
+                <span className="text-slate-900 font-extrabold">Nota de Venta</span>
+                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono font-bold">
                   #{selectedNoteModal.orderId}
                 </span>
               </div>
               <button 
                 type="button"
                 onClick={() => setSelectedNoteModal(null)}
-                className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer text-xs"
+                className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer text-xs shrink-0"
               >
                 ✕
               </button>

@@ -521,31 +521,31 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
   const originalCat = getCategoryConfig(detectProductCategory(originalCoil));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[88vh] animate-modal-pop text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in overflow-x-hidden">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-modal-pop text-slate-900">
         
         {/* Encabezado Fijo */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-              <i className="fa-solid fa-pen-to-square text-base"></i>
+        <div className="flex items-start sm:items-center justify-between p-3.5 sm:p-5 border-b border-slate-100 bg-white shrink-0 gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 shrink-0">
+              <i className="fa-solid fa-pen-to-square text-sm sm:text-base"></i>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">Editar Registro / Cambio de Repuesto</h3>
-                <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 font-bold">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h3 className="text-sm sm:text-lg font-bold text-slate-900 leading-tight">Editar Venta</h3>
+                <span className="font-mono text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 font-bold shrink-0">
                   #{order.orderId}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Selecciona la pieza con su foto, ajusta el precio cobrado y el método de pago dinámicamente.
+              <p className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">
+                Ajusta la pieza, precio o método de pago
               </p>
             </div>
           </div>
           <button 
             type="button" 
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-all duration-200 cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0"
           >
             <i className="fa-solid fa-xmark text-sm"></i>
           </button>
@@ -554,12 +554,12 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
         {/* Formulario con Scroll Interno y Footer Fijo */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           
-          <div className="p-4 sm:p-6 space-y-4 overflow-y-auto text-xs flex-1 custom-scrollbar">
+          <div className="p-3 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto text-xs flex-1 custom-scrollbar">
 
             {/* Selector de Artículos para Órdenes con Varios Repuestos */}
             {itemsList.length > 1 && (
               <div className="p-3.5 bg-red-50/50 border border-red-200 rounded-2xl space-y-2.5">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-1.5">
                     <i className="fa-solid fa-layer-group"></i>
                     <span>Artículos de la Orden ({itemsList.length} repuestos)</span>
@@ -623,17 +623,17 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
             {/* SECCIÓN 1: SELECTOR VISUAL DE REPUESTOS CON FOTOS */}
             {/* ============================================================== */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                 <label className="text-slate-700 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                   <i className="fa-solid fa-box text-red-600"></i>
-                  <span>Repuesto Entregado al Cliente {itemsList.length > 1 ? `(Ítem #${activeItemIndex + 1})` : ''}</span>
+                  <span>Repuesto Entregado {itemsList.length > 1 ? `(Ítem #${activeItemIndex + 1})` : ''}</span>
                 </label>
 
                 {!isPickerOpen && (
                   <button
                     type="button"
                     onClick={() => setIsPickerOpen(true)}
-                    className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-bold text-[11px] transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="self-start sm:self-auto px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-bold text-[10px] sm:text-[11px] transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
                   >
                     <i className="fa-solid fa-magnifying-glass text-xs"></i>
                     <span>Cambiar por otro repuesto</span>
@@ -1020,7 +1020,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
             {/* SECCIÓN 5: TIPO DE PAGO DINÁMICO CON 4 ICONOS INTERACTIVOS */}
             {/* ============================================================== */}
             <div className="space-y-3 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <label className="text-slate-700 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                   <i className="fa-solid fa-wallet text-red-600"></i>
                   <span>Tipo de Pago & Comprobante</span>
@@ -1365,7 +1365,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
           {/* ============================================================== */}
           {/* BOTONES DE ACCIÓN - PIE FIJO SIEMPRE VISIBLE */}
           {/* ============================================================== */}
-          <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/90 shrink-0">
+          <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-t border-slate-100 bg-slate-50/90 shrink-0">
             {typeof onDelete === 'function' ? (
               <button
                 type="button"
@@ -1376,37 +1376,39 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                   }
                 }}
                 disabled={isSubmitting}
-                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold transition cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 disabled:opacity-50"
+                className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold transition cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 disabled:opacity-50 shrink-0"
                 title="Eliminar orden definitivamente"
               >
                 <i className="fa-solid fa-trash-can"></i>
-                <span>Eliminar Venta</span>
+                <span className="hidden sm:inline">Eliminar Venta</span>
+                <span className="sm:hidden">Eliminar</span>
               </button>
             ) : <div />}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition cursor-pointer disabled:opacity-50 text-xs sm:text-sm"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition cursor-pointer disabled:opacity-50 text-xs sm:text-sm"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/25 transition cursor-pointer active:scale-95 flex items-center gap-2 disabled:opacity-50 text-xs sm:text-sm"
+                className="px-3.5 sm:px-5 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/25 transition cursor-pointer active:scale-95 flex items-center gap-1.5 sm:gap-2 disabled:opacity-50 text-xs sm:text-sm"
               >
                 {isSubmitting ? (
                   <>
                     <i className="fa-solid fa-spinner fa-spin"></i>
-                    <span>Guardando en Supabase...</span>
+                    <span>Guardando...</span>
                   </>
                 ) : (
                   <>
                     <i className="fa-solid fa-floppy-disk"></i>
-                    <span>Guardar Cambios</span>
+                    <span className="hidden sm:inline">Guardar Cambios</span>
+                    <span className="sm:hidden">Guardar</span>
                   </>
                 )}
               </button>
