@@ -1,6 +1,6 @@
 import { getCachedExchangeRates, formatVES } from '../services/exchangeRatesService';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { DEFAULT_BOBINAS_SEED, INITIAL_SALES_SEED } from '../data/seedData';
+import { DEFAULT_BOBINAS_SEED } from '../data/seedData';
 import { normalizeCoilRecord } from '../utils/formatters';
 import { OFFICIAL_WA_RAW } from '../utils/whatsapp';
 import { useSoundEffects } from '../hooks/useSoundEffects';
