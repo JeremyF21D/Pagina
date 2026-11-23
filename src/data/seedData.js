@@ -353,22 +353,4 @@ export const DEFAULT_BOBINAS_SEED = [
   }
 ];
 
-export const INITIAL_SALES_SEED = [
-  {
-    orderId: 'ORD-8901',
-    timestamp: 'Hoy, 09:15 AM',
-    userId: 'CLI-INITIAL',
-    customerName: 'Taller Electromecánica Zulia',
-    customerPhone: '0414-6112233',
-    coilId: 'BOB-TIIDA18',
-    coilName: 'Bobina de encendido Nissan Tiida 1.8 / Sentra B16',
-    oem: '22448-ED000',
-    qty: 1,
-    unitPrice: 20.00,
-    totalPrice: 20.00,
-    stockBefore: 25,
-    stockAfter: 24,
-    paymentRef: 'Pago Móvil Ref #550129',
-    status: 'CONFIRMED'
-  }
-];
+export const INITIAL_SALES_SEED = [];

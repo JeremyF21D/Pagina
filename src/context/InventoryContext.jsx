@@ -220,8 +220,8 @@ export function InventoryProvider({ children }) {
 
   const [salesHistory, setSalesHistory] = useState(() => {
     try {
-      // 0. Asegurar que las órdenes eliminadas o huérfanas como ORD-9480 no persistan en LocalStorage
-      let deletedIdsSet = new Set(['ORD-9480', '9480']);
+      // 0. Asegurar que las órdenes eliminadas, de prueba o semillas huérfanas (ORD-9480, ORD-8901) no persistan
+      let deletedIdsSet = new Set(['ORD-9480', '9480', 'ORD-8901', '8901']);
       try {
         const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
         if (Array.isArray(deletedArr)) {
@@ -254,7 +254,7 @@ export function InventoryProvider({ children }) {
         }
       }
     } catch (e) {}
-    return INITIAL_SALES_SEED;
+    return [];
   });
 
   const [ownerSettings, setOwnerSettings] = useState(() => {
@@ -1766,7 +1766,7 @@ Directrices de conversación:
             });
 
             // Respetar lista de órdenes eliminadas para que no resuciten
-            let deletedIdsSet = new Set(['ORD-9480', '9480']);
+            let deletedIdsSet = new Set(['ORD-9480', '9480', 'ORD-8901', '8901']);
             try {
               const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
               if (Array.isArray(deletedArr)) {
