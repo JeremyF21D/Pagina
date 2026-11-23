@@ -220,9 +220,38 @@ export function InventoryProvider({ children }) {
 
   const [salesHistory, setSalesHistory] = useState(() => {
     try {
+      // 0. Asegurar que las órdenes eliminadas o huérfanas como ORD-9480 no persistan en LocalStorage
+      let deletedIdsSet = new Set(['ORD-9480', '9480']);
+      try {
+        const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
+        if (Array.isArray(deletedArr)) {
+          deletedArr.forEach(id => {
+            const clean = String(id).replace(/^#/, '').trim();
+            if (clean) {
+              deletedIdsSet.add(clean);
+              deletedIdsSet.add(clean.replace(/^ORD-/, ''));
+            }
+          });
+        }
+      } catch (e) {}
+      try {
+        localStorage.setItem('JF_DELETED_SALES_IDS', JSON.stringify([...deletedIdsSet]));
+      } catch (e) {}
+
       const saved = localStorage.getItem(STORAGE_KEY_SALES_LOG);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const cleanHistory = parsed.filter(s => {
+            const sid = String(s.orderId || s.order_id || s.id || '').replace(/^#/, '').trim();
+            const bareId = sid.replace(/^ORD-/, '');
+            return sid && !deletedIdsSet.has(sid) && !deletedIdsSet.has(bareId) && !deletedIdsSet.has(`ORD-${bareId}`);
+          });
+          try {
+            localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(cleanHistory));
+          } catch (e) {}
+          return cleanHistory;
+        }
       }
     } catch (e) {}
     return INITIAL_SALES_SEED;
@@ -1388,17 +1417,24 @@ Directrices de conversación:
   const deleteSale = useCallback(async (orderId) => {
     const cleanId = String(orderId || '').replace(/^#/, '').trim();
     if (!cleanId) return;
+    const bareId = cleanId.replace(/^ORD-/, '');
 
     // Registrar en blacklist persistente para que no resucite al re-sincronizar
     try {
       const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
       const deletedSet = new Set(Array.isArray(deletedArr) ? deletedArr : []);
       deletedSet.add(cleanId);
+      deletedSet.add(bareId);
+      deletedSet.add(`ORD-${bareId}`);
       localStorage.setItem('JF_DELETED_SALES_IDS', JSON.stringify([...deletedSet]));
     } catch (e) {}
 
     setSalesHistory(prev => {
-      const next = prev.filter(s => String(s.orderId).replace(/^#/, '') !== cleanId);
+      const next = prev.filter(s => {
+        const sid = String(s.orderId || s.order_id || s.id || '').replace(/^#/, '').trim();
+        const sBare = sid.replace(/^ORD-/, '');
+        return sid !== cleanId && sBare !== bareId;
+      });
       try {
         localStorage.setItem(STORAGE_KEY_SALES_LOG, JSON.stringify(next));
       } catch (e) {}
@@ -1730,18 +1766,31 @@ Directrices de conversación:
             });
 
             // Respetar lista de órdenes eliminadas para que no resuciten
-            let deletedIdsSet = new Set();
+            let deletedIdsSet = new Set(['ORD-9480', '9480']);
             try {
               const deletedArr = JSON.parse(localStorage.getItem('JF_DELETED_SALES_IDS') || '[]');
-              deletedIdsSet = new Set(Array.isArray(deletedArr) ? deletedArr : []);
+              if (Array.isArray(deletedArr)) {
+                deletedArr.forEach(id => {
+                  const clean = String(id).replace(/^#/, '').trim();
+                  if (clean) {
+                    deletedIdsSet.add(clean);
+                    deletedIdsSet.add(clean.replace(/^ORD-/, ''));
+                  }
+                });
+              }
             } catch (e) {}
 
-            const filteredSupabase = mappedSupabase.filter(o => !deletedIdsSet.has(o.orderId));
+            const filteredSupabase = mappedSupabase.filter(o => {
+              const sid = String(o.orderId || o.order_id || o.id || '').replace(/^#/, '').trim();
+              const bareId = sid.replace(/^ORD-/, '');
+              return !deletedIdsSet.has(sid) && !deletedIdsSet.has(bareId);
+            });
 
             // Preservar órdenes locales que aún no hayan impactado Supabase
             const unsyncedLocals = localSales.filter(s => {
-              const id = String(s.orderId || s.order_id || '').replace(/^#/, '').trim();
-              return id && !supabaseIdSet.has(id) && !deletedIdsSet.has(id);
+              const id = String(s.orderId || s.order_id || s.id || '').replace(/^#/, '').trim();
+              const bareId = id.replace(/^ORD-/, '');
+              return id && !supabaseIdSet.has(id) && !supabaseIdSet.has(bareId) && !deletedIdsSet.has(id) && !deletedIdsSet.has(bareId) && !deletedIdsSet.has(`ORD-${bareId}`);
             });
 
             const mergedHistory = [...filteredSupabase, ...unsyncedLocals];
