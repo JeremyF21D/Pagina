@@ -44,7 +44,7 @@ export async function sendOrderEmailNotification({
     const sub = Number(it.subtotal || (qty * price)).toFixed(2);
     const oem = it.oem ? ` (OEM: ${it.oem})` : '';
     const brand = it.brand ? ` [Marca: ${it.brand}]` : '';
-    return `${idx + 1}. (${qty}x) ${it.name}${brand}${oem} — $${price} c/u = $${sub} USD`;
+    return `${idx + 1}. (${qty}x) ${it.name}${brand}${oem} - $${price} c/u = $${sub} USD`;
   }).join('\n');
 
   const totalUSD = Number(order.totalPrice || order.total_price || order.totalUSD || 0).toFixed(2);
@@ -63,37 +63,65 @@ export async function sendOrderEmailNotification({
     timeStyle: 'medium'
   });
 
-  const subject = `[JF AUTO PARTS] ${isApproved ? '✅ VENTA APROBADA' : '🛒 NUEVA ORDEN'}: #${orderId} - $${totalUSD} USD - ${customerName}`;
+  const subject = `[JF AUTO PARTS] ${isApproved ? 'VENTA APROBADA' : 'NUEVA ORDEN'}: #${orderId} - $${totalUSD} USD - ${customerName}`;
 
-  const payload = {
-    _subject: subject,
-    _template: 'table',
-    _captcha: 'false',
-    'Tipo de Notificación': isApproved ? '✅ VENTA APROBADA Y CONFIRMADA' : '🛒 NUEVA ORDEN REGISTRADA (PENDIENTE)',
-    'Número de Orden': `#${orderId}`,
-    'Fecha y Hora (Vzla)': dateFormatted,
-    'Nombre del Cliente': customerName,
-    'Teléfono / WhatsApp': customerPhone,
-    'Vehículo / Modelo': customerCar,
-    'Detalle de Repuestos': formattedItems,
-    'Total en Dólares (USD)': `$${totalUSD} USD`,
-    'Total en Bolívares (VES)': totalVES,
-    'Método de Pago': paymentMethod,
-    'Referencia de Pago': paymentRef,
-    'Estado de la Orden': isApproved ? 'CONFIRMADA' : 'PENDIENTE DE APROBACIÓN',
-    'Observaciones / Notas': notes,
-    'Plataforma Web': 'https://jfautoparts.vercel.app'
-  };
+  // Resumen completo formateado para el cuerpo del mensaje
+  const fullSummary = [
+    '========================================',
+    '       JF AUTO PARTS - DETALLE DE VENTA',
+    '========================================',
+    `NOTIFICACIÓN: ${isApproved ? 'VENTA APROBADA Y CONFIRMADA' : 'NUEVA ORDEN REGISTRADA (PENDIENTE)'}`,
+    `ORDEN: #${orderId}`,
+    `FECHA: ${dateFormatted}`,
+    `CLIENTE: ${customerName}`,
+    `TELÉFONO: ${customerPhone}`,
+    `VEHÍCULO: ${customerCar}`,
+    '',
+    'REPUESTOS COMPRADOS:',
+    formattedItems,
+    '',
+    'TOTALES:',
+    `Total USD: $${totalUSD} USD`,
+    `Total VES: ${totalVES}`,
+    '',
+    'MÉTODO Y PAGO:',
+    `Método de Pago: ${paymentMethod}`,
+    `Referencia: ${paymentRef}`,
+    `Estado de Orden: ${isApproved ? 'CONFIRMADA' : 'PENDIENTE DE APROBACIÓN'}`,
+    `Notas: ${notes}`,
+    '----------------------------------------',
+    'Plataforma: https://jfautoparts.vercel.app',
+    '========================================'
+  ].join('\n');
+
+  // Construir FormData estándar compatible 100% con FormSubmit AJAX
+  const formData = new FormData();
+  formData.append('_subject', subject);
+  formData.append('_template', 'table');
+  formData.append('_captcha', 'false');
+  formData.append('Tipo_Notificacion', isApproved ? 'VENTA APROBADA Y CONFIRMADA' : 'NUEVA ORDEN REGISTRADA');
+  formData.append('Numero_Orden', `#${orderId}`);
+  formData.append('Fecha_y_Hora', dateFormatted);
+  formData.append('Cliente', customerName);
+  formData.append('Telefono_WhatsApp', customerPhone);
+  formData.append('Vehiculo_Modelo', customerCar);
+  formData.append('Repuestos_Detalle', formattedItems);
+  formData.append('Total_USD', `$${totalUSD} USD`);
+  formData.append('Total_VES', String(totalVES));
+  formData.append('Metodo_Pago', paymentMethod);
+  formData.append('Referencia_Pago', paymentRef);
+  formData.append('Estado_Orden', isApproved ? 'CONFIRMADA' : 'PENDIENTE');
+  formData.append('Notas_Observaciones', notes);
+  formData.append('Resumen_Completo', fullSummary);
+  formData.append('message', fullSummary);
 
   try {
-    // Despacho vía FormSubmit AJAX (compatible 100% en frontend estático sin API keys expuestas)
     const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(cleanRecipient)}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: formData
     });
 
     const data = await response.json();
