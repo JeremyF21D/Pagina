@@ -522,8 +522,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
   const originalCat = getCategoryConfig(detectProductCategory(originalCoil));
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-modal-pop text-slate-900">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto overflow-x-hidden">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-modal-pop text-slate-900 min-w-0">
         
         {/* Encabezado Fijo */}
         <div className="flex items-start sm:items-center justify-between p-3.5 sm:p-5 border-b border-slate-100 bg-white shrink-0 gap-2">
@@ -553,13 +553,13 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
         </div>
 
         {/* Formulario con Scroll Interno y Footer Fijo */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden w-full min-w-0">
           
-          <div className="p-3 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto text-xs flex-1 custom-scrollbar">
+          <div className="p-3 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto overflow-x-hidden text-xs flex-1 custom-scrollbar w-full min-w-0">
 
             {/* Selector de Artículos para Órdenes con Varios Repuestos */}
             {itemsList.length > 1 && (
-              <div className="p-3.5 bg-red-50/50 border border-red-200 rounded-2xl space-y-2.5">
+              <div className="p-3.5 bg-red-50/50 border border-red-200 rounded-2xl space-y-2.5 w-full min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-1.5">
                     <i className="fa-solid fa-layer-group"></i>
@@ -570,7 +570,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 w-full min-w-0">
                   {itemsList.map((it, idx) => {
                     const isCurActive = idx === activeItemIndex;
                     const itCoil = coils.find(c => {
@@ -583,7 +583,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                       <div
                         key={idx}
                         onClick={() => handleSwitchActiveItem(idx)}
-                        className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center gap-2.5 text-left relative ${
+                        className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center gap-2.5 text-left relative min-w-0 ${
                           isCurActive
                             ? 'bg-red-50 border-red-500 ring-2 ring-red-500/30 shadow-md'
                             : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -623,8 +623,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
             {/* ============================================================== */}
             {/* SECCIÓN 1: SELECTOR VISUAL DE REPUESTOS CON FOTOS */}
             {/* ============================================================== */}
-            <div className="space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+            <div className="space-y-2 w-full min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 w-full min-w-0">
                 <label className="text-slate-700 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                   <i className="fa-solid fa-box text-red-600"></i>
                   <span>Repuesto Entregado {itemsList.length > 1 ? `(Ítem #${activeItemIndex + 1})` : ''}</span>
@@ -634,7 +634,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                   <button
                     type="button"
                     onClick={() => setIsPickerOpen(true)}
-                    className="self-start sm:self-auto px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-bold text-[10px] sm:text-[11px] transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="self-start sm:self-auto px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-bold text-[10px] sm:text-[11px] transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
                   >
                     <i className="fa-solid fa-magnifying-glass text-xs"></i>
                     <span>Cambiar por otro repuesto</span>
@@ -644,10 +644,10 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
 
               {/* VISTA 1: TARJETA DEL PRODUCTO SELECCIONADO ACTUAL */}
               {!isPickerOpen && (
-                <div className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl p-3.5 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                <div className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl p-3 sm:p-3.5 transition flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs w-full min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-3.5 w-full min-w-0 flex-1">
                     {/* Foto del repuesto */}
-                    <div className="w-16 h-16 rounded-xl bg-white p-1 border border-slate-200 shrink-0 flex items-center justify-center overflow-hidden shadow-xs">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white p-1 border border-slate-200 shrink-0 flex items-center justify-center overflow-hidden shadow-xs">
                       {currentImg ? (
                         <img 
                           src={currentImg} 
@@ -655,48 +655,48 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           className="max-h-full max-w-full object-contain mix-blend-multiply" 
                         />
                       ) : (
-                        <i className={`${currentCat?.icon || 'fa-solid fa-box'} text-2xl text-slate-400`}></i>
+                        <i className={`${currentCat?.icon || 'fa-solid fa-box'} text-xl sm:text-2xl text-slate-400`}></i>
                       )}
                     </div>
 
                     {/* Datos del repuesto */}
                     <div className="flex-1 min-w-0 space-y-1">
-                      <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                      <h4 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-2 leading-tight break-words" title={currentSelectedCoil ? currentSelectedCoil.name : (order.coilName || 'Repuesto Automotriz')}>
                         {currentSelectedCoil ? currentSelectedCoil.name : (order.coilName || 'Repuesto Automotriz')}
                       </h4>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-slate-700 border border-slate-200">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 pt-0.5">
+                        <span className="px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-slate-700 border border-slate-200 shrink-0">
                           {currentSelectedCoil?.brand || 'Repuesto'}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-slate-700 bg-white border border-slate-200">
+                        <span className="px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-mono text-slate-700 bg-white border border-slate-200 max-w-full truncate shrink-0" title={currentSelectedCoil?.oem || order.oem || 'N/A'}>
                           OEM: {currentSelectedCoil?.oem || order.oem || 'N/A'}
                         </span>
                         {currentSelectedCoil && (
                           <>
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                            <span className={`px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0 ${
                               currentSelectedCoil.stock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}>
                               Stock: {currentSelectedCoil.stock} uds
                             </span>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-red-700 bg-red-50 border border-red-200">
+                            <span className="px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-red-700 bg-red-50 border border-red-200 shrink-0">
                               Lista: ${currentSelectedCoil.price}
                             </span>
                           </>
                         )}
                       </div>
                       {currentSelectedCoil?.carModel && (
-                        <p className="text-[10px] text-slate-500 truncate">
+                        <p className="text-[10px] text-slate-500 line-clamp-1 break-words" title={currentSelectedCoil.carModel}>
                           Compatibilidad: {currentSelectedCoil.carModel}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2">
+                  <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 min-w-0">
                     <button
                       type="button"
                       onClick={() => setIsPickerOpen(true)}
-                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-xs shrink-0"
                     >
                       <i className="fa-solid fa-arrows-rotate text-red-600"></i>
                       <span>Cambiar</span>
@@ -705,7 +705,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                       <button
                         type="button"
                         onClick={() => setUnitPrice(currentSelectedCoil.price)}
-                        className="text-[10px] text-red-600 hover:text-red-700 underline font-medium cursor-pointer"
+                        className="text-[10px] text-red-600 hover:text-red-700 underline font-medium cursor-pointer text-right truncate min-w-0"
                         title="Asignar el precio de lista del catálogo"
                       >
                         Usar precio catálogo (${currentSelectedCoil.price})
@@ -909,8 +909,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
             {/* ============================================================== */}
             {/* SECCIÓN 2: PRECIOS Y CANTIDADES (CASO DE LOS $15) */}
             {/* ============================================================== */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-100">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-100 w-full min-w-0">
+              <div className="w-full min-w-0">
                 <label className="block text-slate-700 font-bold text-[11px] mb-1">
                   Cantidad
                 </label>
@@ -920,16 +920,16 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                   max="99"
                   value={qty}
                   onChange={(e) => handleQtyChange(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-mono text-center focus:bg-white focus:outline-none focus:border-red-500 font-bold"
+                  className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-mono text-center focus:bg-white focus:outline-none focus:border-red-500 font-bold"
                   required
                 />
               </div>
 
-              <div>
+              <div className="w-full min-w-0">
                 <label className="block text-slate-700 font-bold text-[11px] mb-1">
                   Precio Cobrado (USD)
                 </label>
-                <div className="relative">
+                <div className="relative w-full min-w-0">
                   <span className="absolute left-2.5 top-2.5 text-slate-400 font-mono text-xs font-bold">$</span>
                   <input
                     type="number"
@@ -937,18 +937,18 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                     min="0"
                     value={unitPrice}
                     onChange={(e) => handleUnitPriceChange(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pl-6 text-slate-900 font-mono font-bold focus:bg-white focus:outline-none focus:border-red-500 text-xs"
+                    className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-2.5 pl-6 text-slate-900 font-mono font-bold focus:bg-white focus:outline-none focus:border-red-500 text-xs"
                     placeholder="15.00"
                     required
                   />
                 </div>
               </div>
 
-              <div>
+              <div className="w-full min-w-0">
                 <label className="block text-slate-700 font-bold text-[11px] mb-1">
                   Total Ajustado
                 </label>
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center text-emerald-700 font-extrabold font-mono text-sm flex items-center justify-center">
+                <div className="w-full min-w-0 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center text-emerald-700 font-extrabold font-mono text-sm flex items-center justify-center">
                   {formatUSD(calculatedTotal)}
                 </div>
               </div>
@@ -957,7 +957,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
             {/* ============================================================== */}
             {/* SECCIÓN 3: MOTIVO DEL CAMBIO / NOTA DE AUDITORÍA */}
             {/* ============================================================== */}
-            <div>
+            <div className="w-full min-w-0">
               <label className="block text-slate-700 font-bold text-[11px] mb-1">
                 Motivo del Cambio o Ajuste (Auditoría)
               </label>
@@ -966,15 +966,15 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ej: Cliente llevó repuesto equivocado, se le cambió por otro modelo y se le cobró $15"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-red-500 text-xs"
+                className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-red-500 text-xs"
               />
             </div>
 
             {/* ============================================================== */}
             {/* SECCIÓN 4: DATOS DEL CLIENTE Y ESTADO */}
             {/* ============================================================== */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-100">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-100 w-full min-w-0">
+              <div className="w-full min-w-0">
                 <label className="block text-slate-700 font-bold text-[11px] mb-1">
                   Nombre del Cliente
                 </label>
@@ -982,13 +982,13 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:bg-white focus:outline-none focus:border-red-500"
+                  className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:bg-white focus:outline-none focus:border-red-500 text-xs"
                   placeholder="Nombre del cliente"
                   required
                 />
               </div>
 
-              <div>
+              <div className="w-full min-w-0">
                 <label className="block text-slate-700 font-bold text-[11px] mb-1">
                   Teléfono / WhatsApp
                 </label>
@@ -996,19 +996,19 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                   type="text"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-red-500"
+                  className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-red-500 text-xs"
                   placeholder="+58 412-0000000"
                 />
               </div>
 
-              <div>
+              <div className="w-full min-w-0">
                 <label className="block text-slate-700 font-bold text-[11px] mb-1">
                   Estado de la Orden
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-red-500 cursor-pointer"
+                  className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-red-500 cursor-pointer text-xs"
                 >
                   <option value="CONFIRMED">CONFIRMADA (Descuenta stock)</option>
                   <option value="PENDING_APPROVAL">PENDIENTE (Sin descontar stock)</option>
@@ -1020,8 +1020,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
             {/* ============================================================== */}
             {/* SECCIÓN 5: TIPO DE PAGO DINÁMICO CON 4 ICONOS INTERACTIVOS */}
             {/* ============================================================== */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div className="space-y-3 pt-2 border-t border-slate-100 w-full min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 w-full min-w-0">
                 <label className="text-slate-700 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                   <i className="fa-solid fa-wallet text-red-600"></i>
                   <span>Tipo de Pago & Comprobante</span>
@@ -1032,7 +1032,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
               </div>
 
               {/* 4 Iconos de Métodos de Pago */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full min-w-0">
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('PAGO_MOVIL')}
@@ -1087,12 +1087,12 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
               </div>
 
               {/* Campos Específicos según el método */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div className="p-3 sm:p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 w-full min-w-0">
                 {/* PAGO MÓVIL */}
                 {paymentMethod === 'PAGO_MOVIL' && (
-                  <div className="space-y-3 animate-fadeIn">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
+                  <div className="space-y-3 animate-fadeIn w-full min-w-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
+                      <div className="w-full min-w-0">
                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
                           Número de Referencia <span className="text-emerald-600">*</span>
                         </label>
@@ -1101,17 +1101,17 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={pagoMovilRef}
                           onChange={e => setPagoMovilRef(e.target.value)}
                           placeholder="Ej: 492019 (últimos 4 o 6 dígitos)"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-600 font-mono"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-600 font-mono"
                         />
                       </div>
-                      <div>
+                      <div className="w-full min-w-0">
                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
                           Banco Emisor / Receptor
                         </label>
                         <select
                           value={pagoMovilBanco}
                           onChange={e => setPagoMovilBanco(e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-emerald-600 cursor-pointer"
                         >
                           <option value="Banesco">Banesco</option>
                           <option value="Mercantil">Banco Mercantil</option>
@@ -1126,14 +1126,14 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                     </div>
 
                     {/* Conversor Dual Limpio: Bolívares <-> Dólares */}
-                    <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2.5 shadow-xs">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
+                    <div className="p-2.5 sm:p-3 bg-white border border-slate-200 rounded-xl space-y-2.5 shadow-xs w-full min-w-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full min-w-0">
+                        <div className="w-full min-w-0">
                           <label className="text-[11px] font-bold text-slate-700 block mb-1 flex items-center justify-between">
                             <span>Monto en Bolívares (Bs.) <span className="text-emerald-600">*</span></span>
                             <span className="text-[10px] text-emerald-600 font-mono font-bold">Transferido</span>
                           </label>
-                          <div className="relative">
+                          <div className="relative w-full min-w-0">
                             <span className="absolute left-3 top-2 text-slate-400 text-xs font-mono font-bold">Bs.</span>
                             <input
                               type="number"
@@ -1141,17 +1141,17 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                               value={pagoMovilMontoVES}
                               onChange={handleVESChange}
                               placeholder="Ej: 38000"
-                              className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-bold placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-600"
+                              className="w-full min-w-0 pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-bold placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-600"
                             />
                           </div>
                         </div>
 
-                        <div>
+                        <div className="w-full min-w-0">
                           <label className="text-[11px] font-bold text-slate-700 block mb-1 flex items-center justify-between">
                             <span>Equivalente en Dólares ($ USD)</span>
                             <span className="text-[10px] text-amber-600 font-mono font-bold">Conversión</span>
                           </label>
-                          <div className="relative">
+                          <div className="relative w-full min-w-0">
                             <span className="absolute left-3 top-2 text-slate-400 text-xs font-mono font-bold">$</span>
                             <input
                               type="number"
@@ -1159,24 +1159,24 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                               value={pagoMovilMontoUSD}
                               onChange={handleUSDChange}
                               placeholder="Ej: 35.60"
-                              className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-bold placeholder-slate-400 focus:bg-white focus:outline-none focus:border-amber-600"
+                              className="w-full min-w-0 pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-bold placeholder-slate-400 focus:bg-white focus:outline-none focus:border-amber-600"
                             />
                           </div>
                         </div>
                       </div>
 
                       {/* Tasa aplicada sutil y clara */}
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1 text-[11px] font-mono text-slate-500 border-t border-slate-100">
-                        <span className="flex items-center gap-1.5 text-slate-700">
-                          <i className="fa-solid fa-calculator text-amber-500"></i>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-1 text-[11px] font-mono text-slate-500 border-t border-slate-100 w-full min-w-0">
+                        <span className="flex items-center gap-1.5 text-slate-700 min-w-0">
+                          <i className="fa-solid fa-calculator text-amber-500 shrink-0"></i>
                           <span>Tasa aplicada: <strong>1 USD = {effectiveRate} Bs.</strong></span>
                         </span>
                         {order.exchangeRateBinance > 0 ? (
-                          <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-bold">
+                          <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-bold self-start sm:self-auto shrink-0">
                             🔒 Tasa congelada de la orden
                           </span>
                         ) : (
-                          <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+                          <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold self-start sm:self-auto shrink-0">
                             ⚡ Tasa Binance en vivo
                           </span>
                         )}
@@ -1187,9 +1187,9 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
 
                 {/* BINANCE PAY */}
                 {paymentMethod === 'BINANCE' && (
-                  <div className="space-y-3 animate-fadeIn">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
+                  <div className="space-y-3 animate-fadeIn w-full min-w-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
+                      <div className="w-full min-w-0">
                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
                           ID / Referencia Binance Pay <span className="text-amber-600">*</span>
                         </label>
@@ -1198,10 +1198,10 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={binanceRef}
                           onChange={e => setBinanceRef(e.target.value)}
                           placeholder="Ej: 284920194 (Order ID / Pay ID)"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 font-mono"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 font-mono"
                         />
                       </div>
-                      <div>
+                      <div className="w-full min-w-0">
                         <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                           <label className="text-[11px] font-bold text-slate-700">
                             Monto USDT <span className="text-amber-600">*</span>
@@ -1219,12 +1219,12 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={binanceMonto}
                           onChange={e => setBinanceMonto(e.target.value)}
                           placeholder="Ej: 15.00"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 font-mono"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 font-mono"
                         />
                       </div>
                     </div>
 
-                    <div>
+                    <div className="w-full min-w-0">
                       <label className="text-[11px] font-bold text-slate-700 block mb-1">
                         Usuario o Pay ID Binance (Opcional)
                       </label>
@@ -1233,7 +1233,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                         value={binanceUser}
                         onChange={e => setBinanceUser(e.target.value)}
                         placeholder="Ej: cliente@correo.com o Binance ID 982348"
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500"
+                        className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500"
                       />
                     </div>
                   </div>
@@ -1241,9 +1241,9 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
 
                 {/* ZELLE */}
                 {paymentMethod === 'ZELLE' && (
-                  <div className="space-y-3 animate-fadeIn">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
+                  <div className="space-y-3 animate-fadeIn w-full min-w-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
+                      <div className="w-full min-w-0">
                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
                           Nombre del Titular de la Cuenta <span className="text-purple-600">*</span>
                         </label>
@@ -1252,10 +1252,10 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={zelleTitular}
                           onChange={e => setZelleTitular(e.target.value)}
                           placeholder="Ej: Juan Carlos Pérez"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600"
                         />
                       </div>
-                      <div>
+                      <div className="w-full min-w-0">
                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
                           Teléfono o Correo Zelle <span className="text-purple-600">*</span>
                         </label>
@@ -1264,13 +1264,13 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={zelleContacto}
                           onChange={e => setZelleContacto(e.target.value)}
                           placeholder="Ej: +1 305-555-0199 o correo@gmail.com"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 font-mono"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 font-mono"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
+                      <div className="w-full min-w-0">
                         <label className="text-[11px] font-bold text-slate-700 block mb-1">
                           N° Confirmación / Ref Zelle <span className="text-purple-600">*</span>
                         </label>
@@ -1279,10 +1279,10 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={zelleRef}
                           onChange={e => setZelleRef(e.target.value)}
                           placeholder="Ej: 98124018"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 font-mono"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 font-mono"
                         />
                       </div>
-                      <div>
+                      <div className="w-full min-w-0">
                         <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                           <label className="text-[11px] font-bold text-slate-700">
                             Monto Transferido ($) <span className="text-purple-600">*</span>
@@ -1300,7 +1300,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                           value={zelleMonto}
                           onChange={e => setZelleMonto(e.target.value)}
                           placeholder="Ej: 15.00"
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 font-mono"
+                          className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 font-mono"
                         />
                       </div>
                     </div>
@@ -1309,8 +1309,8 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
 
                 {/* EFECTIVO */}
                 {paymentMethod === 'EFECTIVO' && (
-                  <div className="space-y-3 animate-fadeIn">
-                    <div>
+                  <div className="space-y-3 animate-fadeIn w-full min-w-0">
+                    <div className="w-full min-w-0">
                       <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                         <label className="text-[11px] font-bold text-slate-700">
                           Monto Recibido en Dólares ($) <span className="text-red-600">*</span>
@@ -1328,11 +1328,11 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                         value={efectivoMonto}
                         onChange={e => setEfectivoMonto(e.target.value)}
                         placeholder="Ej: 15.00 o 20.00"
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 font-mono"
+                        className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 font-mono"
                       />
                     </div>
 
-                    <div>
+                    <div className="w-full min-w-0">
                       <label className="text-[11px] font-bold text-slate-700 block mb-1">
                         Detalle / Billetes / Cambio
                       </label>
@@ -1341,7 +1341,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
                         value={efectivoDetalle}
                         onChange={e => setEfectivoDetalle(e.target.value)}
                         placeholder="Ej: Billete de $20, se entregaron $5 de vuelto"
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
+                        className="w-full min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500"
                       />
                     </div>
                   </div>
@@ -1349,12 +1349,12 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
               </div>
 
               {/* Vista previa en tiempo real de cómo se guardará en Supabase */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl w-full min-w-0">
                 <span className="text-[10px] text-slate-500 block font-semibold mb-1">
                   <i className="fa-solid fa-database text-red-600 mr-1"></i>
                   Registro en Supabase (columna <code className="text-red-600 font-bold">referencia_pago</code>):
                 </span>
-                <div className="font-mono text-[11px] text-emerald-700 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 break-all shadow-xs">
+                <div className="font-mono text-[11px] text-emerald-700 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 break-all shadow-xs w-full min-w-0">
                   {getBuiltPaymentReference()}
                   {notes.trim() && <span className="text-amber-700"> | [AJUSTE: {notes.trim()}]</span>}
                 </div>
@@ -1366,7 +1366,7 @@ export function EditSaleModal({ isOpen, order, coils = [], onClose, onSave, onUp
           {/* ============================================================== */}
           {/* BOTONES DE ACCIÓN - PIE FIJO SIEMPRE VISIBLE */}
           {/* ============================================================== */}
-          <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-t border-slate-100 bg-slate-50/90 shrink-0">
+          <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-t border-slate-100 bg-slate-50/90 shrink-0 w-full min-w-0">
             {typeof onDelete === 'function' ? (
               <button
                 type="button"
