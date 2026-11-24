@@ -94,34 +94,36 @@ export async function sendOrderEmailNotification({
     '========================================'
   ].join('\n');
 
-  // Construir FormData estándar compatible 100% con FormSubmit AJAX
-  const formData = new FormData();
-  formData.append('_subject', subject);
-  formData.append('_template', 'table');
-  formData.append('_captcha', 'false');
-  formData.append('Tipo_Notificacion', isApproved ? 'VENTA APROBADA Y CONFIRMADA' : 'NUEVA ORDEN REGISTRADA');
-  formData.append('Numero_Orden', `#${orderId}`);
-  formData.append('Fecha_y_Hora', dateFormatted);
-  formData.append('Cliente', customerName);
-  formData.append('Telefono_WhatsApp', customerPhone);
-  formData.append('Vehiculo_Modelo', customerCar);
-  formData.append('Repuestos_Detalle', formattedItems);
-  formData.append('Total_USD', `$${totalUSD} USD`);
-  formData.append('Total_VES', String(totalVES));
-  formData.append('Metodo_Pago', paymentMethod);
-  formData.append('Referencia_Pago', paymentRef);
-  formData.append('Estado_Orden', isApproved ? 'CONFIRMADA' : 'PENDIENTE');
-  formData.append('Notas_Observaciones', notes);
-  formData.append('Resumen_Completo', fullSummary);
-  formData.append('message', fullSummary);
+  // Payload estándar JSON 100% compatible con FormSubmit AJAX
+  const payload = {
+    _subject: subject,
+    _template: 'table',
+    _captcha: 'false',
+    name: customerName,
+    message: fullSummary,
+    Tipo_Notificacion: isApproved ? 'VENTA APROBADA Y CONFIRMADA' : 'NUEVA ORDEN REGISTRADA',
+    Numero_Orden: `#${orderId}`,
+    Fecha: dateFormatted,
+    Cliente: customerName,
+    Telefono: customerPhone,
+    Vehiculo: customerCar,
+    Repuestos: formattedItems,
+    Total_USD: `$${totalUSD} USD`,
+    Total_VES: String(totalVES),
+    Metodo_Pago: paymentMethod,
+    Referencia_Pago: paymentRef,
+    Estado: isApproved ? 'CONFIRMADA' : 'PENDIENTE',
+    Notas: notes
+  };
 
   try {
     const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(cleanRecipient)}`, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: formData
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
@@ -132,10 +134,27 @@ export async function sendOrderEmailNotification({
       data 
     };
   } catch (error) {
-    console.warn(`[OrderNotification] Advertencia al enviar correo a ${cleanRecipient}:`, error);
-    return { 
-      success: false, 
-      error: error.message || 'Error de conexión al enviar correo' 
-    };
+    console.warn(`[OrderNotification] Envío JSON con advertencia, intentando FormData de respaldo:`, error);
+    try {
+      const formData = new FormData();
+      Object.entries(payload).forEach(([k, v]) => formData.append(k, String(v)));
+      const fallbackResponse = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(cleanRecipient)}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: formData
+      });
+      const dataFallback = await fallbackResponse.json();
+      return { 
+        success: true, 
+        message: `Notificación enviada a ${cleanRecipient}`, 
+        data: dataFallback 
+      };
+    } catch (fbErr) {
+      console.warn(`[OrderNotification] Advertencia al enviar correo a ${cleanRecipient}:`, fbErr);
+      return { 
+        success: false, 
+        error: fbErr.message || error.message || 'Error de conexión al enviar correo' 
+      };
+    }
   }
 }
