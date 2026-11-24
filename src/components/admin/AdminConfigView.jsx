@@ -9,6 +9,7 @@ export function AdminConfigView() {
 
   const [form, setForm] = useState({
     ownerPhone: ownerSettings.ownerPhone || OFFICIAL_WA_RAW,
+    ownerEmail: ownerSettings.ownerEmail || 'jfautoparts2001@gmail.com',
     ownerName: ownerSettings.ownerName || 'Administrador Principal',
     autoDeductStock: ownerSettings.autoDeductStock ?? true,
     soundAlert: ownerSettings.soundAlert ?? true,
@@ -89,7 +90,7 @@ Directrices de conversación:
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
                 WhatsApp Oficial del Dueño (Para Confirmaciones)

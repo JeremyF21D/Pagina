@@ -1,6 +1,7 @@
 import { getCachedExchangeRates, formatVES } from '../services/exchangeRatesService';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { DEFAULT_BOBINAS_SEED } from '../data/seedData';
+import { sendOrderEmailNotification } from '../services/orderNotificationService';
 import { normalizeCoilRecord } from '../utils/formatters';
 import { OFFICIAL_WA_RAW } from '../utils/whatsapp';
 import { useSoundEffects } from '../hooks/useSoundEffects';
@@ -263,6 +264,7 @@ export function InventoryProvider({ children }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
+          ownerEmail: 'jfautoparts2001@gmail.com',
           ...parsed,
           requireApproval: true
         };
@@ -270,6 +272,7 @@ export function InventoryProvider({ children }) {
     } catch (e) {}
     return {
       ownerPhone: OFFICIAL_WA_RAW,
+      ownerEmail: 'jfautoparts2001@gmail.com',
       ownerName: 'Administrador Principal',
       autoDeductStock: true,
       soundAlert: true,
@@ -1063,6 +1066,15 @@ Directrices de conversación:
       // Guardar de inmediato en Supabase
       saveSaleToSupabase(newOrder, coilRef);
 
+      // Despachar notificación automática por correo a Atención al Cliente
+      try {
+        sendOrderEmailNotification({
+          order: newOrder,
+          eventType: isConfirmed ? 'CONFIRMED' : 'CREATED',
+          recipientEmail: ownerSettings?.ownerEmail || 'jfautoparts2001@gmail.com'
+        }).catch(err => console.warn('Error al enviar correo de notificación:', err));
+      } catch (e) {}
+
       if (ownerSettings.soundAlert) {
         playCashRegisterSound();
       }
@@ -1162,6 +1174,15 @@ Directrices de conversación:
 
     // Guardar en Supabase orden
     await saveSaleToSupabase(updatedOrder);
+
+    // Despachar notificación automática de venta aprobada por correo
+    try {
+      sendOrderEmailNotification({
+        order: updatedOrder,
+        eventType: 'CONFIRMED',
+        recipientEmail: ownerSettings?.ownerEmail || 'jfautoparts2001@gmail.com'
+      }).catch(err => console.warn('Error al enviar correo de venta confirmada:', err));
+    } catch (e) {}
 
     if (ownerSettings.soundAlert) {
       playCashRegisterSound();
@@ -1644,6 +1665,16 @@ Directrices de conversación:
     // Guardar / Actualizar en Supabase garantizando persistencia de metadatos multi-artículo
     if (dbEngine === 'supabase') {
       await saveSaleToSupabase(updatedOrder, newMatchedCoil);
+    }
+
+    if (!wasConfirmed && isNowConfirmed) {
+      try {
+        sendOrderEmailNotification({
+          order: updatedOrder,
+          eventType: 'CONFIRMED',
+          recipientEmail: ownerSettings?.ownerEmail || 'jfautoparts2001@gmail.com'
+        }).catch(err => console.warn('Error al enviar correo de venta confirmada:', err));
+      } catch (e) {}
     }
 
     showToast(`✓ Venta #${cleanId} actualizada y sincronizada en Supabase`);

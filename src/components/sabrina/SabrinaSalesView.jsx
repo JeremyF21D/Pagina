@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Receipt, Plus, RefreshCw, MessageSquare, Search, 
   DollarSign, CheckCircle, Clock, Smartphone, Shield, ArrowUpRight,
-  Edit3, RotateCcw, FileText, Check, Ban, Filter, Calendar, CreditCard, Trash2
+  Edit3, RotateCcw, FileText, Check, Ban, Filter, Calendar, CreditCard, Trash2, Mail
 } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -14,6 +14,8 @@ import { WarrantyModal } from '../modals/WarrantyModal';
 import { EditSaleModal } from '../modals/EditSaleModal';
 import { ReceiptModal } from '../modals/ReceiptModal';
 import { ConfirmSalePaymentModal } from '../modals/ConfirmSalePaymentModal';
+import { useToast } from '../../context/ToastContext';
+import { sendOrderEmailNotification } from '../../services/orderNotificationService';
 
 // Función para clasificar y normalizar métodos de pago
 export const detectPaymentMethodKey = (order) => {
@@ -52,6 +54,28 @@ export function SabrinaSalesView({ onOpenManualSaleModal }) {
   
   const { binanceRate, bcvRate, rates } = useCurrency();
   const activeRate = Number(binanceRate || rates?.binance || 1076.87);
+  const { showToast } = useToast();
+
+  const handleSendEmailNotification = async (ord) => {
+    const email = ownerSettings?.ownerEmail || 'jfautoparts2001@gmail.com';
+    const ordId = ord.orderId || ord.order_id || ord.id || 'ORD-000';
+    const isConf = ord.status === 'CONFIRMED' || !ord.status;
+    showToast(`📧 Enviando datos de la orden #${ordId} a ${email}...`);
+    try {
+      const res = await sendOrderEmailNotification({
+        order: ord,
+        eventType: isConf ? 'CONFIRMED' : 'CREATED',
+        recipientEmail: email
+      });
+      if (res && res.success) {
+        showToast(`✅ Correo enviado a ${email} con los datos de la orden #${ordId}`);
+      } else {
+        showToast(`⚠️ No se pudo enviar el correo: ${res?.error || 'Revisa tu conexión'}`);
+      }
+    } catch (err) {
+      showToast(`⚠️ Error al enviar correo: ${err.message}`);
+    }
+  };
 
   // Auto-recarga en segundo plano cada 15 segundos para pedidos nuevos en tiempo real
   useEffect(() => {

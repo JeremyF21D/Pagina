@@ -91,6 +91,10 @@ export function Footer() {
                 <i className="fa-brands fa-whatsapp text-emerald-400 text-sm"></i>
                 <span>Atención inmediata vía WhatsApp</span>
               </li>
+              <li className="flex items-center gap-2 text-slate-300 hover:text-white transition">
+                <i className="fa-solid fa-envelope text-[#de2420] text-xs"></i>
+                <a href="mailto:jfautoparts2001@gmail.com" className="hover:underline">jfautoparts2001@gmail.com</a>
+              </li>
               <li className="flex items-center gap-2 text-slate-300">
                 <i className="fa-solid fa-clock text-[#de2420] text-xs"></i>
                 <span>Lunes a Sábado: 8:00 AM - 6:00 PM</span>

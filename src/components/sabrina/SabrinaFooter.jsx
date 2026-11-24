@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Truck, Phone, MessageSquare, CheckCircle, ChevronRight } from 'lucide-react';
+import { Shield, Truck, Phone, MessageSquare, CheckCircle, ChevronRight, Mail } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
 import { normalizeWaPhone } from '../../utils/whatsapp';
 import logoImg from '../../assets/logo.png';
@@ -85,18 +85,28 @@ export function SabrinaFooter() {
           {/* Columna 4: Contacto Directo */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Atención Técnica en Maracaibo
+              Atención al Cliente en Maracaibo
             </h4>
             <p className="text-xs text-slate-600">
               Línea directa para asesoría de compatibilidad OEM y confirmación de pagos:
             </p>
-            <button
-              onClick={handleOpenWhatsApp}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold transition text-xs cursor-pointer shadow-xs"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>+58 412-6497478 (WhatsApp)</span>
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleOpenWhatsApp}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold transition text-xs cursor-pointer shadow-xs"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>+58 412-6497478 (WhatsApp)</span>
+              </button>
+              <a
+                href="mailto:jfautoparts2001@gmail.com"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-red-600 border border-slate-200 font-medium transition text-xs shadow-xs"
+                title="Escribir a Atención al Cliente"
+              >
+                <Mail className="w-4 h-4 text-red-500" />
+                <span>jfautoparts2001@gmail.com</span>
+              </a>
+            </div>
           </div>
 
         </div>
